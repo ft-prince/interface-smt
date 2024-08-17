@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+    <title>Activate Product</title>
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="container">
+        <h1>Activate Product</h1>
+        <form method="post">
+            {% csrf_token %}
+            <label for="product"><h5>Select Product:</h5></label>
+            <select id="product" name="product">
+                {% for product in products %}
+                    <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="Running" class="btn btn-primary">
+        </form>
+    </div>
+
+{% endblock content %}
+

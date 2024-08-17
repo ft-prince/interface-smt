@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Readings List{% endblock %}
+
+{% block content %}
+    <h1>Readings List</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Reading 1</th>
+                <th>Reading 2</th>
+                <th>Reading 3</th>
+                <th>Reading 4</th>
+                <th>Reading 5</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for reading in readings %}
+                <tr>
+                    <td>{{ reading.date }}</td>
+                    <td>{{ reading.reading1 }}</td>
+                    <td>{{ reading.reading2 }}</td>
+                    <td>{{ reading.reading3 }}</td>
+                    <td>{{ reading.reading4 }}</td>
+                    <td>{{ reading.reading5 }}</td>
+                    <td>
+                        <a href="{% url 'reading_detail' reading.id %}" class="btn btn-sm btn-info">View</a>
+                        <a href="{% url 'reading_update' reading.id %}" class="btn btn-sm btn-warning">Edit</a>
+                        <a href="{% url 'reading_delete' reading.id %}" class="btn btn-sm btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{% url 'reading_create' %}" class="btn btn-primary">Add New Reading</a>
+{% endblock %}

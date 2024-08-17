@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}
+    <title>Fixture Cleaning Records</title>
+{% endblock title %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    .add-new-btn {
+        display: inline-block;
+        background-color: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        transition: background-color 0.3s;
+    }
+    .add-new-btn:hover {
+        background-color: #45a049;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+        color: #333;
+    }
+    tr:hover {
+        background-color: #f5f5f5;
+    }
+    .action-btn {
+        display: inline-block;
+        padding: 5px 10px;
+        margin: 2px;
+        text-decoration: none;
+        color: white;
+        border-radius: 3px;
+        transition: background-color 0.3s;
+    }
+    .view-btn { background-color: #3498db; }
+    .view-btn:hover { background-color: #2980b9; }
+    .edit-btn { background-color: #f39c12; }
+    .edit-btn:hover { background-color: #e67e22; }
+    .delete-btn { background-color: #e74c3c; }
+    .delete-btn:hover { background-color: #c0392b; }
+    .no-records {
+        text-align: center;
+        padding: 20px;
+        color: #777;
+        font-style: italic;
+    }
+</style>
+
+<div class="container">
+    <h1>Fixture Cleaning Records</h1>
+
+    <a href="{% url 'add_fixture_cleaning_record' %}" class="add-new-btn">Add New Record</a>
+
+    {% if records %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Control No</th>
+                    <th>Location</th>
+                    <th>Shift</th>
+                    <th>Date</th>
+                    <th>Operator Name</th>
+                    <th>Tag Available</th>
+                    <th>Tag Condition</th>
+                    <th>No Dust</th>
+                    <th>No Epoxy Coating</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in records %}
+                <tr>
+                    <td>{{ record.fixture_control_no }}</td>
+                    <td>{{ record.fixture_location }}</td>
+                    <td>{{ record.shift }}</td>
+                    <td>{{ record.date }}</td>
+                    <td>{{ record.operator_name.username }}</td>
+                    <td>{{ record.verification_tag_available }}</td>
+                    <td>{{ record.verification_tag_condition }}</td>
+                    <td>{{ record.no_dust_on_fixture }}</td>
+                    <td>{{ record.no_epoxy_coating_on_fixture }}</td>
+                    <td>
+                        <a href="{% url 'fixture_cleaning_record_detail' record.pk %}" class="action-btn view-btn">View</a>
+                        <a href="{% url 'update_fixture_cleaning_record' record.pk %}" class="action-btn edit-btn">Edit</a>
+                        <a href="{% url 'delete_fixture_cleaning_record' record.pk %}" class="action-btn delete-btn">Delete</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="no-records">No records found.</p>
+    {% endif %}
+</div>
+{% endblock content %}

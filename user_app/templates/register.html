@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}
+    <title>Registration Form</title>
+{% endblock title %}
+
+{% block content %}
+
+    <div class="container">
+
+    </br>
+
+    <h2>Registration Form</h2>
+
+    </br>
+
+    {% if messages %}
+    
+      {% for message in messages %}
+    
+        <div class="alert alert-dismissible alert-success">
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          <strong>Well done!</strong> {{ message }}
+        </div>
+    
+    
+      {% endfor %}
+    
+    {% endif %}
+
+        <form method="post" class="mt-5 col-6">
+
+            {% csrf_token %}
+
+            {{register_form|crispy}}
+
+            <button class="btn btn-primary" type="submit" id="button-addon2">Register</button>
+
+
+        </form>
+
+    </div>
+   
+{% endblock content %}
+

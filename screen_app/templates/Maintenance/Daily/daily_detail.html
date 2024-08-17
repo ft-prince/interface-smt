@@ -1,0 +1,167 @@
+{% extends "base.html" %} {% block title %}
+<title>Daily Checklist Item Detail</title>
+{% endblock title %} {% block content %}
+<style>
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  h1,
+  h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .excel-table th,
+  .excel-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .excel-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .section {
+    margin-bottom: 30px;
+  }
+  .btn-submit {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-submit:hover {
+    background-color: #45a049;
+  }
+  .btn-back {
+    background-color: #f44336;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    margin-left: 10px;
+  }
+</style>
+
+<div class="container">
+  <h1>Daily Checklist Item Detail</h1>
+
+  <div class="section">
+    <h2>General Information</h2>
+    <table class="excel-table">
+      <tr>
+        <th>Field</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Station</td>
+        <td>{{ record.station }}</td>
+      </tr>
+      <tr>
+        <td>Doc Number</td>
+        <td>{{ record.doc_number }}</td>
+      </tr>
+      <tr>
+        <td>Machine Name</td>
+        <td>{{ record.get_machine_name_display }}</td>
+      </tr>
+      <tr>
+        <td>Machine Location</td>
+        <td>{{ record.get_machine_location_display }}</td>
+      </tr>
+      <tr>
+        <td>Month/Year</td>
+        <td>{{ record.month_year|date:"F Y" }}</td>
+      </tr>
+      <tr>
+        <td>Date</td>
+        <td>{{record.date}}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Check Points</h2>
+    <table class="excel-table">
+      <tr>
+        <th>Check Point</th>
+        <th>Requirement Range</th>
+        <th>Method of Checking</th>
+        <th>Remark</th>
+      </tr>
+      <tr>
+        <td>{{record.check_point_1}}</td>
+        <td>{{ record.requirement_range_1 }}</td>
+        <td>{{ record.method_of_checking_1 }}</td>
+        <td>{{ record.Remark_1 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_2}}</td>
+        <td>{{ record.requirement_range_2 }}</td>
+        <td>{{ record.method_of_checking_2 }}</td>
+        <td>{{ record.Remark_2 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_3}}</td>
+        <td>{{ record.requirement_range_3 }}</td>
+        <td>{{ record.method_of_checking_3 }}</td>
+        <td>{{ record.Remark_3 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_4}}</td>
+        <td>{{ record.requirement_range_4 }}</td>
+        <td>{{ record.method_of_checking_4 }}</td>
+        <td>{{ record.Remark_4 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_5}}</td>
+        <td>{{ record.requirement_range_5 }}</td>
+        <td>{{ record.method_of_checking_5 }}</td>
+        <td>{{ record.Remark_5 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_6}}</td>
+        <td>{{ record.requirement_range_6 }}</td>
+        <td>{{ record.method_of_checking_6 }}</td>
+        <td>{{ record.Remark_6 }}</td>
+      </tr>
+      <tr>
+        <td>{{record.check_point_7}}</td>
+        <td>{{ record.requirement_range_7 }}</td>
+        <td>{{ record.method_of_checking_7 }}</td>
+        <td>{{ record.Remark_7 }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="section">
+    <h2>Approval</h2>
+    <table class="excel-table">
+      <tr>
+        <th>Field</th>
+        <th>Value</th>
+      </tr>
+      <tr>
+        <td>Checked by Operator</td>
+        <td>{{ record.get_checked_by_Operator_display }}</td>
+      </tr>
+      <tr>
+        <td>Approved by Supervisor</td>
+        <td>{{ record.get_approved_by_Supervisor_display }}</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="action-buttons">
+    <a href="{% url 'update_daily' record.pk %}" class="btn-submit">Edit</a>
+    <a href="{% url 'list_daily' %}" class="btn-back">Back to List</a>
+  </div>
+</div>
+{% endblock content %}

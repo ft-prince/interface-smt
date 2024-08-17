@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_head %}
+    <link rel="stylesheet" href="{% static 'swiper/swiper.min.css' %}">
+    <style>
+        /* Add CSS for landscape orientation */
+        .video-container {
+            width: 100%; /* Adjust as needed */
+            height: 100vw; /* 16:9 aspect ratio (9 / 16 * 100) */
+            max-height: 1960px; /* Adjust as needed */
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .video-container video {
+            width: 100%;
+            height: 100%;
+            transform: rotate(270deg); /* Rotate the video 90 degrees clockwise */
+        }
+        
+        .swiper-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .swiper-slide {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .swiper-container {
+            transition: transform 0.3s ease;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: white; /* Set background color */
+            z-index: -1; /* Place behind content */
+            overflow: hidden;
+        }
+          
+        /* Ensure rule only applies when navbar is collapsed and a direct sibling */
+        .navbar.collapsed + .swiper-container {
+            transform: translateY(-100%);
+        }
+          
+        /* Optional if using a different class for a visible navbar */
+        .navbar.visible + .swiper-container {
+            transform: translateY(0);
+        }
+
+        .embed-container {
+            width: 80%; /* Set the width to 80% to fill the container */
+            height: 100vh; /* Set the height to 100% of the viewport height */
+        }
+    </style>
+{% endblock extra_head %}
+
+{% block title %}
+    <title>View Content</title>
+{% endblock title %}
+
+{% block content %}
+<div class="swiper-container" id="content">
+    <div class="swiper-wrapper">
+        <!-- Each screen will have two slides: one for the video and one for the PDF -->
+        {% for screen in screens %}
+            {% if screen.video_path %}
+                <div class="swiper-slide">
+                    <div class="video-container">
+                        <video id="video-{{ screen.screen_id }}" loop muted>
+                            <source src="{% static screen.video_path %}" type="video/mp4">
+                        </video>
+                    </div>
+                </div>
+            {% endif %}
+            {% if screen.pdf_path %}
+                <div class="swiper-slide">
+                    <embed id="pdfEmbed" class="embed-container" src="{% static screen.pdf_path %}#toolbar=0&navpanes=0" type="application/pdf">
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    <!-- Add pagination -->
+    <div class="swiper-pagination"></div>
+</div>
+{% endblock content %}
+
+{% block extra_scripts %}
+    <script src="{% static 'swiper/swiper.min.js' %}"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var mySwiper = new Swiper('.swiper-container', {
+                slidesPerView: 1,
+                spaceBetween: 30,
+                loop: true,
+                autoplay: false,
+            });
+
+        
+            function autoplaySlides() {
+                setInterval(function() {
+                    mySwiper.slideNext();
+                }, 10000);
+            }
+        
+            autoplaySlides();
+        
+            mySwiper.on('slideChange', function () {
+                var currentSlide = mySwiper.slides[mySwiper.activeIndex];
+                var currentVideo = currentSlide.querySelector('video');
+                if (currentVideo) {
+                    currentVideo.play();
+                }
+            });
+        
+            mySwiper.on('slideChangeTransitionEnd', function () {
+                if (mySwiper.isEnd) {
+                    setTimeout(function () {
+                        fetchUpdatedVideoData(); // Fetch updated video data after slideshow ends
+                        fetchUpdatedPdfData(); // Fetch updated PDF data after slideshow ends
+                    }, 10000); // Adjust the delay as needed
+                    
+
+                }
+            });
+        
+            function fetchUpdatedVideoData() {
+                fetch('/screen/fetch_updated_video_data/')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateVideoContent(data);
+
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+            
+
+
+        
+            function updateVideoContent(data) {
+                var swiperWrapper = document.querySelector('.swiper-wrapper');
+        
+                // Check if there is a video slide
+                var videoSlide = swiperWrapper.querySelector('.video-container');
+                if (videoSlide) {
+                    if (data.length > 0 && data[0].video_path) {
+                        var videoElement = videoSlide.querySelector('video');
+                        videoElement.src = data[0].video_path;
+                        videoElement.load();
+                    } else {
+                        // Hide the video slide if there's no updated video data
+                        videoSlide.style.display = 'none';
+                    }
+                }
+        
+                mySwiper.update(); // Update Swiper after content change
+            }
+        
+
+            function fetchUpdatedPdfData() {
+                fetch('/screen/fetch_updated_pdf_data/')
+                    .then(response => response.json())
+                    .then(data => {
+                        updatePdfContent(data);
+
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            function updatePdfContent(data) {
+                var swiperWrapper = document.querySelector('.swiper-wrapper');
+        
+                // Check if there is a PDF slide
+                var pdfSlide = swiperWrapper.querySelector('.swiper-slide');
+                //console.log("pdfSlide "+pdfSlide);
+                
+                if (pdfSlide) {
+                    if (data.length > 0 && data[0].pdf_path) {
+                        //console.log("1 "+data[0].pdf_path);
+
+                        //console.log("**Before querySelector:** Is pdfSlide element found?", pdfSlide); // Log if the pdfSlide element exists
+
+                        var embedElement = pdfSlide.querySelector('embed');
+                        //var embedElement = pdfSlide;
+
+                        //console.log("**After querySelector:** Is embedElement found?", embedElement); // Log if the embed element is found within pdfSlide
+
+                        
+                        embedElement.src = data[0].pdf_path + '#toolbar=0&navpanes=0';
+
+                        //console.log("src "+embedElement.src);
+
+                    } else {
+                        // Hide the PDF slide if there's no updated PDF data
+                        pdfSlide.style.display = 'none';
+                    }
+                }
+                //window.location.reload(); // Reload the page
+
+                mySwiper.update(); // Update Swiper after content change
+            }
+        
+            // Fetch updated data initially and then periodically
+            fetchUpdatedVideoData();
+            fetchUpdatedPdfData();
+            setInterval(fetchUpdatedVideoData, 10000); // Adjust interval as needed
+            setInterval(fetchUpdatedPdfData, 10000); // Adjust interval as needed
+        });
+    </script>
+{% endblock extra_scripts %}

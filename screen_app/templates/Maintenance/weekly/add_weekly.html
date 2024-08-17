@@ -1,0 +1,155 @@
+{% extends "base.html" %} {% block title %}
+<title>
+  {% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist Item
+</title>
+{% endblock title %} {% block content %}
+<style>
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  h1,
+  h2 {
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  .excel-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  .excel-table th,
+  .excel-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .excel-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .section {
+    margin-bottom: 30px;
+  }
+  .btn-submit {
+    background-color: #4caf50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-submit:hover {
+    background-color: #45a049;
+  }
+  .btn-back {
+    background-color: #f44336;
+    color: white;
+    padding: 10px 20px;
+    text-decoration: none;
+    margin-left: 10px;
+  }
+</style>
+
+<div class="container">
+  <h1>
+    {% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist
+    Item
+  </h1>
+
+  <form method="post">
+    {% csrf_token %}
+
+    <div class="section">
+      <div class="d-flex justify-content-between align-items-center">
+        <h2>General Information</h2>
+        <p>QSF-13-06</p>
+      </div>
+      <table class="excel-table">
+        <tr>
+          {% comment %}
+          <th>{{ form.doc_number.label_tag }}</th>
+          <td>{{ form.doc_number }}</td>
+          {% endcomment %}
+          <th>{{ form.rev_number.label_tag }}</th>
+          <td>{{ form.rev_number }}</td>
+          <th>{{ form.rev_date.label_tag }}</th>
+          <td>{{ form.rev_date }}</td>
+        </tr>
+        <tr>
+          <th>{{ form.machine_name.label_tag }}</th>
+          <td>{{ form.machine_name }}</td>
+          <th>{{ form.machine_location.label_tag }}</th>
+          <td>{{ form.machine_location }}</td>
+        </tr>
+        <tr>
+          <th>{{ form.control_number.label_tag }}</th>
+          <td>{{ form.control_number }}</td>
+          <th>{{ form.month_year.label_tag }}</th>
+          <td>{{ form.month_year }}</td>
+        </tr>
+        <tr>
+          <th>{{ form.station.label_tag }}</th>
+          <td>{{ form.station }}</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section">
+      <h2>Check Points</h2>
+      <table class="excel-table">
+        <tr>
+          <th>Check Point</th>
+          <th>Requirement Range</th>
+          <th>Method of Checking</th>
+          <th>Remark</th>
+        </tr>
+        <tr>
+          <td>Check Conveyor Belts</td>
+          <td>No Damage</td>
+          <td>By Hand</td>
+          <td>{{ form.Remark_8 }}</td>
+        </tr>
+        <tr>
+          <td>Check Solder bit Assembly. For any Bolts & Screw Loose</td>
+          <td>Proper Tight</td>
+          <td>By Hand</td>
+          <td>{{ form.Remark_9 }}</td>
+        </tr>
+        <tr>
+          <td>Check Wire & Cable</td>
+          <td>No Damage No Broken</td>
+          <td>By Hand</td>
+          <td>{{ form.Remark_10 }}</td>
+        </tr>
+        <tr>
+          <td>Electrical Insulation</td>
+          <td>No Cut & No Damage Wire</td>
+          <td>By Hand</td>
+          <td>{{ form.Remark_11 }}</td>
+        </tr>
+      </table>
+    </div>
+
+    {% comment %} <div class="section">
+      <h2>Approval</h2>
+      <table class="excel-table">
+        <tr>
+          <th>{{ form.checked_by_Operator.label_tag }}</th>
+          <td>{{ form.checked_by_Operator }}</td>
+        </tr>
+        {% if form.instance.pk %}
+        <tr>
+          <th>{{ form.approved_by_Supervisor.label_tag }}</th>
+          <td>{{ form.approved_by_Supervisor }}</td>
+        </tr>
+        {% endif %}
+      </table>
+    </div> {% endcomment %}
+
+    <button type="submit" class="btn-submit">Save</button>
+    <a href="{% url 'list_weekly' %}" class="btn-back">Back to List</a>
+  </form>
+</div>
+{% endblock content %}

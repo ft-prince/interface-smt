@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+    <title>Update Content</title>
+{% endblock title %}
+
+
+{% block content %}
+
+    <div class="container">
+        <h1>Update Content</h1>
+        <form method="post">
+            {% csrf_token %}
+            <label for="product">Select Product:</label>
+            <select id="product" name="product">
+                {% for product in products %}
+                    <option value="{{ product.id }}">{{ product.name }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="video_url">Video Path:</label>
+            <input type="text" id="video_path" name="video_path"><br>
+            <label for="pdf_path">PDF Path:</label>
+            <input type="text" id="pdf_path" name="pdf_path"><br>
+            <input type="submit" value="Update Content">
+        </form>
+    </div>
+
+{% endblock content %}
+

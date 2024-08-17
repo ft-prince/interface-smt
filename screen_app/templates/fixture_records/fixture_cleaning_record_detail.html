@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}<title>Record Detail</title>{% endblock %}
+
+{% block content %}
+<style class='container'>
+    .excel-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 14px;
+    }
+    .excel-table th, .excel-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .excel-table th {
+        background-color: #f2f2f2;
+        font-weight: bold;
+    }
+    .excel-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .excel-table tr:hover {
+        background-color: #f5f5f5;
+    }
+    .action-buttons {
+        margin-top: 20px;
+    }
+    .action-buttons a {
+        margin-right: 10px;
+    }
+</style>
+
+<h1>Fixture Cleaning Record Detail</h1>
+<div class='container'>
+
+    <table class="excel-table">
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Station</td>
+            <td>{{ record.station }}</td>
+        </tr>
+                
+        <tr>
+            <td>Document Number</td>
+            <td>{{ record.doc_number }}</td>
+        </tr>
+        
+
+        <tr>
+            <td>Month Year</td>
+            <td>{{ record.month_year|date:"F Y" }}</td>
+        </tr>
+        <tr>
+            <td>Shift</td>
+            <td>{{ record.get_shift_display }}</td>
+        </tr>
+        <tr>
+            <td>Fixture Location</td>
+        <td>{{ record.get_fixture_location_display }}</td>
+    </tr>
+    <tr>
+        <td>Fixture Control No.</td>
+        <td>{{ record.get_fixture_control_no_display }}</td>
+    </tr>
+    <tr>
+        <td>Fixture Installation Date</td>
+        <td>{{ record.fixture_installation_date|date:"Y-m-d" }}</td>
+    </tr>
+    <tr>
+        <td>Date</td>
+        <td>{{ record.date|date:"Y-m-d" }}</td>
+    </tr>
+    <tr>
+        <td>Time</td>
+        <td>{{ record.time|time:"H:i" }}</td>
+    </tr>
+    <tr>
+        <td>Operator Name</td>
+        <td>{{ record.operator_name.username }}</td>
+    </tr>
+    <tr>
+        <td>Verification Tag Available</td>
+        <td>{{ record.get_verification_tag_available_display }}</td>
+    </tr>
+    <tr>
+        <td>Verification Tag Condition</td>
+        <td>{{ record.get_verification_tag_condition_display }}</td>
+    </tr>
+    <tr>
+        <td>No Dust on Fixture</td>
+        <td>{{ record.get_no_dust_on_fixture_display }}</td>
+    </tr>
+    <tr>
+        <td>No Epoxy Coating on Fixture</td>
+        <td>{{ record.get_no_epoxy_coating_on_fixture_display }}</td>
+    </tr>
+    <tr>
+        <td>Operator Signature</td>
+        <td>{{ record.get_operator_signature_display }}</td>
+    </tr>
+    <tr>
+        <td>Supervisor Signature</td>
+        <td>{{ record.get_supervisor_signature_display }}</td>
+    </tr>
+</table>
+
+<div class="action-buttons">
+    <a href="{% url 'update_fixture_cleaning_record' record.pk %}" class="btn">Edit</a>
+    <a href="{% url 'list_fixture_cleaning_records' %}" class="btn">Back to List</a>
+</div>
+</div>
+
+{% endblock content %}

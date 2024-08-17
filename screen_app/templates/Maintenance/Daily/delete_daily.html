@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}
+<title>Delete Daily Checklist Item</title>
+{% endblock title %}
+
+{% block content %}
+<style>
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    h1 { color: #333; text-align: center; margin-bottom: 30px; }
+    .warning-box { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+    .btn { display: inline-block; padding: 10px 20px; text-decoration: none; color: white; border-radius: 5px; }
+    .btn-danger { background-color: #dc3545; }
+    .btn-cancel { background-color: #6c757d; margin-left: 10px; }
+</style>
+
+<div class="container">
+    <h1>Delete Daily Checklist Item</h1>
+    <div class="warning-box">
+        <p style="font-size: 18px; margin-bottom: 10px">
+            Are you sure you want to delete this daily checklist item?
+        </p>
+        <p><strong>Machine Name:</strong> {{object.get_machine_name_display}}</p>
+        <p><strong>Machine Location:</strong> {{object.get_machine_location_display}}</p>
+        <p><strong>Month/Year:</strong> {{ object.month_year|date:"F Y" }}</p>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'list_daily' %}" class="btn btn-cancel">Cancel</a>
+    </form>
+</div>
+{% endblock content %}

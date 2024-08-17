@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}
+<title>Soldering Bit Record Detail</title>
+{% endblock title %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    .excel-table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 14px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    .excel-table th,
+    .excel-table td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+    }
+    .excel-table th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        text-transform: uppercase;
+        font-size: 12px;
+    }
+    .excel-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    .excel-table tr:hover {
+        background-color: #f5f5f5;
+    }
+    .action-buttons {
+        margin-top: 20px;
+        text-align: right;
+    }
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        margin-right: 10px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.3s ease;
+    }
+    .btn:hover {
+        background-color: #0056b3;
+    }
+    h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+    }
+</style>
+
+<h1>Soldering Bit Record Detail</h1>
+<div class="container">
+    <table class="excel-table">
+        <tr>
+            <th>Field</th>
+            <th>Value</th>
+        </tr>
+        <tr>
+            <td>Station</td>
+            <td>{{ record.station }}</td>
+        </tr>
+        <tr>
+            <td>Doc Number</td>
+            <td>{{ record.doc_number }}</td>
+        </tr>
+        <tr>
+            <td>Part Name</td>
+            <td>{{ record.get_part_name_display }}</td>
+        </tr>
+        <tr>
+            <td>Machine No</td>
+            <td>{{ record.get_machine_no_display }}</td>
+        </tr>
+        <tr>
+            <td>Machine Location</td>
+            <td>{{ record.get_machine_location_display }}</td>
+        </tr>
+        <tr>
+            <td>Month</td>
+            <td>{{ record.month|date:"F Y" }}</td>
+        </tr>
+        <tr>
+            <td>Time</td>
+            <td>{{ record.time }}</td>
+        </tr>
+        <tr>
+            <td>Operator Name</td>
+            <td>{{ record.operator_name }}</td>
+        </tr>
+        <tr>
+            <td>Soldering Points Per Part</td>
+            <td>{{ record.soldering_points_per_part }}</td>
+        </tr>
+        <tr>
+            <td>Bit Size</td>
+            <td>{{ record.bit_size }}</td>
+        </tr>
+        <tr>
+            <td>Date</td>
+            <td>{{ record.date }}</td>
+        </tr>
+        <tr>
+            <td>Produce Quantity Shift A</td>
+            <td>{{ record.produce_quantity_shift_a }}</td>
+        </tr>
+        <tr>
+            <td>Produce Quantity Shift B</td>
+            <td>{{ record.produce_quantity_shift_b }}</td>
+        </tr>
+        <tr>
+            <td>Total Quantity</td>
+            <td>{{ record.total_quantity }}</td>
+        </tr>
+        <tr>
+            <td>Total Soldering Points</td>
+            <td>{{ record.total_soldering_points }}</td>
+        </tr>
+        <tr>
+            <td>Bit Life Remaining</td>
+            <td>{{ record.bit_life_remaining }}</td>
+        </tr>
+        <tr>
+            <td>Bit Change Date</td>
+            <td>{{ record.bit_change_date }}</td>
+        </tr>
+        <tr>
+            <td>Prepared By</td>
+            <td>{{ record.get_prepared_by_display }}</td>
+        </tr>
+        <tr>
+            <td>Approved By</td>
+            <td>{{ record.get_approved_by_display }}</td>
+        </tr>
+    </table>
+    <div class="action-buttons">
+        <a href="{% url 'update_soldering_bit_record' record.pk %}" class="btn">Edit</a>
+        <a href="{% url 'list_soldering_bit_records' %}" class="btn">Back to List</a>
+    </div>
+</div>
+{% endblock content %}

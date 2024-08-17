@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Edit Reading{% else %}Add Reading{% endif %}{% endblock %}
+
+{% block content %}
+    <h1>{% if form.instance.pk %}Edit Reading{% else %}Add Reading{% endif %}</h1>
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="mb-3">
+                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                {{ field.as_widget }}
+                {% if field.errors %}
+                    <div class="text-danger">
+                        {% for error in field.errors %}
+                            {{ error }}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'reading_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+{% endblock %}

@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}
+<title>{% if form.instance.pk %}Update{% else %}Add{% endif %} Daily Checklist Item</title>
+{% endblock title %}
+
+{% block content %}
+<style>
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1, h2 { color: #333; text-align: center; margin-bottom: 20px; }
+    .excel-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+    .excel-table th, .excel-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    .excel-table th { background-color: #f2f2f2; font-weight: bold; }
+    .section { margin-bottom: 30px; }
+    .btn-submit { background-color: #4CAF50; color: white; padding: 10px 20px; border: none; cursor: pointer; }
+    .btn-submit:hover { background-color: #45a049; }
+    .btn-back { background-color: #f44336; color: white; padding: 10px 20px; text-decoration: none; margin-left: 10px; }
+</style>
+
+<div class="container">
+    <h1>{% if form.instance.pk %}Update{% else %}Add{% endif %} Daily Checklist Item</h1>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="section">
+            <h2>General Information</h2>
+            <table class="excel-table">
+                <tr>
+                    <th>{{ form.doc_number.label_tag }}</th>
+                    <td>{{ form.doc_number }}</td>
+                    <th>{{ form.rev_number.label_tag }}</th>
+                    <td>{{ form.rev_number }}</td>
+                </tr>
+                <tr>
+                    <th>{{ form.rev_date.label_tag }}</th>
+                    <td>{{ form.rev_date }}</td>
+                    <th>{{ form.machine_name.label_tag }}</th>
+                    <td>{{ form.machine_name }}</td>
+                </tr>
+                <tr>
+                    <th>{{ form.control_number.label_tag }}</th>
+                    <td>{{ form.control_number }}</td>
+                    <th>{{ form.machine_location.label_tag }}</th>
+                    <td>{{ form.machine_location }}</td>
+                </tr>
+                <tr>
+                    <th>{{ form.month_year.label_tag }}</th>
+                    <td>{{ form.month_year }}</td>
+                    <th>{{ form.station.label_tag }}</th>
+                    <td>{{ form.station }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Check Points</h2>
+            <table class="excel-table">
+                <tr>
+                    <th>Check Point</th>
+                    <th>Requirement Range</th>
+                    <th>Method of Checking</th>
+                    <th>Remark</th>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_1 }}</td>
+                    <td>{{ form.requirement_range_1 }}</td>
+                    <td>{{ form.method_of_checking_1 }}</td>
+                    <td>{{ form.Remark_1 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_2 }}</td>
+                    <td>{{ form.requirement_range_2 }}</td>
+                    <td>{{ form.method_of_checking_2 }}</td>
+                    <td>{{ form.Remark_2 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_3 }}</td>
+                    <td>{{ form.requirement_range_3 }}</td>
+                    <td>{{ form.method_of_checking_3 }}</td>
+                    <td>{{ form.Remark_3 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_4 }}</td>
+                    <td>{{ form.requirement_range_4 }}</td>
+                    <td>{{ form.method_of_checking_4 }}</td>
+                    <td>{{ form.Remark_4 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_5 }}</td>
+                    <td>{{ form.requirement_range_5 }}</td>
+                    <td>{{ form.method_of_checking_5 }}</td>
+                    <td>{{ form.Remark_5 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_6 }}</td>
+                    <td>{{ form.requirement_range_6 }}</td>
+                    <td>{{ form.method_of_checking_6 }}</td>
+                    <td>{{ form.Remark_6 }}</td>
+                </tr>
+                <tr>
+                    <td>{{ form.check_point_7 }}</td>
+                    <td>{{ form.requirement_range_7 }}</td>
+                    <td>{{ form.method_of_checking_7 }}</td>
+                    <td>{{ form.Remark_7 }}</td>
+                </tr>
+            </table>
+        </div>
+        
+        <div class="section">
+            <h2>Approval</h2>
+            <table class="excel-table">
+                <tr>
+                    <th>{{ form.checked_by_Operator.label_tag }}</th>
+                    <td>{{ form.checked_by_Operator }}</td>
+                </tr>
+                {% if form.instance.pk %}
+                <tr>
+                    <th>{{ form.approved_by_Supervisor.label_tag }}</th>
+                    <td>{{ form.approved_by_Supervisor }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+        
+        <button type="submit" class="btn-submit">Save</button>
+        <a href="{% url 'list_daily' %}" class="btn-back">Back to List</a>
+    </form>
+</div>
+{% endblock content %}

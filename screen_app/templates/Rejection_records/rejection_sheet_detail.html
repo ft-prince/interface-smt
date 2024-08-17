@@ -1,0 +1,107 @@
+{% extends "base.html" %} {% block title %}
+<title>Rejection Sheet Detail</title>
+{% endblock title %} {% block content %}
+<style class="container">
+  .excel-table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
+    font-size: 14px;
+  }
+  .excel-table th,
+  .excel-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  .excel-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  .excel-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  .excel-table tr:hover {
+    background-color: #f5f5f5;
+  }
+  .action-buttons {
+    margin-top: 20px;
+  }
+  .action-buttons a {
+    margin-right: 10px;
+  }
+</style>
+
+<h1>Rejection Sheet Detail</h1>
+<div class="container">
+  <table class="excel-table">
+    <tr>
+      <th>Field</th>
+      <th>Value</th>
+    </tr>
+
+    <tr>
+        <td>Station</td>
+        <td>{{ sheet.station }}</td>
+      </tr>
+  
+    <tr>
+      <td>Part Description</td>
+      <td>{{ sheet.get_part_description_display }}</td>
+    </tr>
+
+    <tr>
+      <td>Month</td>
+      <td>{{ sheet.month|date:"F Y" }}</td>
+    </tr>
+    <tr>
+      <td>Date</td>
+      <td>{{ sheet.date }}</td>
+    </tr>
+    <tr>
+      <td>Stage</td>
+      <td>{{ sheet.get_stage_display }}</td>
+    </tr>
+    <tr>
+      <td>Opening Balance</td>
+      <td>{{ sheet.opening_balance }}</td>
+    </tr>
+    <tr>
+      <td>Receive from Rework</td>
+      <td>{{ sheet.receive_from_rework }}</td>
+    </tr>
+    <tr>
+      <td>Total Pass Quantity</td>
+      <td>{{ sheet.total_pass_qty }}</td>
+    </tr>
+    <tr>
+      <td>Total Rejection Quantity</td>
+      <td>{{ sheet.total_rejection_qty }}</td>
+    </tr>
+    <tr>
+      <td>Closing Balance</td>
+      <td>{{ sheet.closing_balance }}</td>
+    </tr>
+    <tr>
+      <td>
+        Operator Name
+      </td>
+    <td>
+      {{sheet.operator_name.username}}
+    </td>
+    </tr>
+    <tr>
+      <td>Verified By Operator </td>
+      <td>{{ sheet.get_operator_signature_display }}</td>
+    </tr>
+    <tr>
+      <td>Verified By SuperVisor</td>
+      <td>{{ sheet.get_verified_by_display }}</td>
+    </tr>
+  </table>
+  <div class="action-buttons">
+    <a href="{% url 'update_rejection_sheet' sheet.pk %}" class="btn">Edit</a>
+    <a href="{% url 'list_rejection_sheets' %}" class="btn">Back to List</a>
+  </div>
+</div>
+{% endblock content %}
