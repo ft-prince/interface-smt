@@ -91,6 +91,8 @@ urlpatterns = [
 
 #  -------------------------------------------------------------------------------------------
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('web/', views.index, name='index'),
+
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

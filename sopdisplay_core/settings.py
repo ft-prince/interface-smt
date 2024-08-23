@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     'user_app',
     'crispy_forms',
     'crispy_bootstrap5',
+    'channels',
+    
   
 ]
 
@@ -68,6 +70,14 @@ TEMPLATES = [
         },
     },
 ]
+
+ASGI_APPLICATION = 'sopdisplay_core.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default':{
+        'BACKEND':'channels.layers.InMemoryChannelLayer'
+    }
+}
 
 WSGI_APPLICATION = "sopdisplay_core.wsgi.application"
 

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Notifications</title>
+</head>
+<body>
+    <h1>WebSocket Notifications</h1>
+    <textarea id="messageInput" placeholder="Type a message..."></textarea>
+    <button id="sendButton">Send</button>
+
+    <ul id="messagesList"></ul>
+
+    <script>
+        const chatSocket = new WebSocket(
+            'ws://' + window.location.host + '/ws/socket-server/'
+        );
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#messagesList').innerHTML += '<li>' + data.message + '</li>';
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#sendButton').onclick = function(e) {
+            const messageInput = document.querySelector('#messageInput');
+            chatSocket.send(JSON.stringify({
+                'message': messageInput.value
+            }));
+            messageInput.value = '';
+        };
+    </script>
+</body>
+</html>

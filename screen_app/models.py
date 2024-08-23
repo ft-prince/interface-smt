@@ -3,6 +3,56 @@ from django.db import models
 from django.contrib.auth.models import User
 import django
 
+
+CONTROL_NUMBER_CHOICES = (
+        ('51-00-4283-3', '51-00-4283-3'),
+        ('51-00-2603-3', '51-00-2603-3'),
+        ('51-00-1466-3', '51-00-1466-3'),
+        ('57-00-2141-3', '57-00-2141-3'),
+        ('57-00-1891-3', '57-00-1891-3'),
+        ('56-00-1702-3', '56-00-1702-3'),
+        ('56-00-2461-2', '56-00-2461-2'),
+        ('56-00-1019-2', '56-00-1019-2'),
+        ('56-00-1454-2', '56-00-1454-2'),
+        ('56-00-1737-3', '56-00-1737-3'),
+        ('56-00-2305-3', '56-00-2305-3'),
+        ('51-00-2305-3', '51-00-2305-3'),
+        ('51-00-3585-3', '51-00-3585-3'),
+        ('51-00-2629-3', '51-00-2629-3'),
+        ('57-00-1578-3', '57-00-1578-3'),
+        ('57-00-1579-3', '57-00-1579-3'),
+        ('51-00-3228-3', '51-00-3228-3'),
+        ('56-00-2450-3', '56-00-2450-3'),
+        ('52-00-1035-1', '52-00-1035-1'),
+        # Add more controls as needed
+    )
+
+MACHINE_LOCATION_CHOICES = (
+        ('visual_inspection', 'Visual Inspection'),
+        ('programming_testing', 'Programming & Testing'),
+        ('function_testing', 'Function Testing'),
+        ('adhesive_application', 'Adhesive Application'),
+        ('conformal_coating', 'Conformal Coating'),
+        ('housing', 'Housing'),
+        ('e90fl', 'E90FL'),
+        ('dr_beck_epoxy', 'Dr. Beck Epoxy'),
+        ('final_testing', 'Final Testing'),
+        # Add more locations as needed
+    )
+MACHINE_NAME_CHOICES = (
+        ('tsc_01', 'TSC 01'),
+        ('tsc_02', 'TSC 02'),
+        ('tsc_04', 'TSC 04'),
+        ('tsc_05', 'TSC 05'),
+        ('tsc_09', 'TSC 09'),
+        ('ebe_01', 'EBE 01'),
+        ('csl_01', 'CSL 01'),
+        ('dtr_03', 'DTR 03'),
+        ('dtr_05', 'DTR 05'),
+        # Add more machines as needed
+    )
+
+
 STATION_CHOICES = [
         ('DSL01_S01', 'DSL01_S01'),
         ('DSL01_S02', 'DSL01_S02'),
@@ -50,27 +100,22 @@ class FixtureCleaningRecord(models.Model):
         ('A', 'A'),
         ('B', 'B'),
     ]
-    CONTROL_NO = [
-        ('A', 'A'),
-        ('B', 'B'),
-        ('C', 'C'),
-        ('D', 'D')
-    ]
 
     FIXTURE_LOCATION = [
-        ('A', 'A'),
-        ('B', 'B'),
-        ('C', 'C'),
-        ('D', 'D')
+        ('visual_inspection', 'Visual Inspection'),
+        ('programming_testing', 'Programming & Testing'),
+        ('function_testing', 'Function Testing'),
+        ('adhesive_application', 'Adhesive Application'),
+        ('conformal_coating', 'Conformal Coating'),
+        ('housing', 'Housing'),
+        ('e90fl', 'E90FL'),
+        ('dr_beck_epoxy', 'Dr. Beck Epoxy'),
+        ('final_testing', 'Final Testing'),
     ]
     
     TAG_CHOICES = [
         ('Available', 'Available'),
         ('Not Available', 'Not Available'),
-    ]
-    CHECK_CHOICES = [
-        ('OK', 'OK'),
-        ('NG', 'NG'),
     ]
     TICK_CHOICES = [
         ('✔', 'OK'),
@@ -78,22 +123,27 @@ class FixtureCleaningRecord(models.Model):
         ('', 'Not Checked')
     ]
 
+    TAG_CHOICES = [
+        ('Available', 'Available'),
+        ('Not Available', 'Not Available'),
+    ]
+
     # Fields from FixtureCleaningRecord
     station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
     doc_number = models.CharField(max_length=20, default="QSF-12-15",blank=True)
     month_year = models.DateField()
     shift = models.CharField(max_length=1, choices=SHIFT_CHOICES)
-    fixture_location = models.CharField(max_length=10, choices=FIXTURE_LOCATION)
-    fixture_control_no = models.CharField(max_length=200, choices=CONTROL_NO)
+    fixture_location = models.CharField(max_length=200, choices=FIXTURE_LOCATION)
+    fixture_control_no = models.CharField(max_length=200, choices=CONTROL_NUMBER_CHOICES)
     fixture_installation_date = models.DateField()
     # Fields from DailyRecord
     date = models.DateField(default=timezone.now,blank=True)
     time = models.TimeField(default=timezone.now,blank=True)
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-    verification_tag_available = models.CharField(max_length=13, choices=TAG_CHOICES)
-    verification_tag_condition = models.CharField(max_length=2, choices=CHECK_CHOICES)
-    no_dust_on_fixture = models.CharField(max_length=2, choices=CHECK_CHOICES)
-    no_epoxy_coating_on_fixture = models.CharField(max_length=2, choices=CHECK_CHOICES)
+    verification_tag_available = models.CharField(max_length=25, choices=TAG_CHOICES)
+    verification_tag_condition = models.CharField(max_length=25, choices=TAG_CHOICES)
+    no_dust_on_fixture = models.CharField(max_length=25, choices=TAG_CHOICES)
+    no_epoxy_coating_on_fixture = models.CharField(max_length=25, choices=TAG_CHOICES)
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
     supervisor_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✘',blank=True)
 
@@ -102,9 +152,43 @@ class FixtureCleaningRecord(models.Model):
         verbose_name_plural = "Fixture Cleaning Records"
 
     def save(self, *args, **kwargs):
-        if not self.operator_name and hasattr(self, 'request'):
-            self.operator_name = self.request.user
+        # Call the parent save method
         super().save(*args, **kwargs)
+
+        # Send notifications if any field is 'Not Available'
+        channel_layer = get_channel_layer()
+        if self.verification_tag_available == 'Not Available':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Fixture Cleaning Record {self.pk}: Verification Tag Available is Not Available'
+                }
+            )
+        if self.verification_tag_condition == 'Not Available':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Fixture Cleaning Record {self.pk}: Verification Tag Condition is Not Available'
+                }
+            )
+        if self.no_dust_on_fixture == 'Not Available':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Fixture Cleaning Record {self.pk}: No Dust on Fixture is Not Available'
+                }
+            )
+        if self.no_epoxy_coating_on_fixture == 'Not Available':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Fixture Cleaning Record {self.pk}: No Epoxy Coating on Fixture is Not Available'
+                }
+            )
 
     def __str__(self):
         return f"Cleaning Record {self.fixture_control_no} - {self.date}"
@@ -173,57 +257,67 @@ class RejectionSheet(models.Model):
 
 # ----------------------------------------------------------------
 # SolderingBitRecord
-class SolderingBitRecord(models.Model):
+from django.db import models
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
+class SolderingBitRecord(models.Model):
     PART_CHOICES = (
-    ('Part 1', 'Part 1 Description'),
-    ('Part 2', 'Part 2 Description'),
-    ('Part 3', 'Part 3 Description'),
-     )      
+        ('tsc_01', 'TSC 01'),
+        ('tsc_02', 'TSC 02'),
+        ('tsc_04', 'TSC 04'),
+        ('tsc_05', 'TSC 05'),
+        ('tsc_09', 'TSC 09'),
+        ('ebe_01', 'EBE 01'),
+        ('csl_01', 'CSL 01'),
+        ('dtr_03', 'DTR 03'),
+        ('dtr_05', 'DTR 05'),
+    )
 
     MACHINE_CHOICES = (
         ('M1', 'Machine 1'),
         ('M2', 'Machine 2'),
         ('M3', 'Machine 3'),
-        # Add more as needed
     )
+
     LOCATION_CHOICES = (
-        ('Location A', 'Location A'),
-        ('Location B', 'Location B'),
-        ('Location C', 'Location C'),
-        # Add more as needed
+        ('visual_inspection', 'Visual Inspection'),
+        ('programming_testing', 'Programming & Testing'),
+        ('function_testing', 'Function Testing'),
+        ('adhesive_application', 'Adhesive Application'),
+        ('conformal_coating', 'Conformal Coating'),
+        ('housing', 'Housing'),
+        ('e90fl', 'E90FL'),
+        ('dr_beck_epoxy', 'Dr. Beck Epoxy'),
+        ('final_testing', 'Final Testing'),
     )
+
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
-        ('', 'Not Checked')
+        ('', 'Not Checked'),
     ]
 
-    station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
-    doc_number = models.CharField(max_length=50, verbose_name="Doc. No.",default='Doc-QSF-12-15',blank=True)
+    station = models.CharField(max_length=100, default='DSL01_S01')
+    doc_number = models.CharField(max_length=50, verbose_name="Doc. No.", default='Doc-QSF-12-15', blank=True)
     part_name = models.CharField(max_length=100, choices=PART_CHOICES)
-    machine_no = models.CharField(max_length=150,choices=MACHINE_CHOICES)
-    machine_location = models.CharField(max_length=150,choices=STATION_CHOICES)
-    month = models.DateField(default=timezone.now,blank=True)
-    time = models.TimeField(default=timezone.now,blank=True)
+    machine_no = models.CharField(max_length=150, choices=MACHINE_CHOICES)
+    machine_location = models.CharField(max_length=150,choices=LOCATION_CHOICES)
+    month = models.DateField(default=timezone.now, blank=True)
+    time = models.TimeField(default=timezone.now, blank=True)
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     soldering_points_per_part = models.IntegerField(default=10)
     bit_size = models.CharField(max_length=20, default="20DV")
-# ----------------------------------------------------------------------------
-    date = models.DateField(default=timezone.now,blank=True)
+    date = models.DateField(default=timezone.now, blank=True)
     produce_quantity_shift_a = models.IntegerField(verbose_name="Produce Quantity Shift A")
     produce_quantity_shift_b = models.IntegerField(verbose_name="Produce Quantity Shift B")
-    total_quantity = models.IntegerField(verbose_name="Total Quantity (Both shift)",default=500,help_text="This field is automatically calculated based on the sum of produce_quantity_shift_a and produce_quantity_shift_b."
-)
-    total_soldering_points = models.IntegerField(verbose_name="Total Soldering points/day",default=500,help_text="This field is automatically calculated based on the total quantity and soldering points per part.",blank=True
-)
-    bit_life_remaining = models.IntegerField(verbose_name="Bit Life Remaining (Parts in Nos.)",default=500,help_text="This field is automatically calculated based on the total quantity and the initial bit life.",blank=True
-)
+    total_quantity = models.IntegerField(verbose_name="Total Quantity (Both shifts)", default=500)
+    total_soldering_points = models.IntegerField(verbose_name="Total Soldering points/day", default=500)
+    bit_life_remaining = models.IntegerField(verbose_name="Bit Life Remaining (Parts in Nos.)", default=500)
     bit_change_date = models.DateField(verbose_name="Bit Change Date")
-    
-    
-    prepared_by = models.CharField(max_length=100,choices=TICK_CHOICES,blank=True)
-    approved_by = models.CharField(max_length=100,choices=TICK_CHOICES,blank=True)
+    prepared_by = models.CharField(max_length=100, choices=TICK_CHOICES, blank=True)
+    approved_by = models.CharField(max_length=100, choices=TICK_CHOICES, blank=True)
 
     class Meta:
         verbose_name = "Robotic Soldering Bit Replacement Record"
@@ -232,6 +326,17 @@ class SolderingBitRecord(models.Model):
     def __str__(self):
         return f"Record {self.doc_number} - {self.date}"
 
+    def send_notification(self, message):
+        # Sending notification via WebSocket
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "test",  # the name of the group to send the message to
+            {
+                'type': 'chat_message',
+                'message': message
+            }
+        )
+
     def save(self, *args, **kwargs):
         # Calculate total quantity and total soldering points
         self.total_quantity = self.produce_quantity_shift_a + self.produce_quantity_shift_b
@@ -239,35 +344,19 @@ class SolderingBitRecord(models.Model):
         # Calculate bit life remaining
         self.bit_life_remaining = 12000 - self.total_quantity
 
-        if not self.operator_name and hasattr(self, 'request'):
-            self.operator_name = self.request.user
-        
-        super().save(*args, **kwargs)
+        # Notification logic for WebSocket
+        if self.prepared_by == '✘' or self.approved_by == '✘':
+            message = f"Record {self.doc_number} marked as 'Not OK'."
+            self.send_notification(message)
 
+        super().save(*args, **kwargs)
 
 
 # ----------------------------------------------------------------
 
     
 class DailyChecklistItem(models.Model):
-    MACHINE_NAME_CHOICES = (
-        ('Machine 1', 'Machine 1'),
-        ('Machine 2', 'Machine 2'),
-        ('Machine 3', 'Machine 3'),
-        # Add more machines as needed
-    )
-    CONTROL_NUMBER_CHOICES = (
-        ('Control A', 'Control A'),
-        ('Control B', 'Control B'),
-        ('Control C', 'Control C'),
-        # Add more controls as needed
-    )
-    MACHINE_LOCATION_CHOICES = (
-        ('Location A', 'Location A'),
-        ('Location B', 'Location B'),
-        ('Location C', 'Location C'),
-        # Add more locations as needed
-    )
+
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
@@ -353,33 +442,75 @@ class DailyChecklistItem(models.Model):
         verbose_name_plural = "Maintenance Checklists For Daily"
 
     def __str__(self):
-        return f" Daily Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
+        return f"Daily Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
+
+    def save(self, *args, **kwargs):
+        # Call the parent save method
+        super().save(*args, **kwargs)
+
+        # Check for 'Not OK' remarks and send notifications
+        channel_layer = get_channel_layer()
+        if self.Remark_1 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 1 is Not OK'
+                }
+            )
+        if self.Remark_2 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 2 is Not OK'
+                }
+            )
+        if self.Remark_3 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 3 is Not OK'
+                }
+            )
+        if self.Remark_4 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 4 is Not OK'
+                }
+            )
+        if self.Remark_5 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 5 is Not OK'
+                }
+            )
+        if self.Remark_6 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 6 is Not OK'
+                }
+            )
+        if self.Remark_7 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Daily Checklist Item {self.pk}: Remark 7 is Not OK'
+                }
+            )
 
 
 class WeeklyChecklistItem(models.Model):
-    MACHINE_NAME_CHOICES = (
-        ('Machine 1', 'Machine 1'),
-        ('Machine 2', 'Machine 2'),
-        ('Machine 3', 'Machine 3'),
-        # Add more machines as needed
-    )
-    CONTROL_NUMBER_CHOICES = (
-        ('Control A', 'Control A'),
-        ('Control B', 'Control B'),
-        ('Control C', 'Control C'),
-        # Add more controls as needed
-    )
-    MACHINE_LOCATION_CHOICES = (
-        ('Location A', 'Location A'),
-        ('Location B', 'Location B'),
-        ('Location C', 'Location C'),
-        # Add more locations as needed
-    )
-    CHECKLIST_TYPE_CHOICES = (
-        ('Daily', 'Daily'),
-        ('Weekly', 'Weekly'),
-        ('Monthly', 'Monthly'),
-    )
+
+
     
     TICK_CHOICES = [
         ('✔', 'OK'),
@@ -396,11 +527,6 @@ class WeeklyChecklistItem(models.Model):
     month_year = models.DateField(default=timezone.now,blank=True)
         
 
-    TICK_CHOICES = [
-        ('✔', 'OK'),
-        ('✘', 'Not OK'),
-        ('', 'Not Checked')
-    ]
     # Weekly Checklist field
     # Choices for check points
     CHECK_POINT_CHOICES = (
@@ -451,39 +577,49 @@ class WeeklyChecklistItem(models.Model):
 
     
     
-    class Meta:
-        verbose_name = "Maintenance Checklist for Weekly Basis"
-        verbose_name_plural = "Maintenance Checklists for Weekly Basis"
+    def save(self, *args, **kwargs):
+        # Call the parent save method
+        super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
+        # Check for 'Not OK' remarks and send notifications
+        channel_layer = get_channel_layer()
+        if self.Remark_8 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 8 is Not OK'
+                }
+            )
+        if self.Remark_9 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 9 is Not OK'
+                }
+            )
+        if self.Remark_10 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 10 is Not OK'
+                }
+            )
+        if self.Remark_11 == '✘':
+            async_to_sync(channel_layer.group_send)(
+                'test',
+                {
+                    'type': 'chat_message',
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 11 is Not OK'
+                }
+            )
 
     
 class MonthlyChecklistItem(models.Model):
-    MACHINE_NAME_CHOICES = (
-        ('Machine 1', 'Machine 1'),
-        ('Machine 2', 'Machine 2'),
-        ('Machine 3', 'Machine 3'),
-        # Add more machines as needed
-    )
-    CONTROL_NUMBER_CHOICES = (
-        ('Control A', 'Control A'),
-        ('Control B', 'Control B'),
-        ('Control C', 'Control C'),
-        # Add more controls as needed
-    )
-    MACHINE_LOCATION_CHOICES = (
-        ('Location A', 'Location A'),
-        ('Location B', 'Location B'),
-        ('Location C', 'Location C'),
-        # Add more locations as needed
-    )
-    CHECKLIST_TYPE_CHOICES = (
-        ('Daily', 'Daily'),
-        ('Weekly', 'Weekly'),
-        ('Monthly', 'Monthly'),
-    )
-    
+
+
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
@@ -492,18 +628,13 @@ class MonthlyChecklistItem(models.Model):
 
         
     station=models.ForeignKey(Screen, on_delete=models.CASCADE, default=None)
-    doc_number = models.CharField(max_length=20, default="QSF-13-06")
+    doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
     rev_number = models.CharField(max_length=10, default="02")
     rev_date = models.DateField(default="2022-12-31")
     machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
     control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
     machine_location = models.CharField(max_length=100,choices=MACHINE_LOCATION_CHOICES)
     month_year = models.DateField(default=timezone.now)
-    TICK_CHOICES = [
-        ('✔', 'OK'),
-        ('✘', 'Not OK'),
-        ('', 'Not Checked')
-    ]
 
     CHECK_POINT_CHOICES = (
         ('Check Machine Earthing (Leakage Voltage)', 'Check Machine Earthing (Leakage Voltage)'),        
@@ -543,12 +674,30 @@ class MonthlyChecklistItem(models.Model):
     ]
     Remark_12=models.CharField(max_length=100,choices=TICK_CHOICES)
 
-    checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='')
+    checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='',blank=True)
     approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES ,default='',blank=True)
     
     
     def __str__(self):
         return f"MonthlyChecklistItem: {self.pk}"
+
+    def save(self, *args, **kwargs):
+        # Check if Remark_12 is set to "Not OK"
+        if self.Remark_12 == '✘':
+            # Trigger WebSocket notification
+            from channels.layers import get_channel_layer
+            from asgiref.sync import async_to_sync
+
+            channel_layer = get_channel_layer()
+            async_to_sync(channel_layer.group_send)(
+                'test',  # Use the same group name as in the WebSocket consumer
+                {
+                    'type': 'chat_message',
+                    'message': f'Notification: Remark 12 is Not OK for MonthlyChecklistItem {self.pk}'
+                }
+            )
+        
+        super().save(*args, **kwargs)
 
 
 
@@ -650,3 +799,8 @@ class ControlChartStatistics(models.Model):
             'cpk': cpk,
             'std_dev': std_dev
         }
+
+
+
+# > python -m pip uninstall channels
+# > python -m pip install -Iv channels==3.0.5

@@ -619,3 +619,10 @@ from django.contrib.auth.decorators import login_required
 @login_required
 def dashboard(request):
     return render(request, 'dashboard.html')
+
+
+
+from django.shortcuts import render
+
+def index(request):
+    return render(request, 'index.html')
