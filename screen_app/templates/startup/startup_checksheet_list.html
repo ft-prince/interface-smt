@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4">Start Up Check Sheets</h1>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'checksheet_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create New Check Sheet
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="list-group">
+                {% for sheet in check_sheets %}
+                    <a href="{% url 'checksheet_detail' sheet.pk %}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                        <div>
+                            <h5 class="mb-1">{{ sheet.process_operation }}</h5>
+                            <small class="text-muted">Effective Date: {{ sheet.effective_date|date:"F d, Y" }}</small>
+                        </div>
+                        <div>
+                            <span class="badge bg-primary rounded-pill me-2">Rev. {{ sheet.revision_no }}</span>
+                            <span class="badge bg-secondary rounded-pill">{{ sheet.min_skill_required }}</span>
+                        </div>
+                    </a>
+                {% empty %}
+                    <div class="alert alert-info" role="alert">
+                        <i class="fas fa-info-circle"></i> No check sheets available. Create a new one to get started!
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

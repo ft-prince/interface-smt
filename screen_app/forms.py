@@ -102,3 +102,14 @@ class ControlChartReadingForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }                
+        
+        
+        
+#----------------------------------------------------------------
+from .models import StartUpCheckSheet
+
+class StartUpCheckSheetForm(forms.ModelForm):
+    class Meta:
+        model = StartUpCheckSheet
+        fields = '__all__'  # Include all fields from the model
+ 

@@ -33,7 +33,13 @@ from .views import (
    UpdateMonthlyChecklistItem,
    DeleteMonthlyChecklistItem,
    MonthlyChecklistItemDetailView,
-   ListMonthlyChecklistItem
+   ListMonthlyChecklistItem,
+    StartUpCheckSheetListView,
+    startup_checksheet_create_view,
+    StartUpCheckSheetDetailView,
+    StartUpCheckSheetUpdateView,
+    StartUpCheckSheetDeleteView
+   
 )
 
 
@@ -92,6 +98,11 @@ urlpatterns = [
 #  -------------------------------------------------------------------------------------------
     path('dashboard/', views.dashboard, name='dashboard'),
     path('web/', views.index, name='index'),
+    path('startup/', StartUpCheckSheetListView.as_view(), name='checksheet_list'),
+    path('startup/new/', views.startup_checksheet_create_view, name='checksheet_create'),
+    path('startup/<int:pk>/', StartUpCheckSheetDetailView.as_view(), name='checksheet_detail'),
+    path('startup/<int:pk>/edit/', StartUpCheckSheetUpdateView.as_view(), name='checksheet_edit'),
+    path('startup/<int:pk>/delete/', StartUpCheckSheetDeleteView.as_view(), name='checksheet_delete'),
 
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

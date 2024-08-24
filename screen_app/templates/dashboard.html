@@ -205,6 +205,17 @@
                     </div>
                 </div>
 
+                
+                <div class="card">
+                    <h2>Startup checklist</h2>
+                    <div class="button-container">
+                        <a href="{% url 'checksheet_create' %}" class="button">Add Reading </a>
+             
+                        <a href="{% url 'checksheet_list' %}" class="button"> view Startup checklist</a>
+                    </div>
+                </div>
+
+
                 {% else %}
                 <!-- Operator Dashboard -->
                 <div class="card">
@@ -242,9 +253,19 @@
                         <a href="{% url 'reading_create' %}" class="button">Add Reading</a>
                     </div>
                 </div>
-
+                <div class="card">
+                    <h2>Startup checklist</h2>
+                    <div class="button-container">
+                        <a href="{% url 'checksheet_create' %}" class="button">Add Reading </a>
+             
+                        <a href="{% url 'checksheet_list' %}" class="button"> view Startup checklist</a>
+                    </div>
+                </div>
                 {% endif %}
             </div>
+
+
+            
         </div>
 
         <!-- Notification Bar -->

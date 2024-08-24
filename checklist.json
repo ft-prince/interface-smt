@@ -1,0 +1,178 @@
+[
+    {
+        "s_no": 1,
+        "checkpoint": "Plan के अनसु ार Part assy & Child parts Working Table पर रखें| प्लान के अनसु ार | visual प्रतिदिन",
+        "specification": "Part assy & Child parts",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 2,
+        "checkpoint": "अपनेकार्स्य थल को साफ करे| कार्स्य थल धलू रदिि िोना चादिए | visual प्रतिदिन",
+        "specification": "साफ करे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 3,
+        "checkpoint": "कार्यकरनेसेपिलेWorking table पर सेअनावश्र्क Part / material िटा िें, और उसेउसकी जगि पर रखें| अनावश्र्क Part / material Working Table पर ना िों | visual प्रतिदिन",
+        "specification": "Working table पर सेअनावश्र्क Part / material िटा िें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 4,
+        "checkpoint": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे| Dirty Tray Area visual प्रतिदिन",
+        "specification": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 5,
+        "checkpoint": "चके करेंकक Fixture / Machine Condition OK िों और उसके सभी Connections ठीक िों, Loose ना िों | Fixture / Machine Condition OK, No loose connections visual प्रतिदिन",
+        "specification": "Fixture / Machine Condition OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 6,
+        "checkpoint": "चके करेंकक Fixture / Machine मेंलगेCalibration / Verification Tag की Date Expire ना िों | Verification Tag / Calibration Tag visual प्रतिदिन",
+        "specification": "Calibration / Verification Tag की Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 7,
+        "checkpoint": "चके करेंकक ESD Wrist Band OK िों | (Where Applicable) लाल / िरा SIGNAL (As per Work instruction) Wrist Band tester प्रतिदिन",
+        "specification": "ESD Wrist Band OK",
+        "control_method": "Wrist Band tester",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 8,
+        "checkpoint": "ESD wrist band पिनें| (Where Applicable) कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD wrist band पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 9,
+        "checkpoint": "Face mask पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों| (As per Work instruction) visual प्रतिदिन",
+        "specification": "Face mask पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 10,
+        "checkpoint": "ESD Jacket & Cap, ESD Gloves/Finger coats पिनें| कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD Jacket & Cap, ESD Gloves/Finger coats",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 11,
+        "checkpoint": "चके करेंकक Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 12,
+        "checkpoint": "चके करेंकक Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों | Reject Tag, OK Tag, Abnormal Situation Tag etc. visual प्रतिदिन",
+        "specification": "Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 13,
+        "checkpoint": "चके करेंकक Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 14,
+        "checkpoint": "चके करेंकक कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों | Setup & FPA, Daily monthly Rejection sheet,Control Charts etc. visual प्रतिदिन",
+        "specification": "कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 15,
+        "checkpoint": "चके करेंकक Line पर OK/NG Master sample उपलब्ध िो और उसकी Date Expire ना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Line पर OK/NG Master sample उपलब्ध िो",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 16,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 17,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 18,
+        "checkpoint": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 19,
+        "checkpoint": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें| (Where FRL Applicable) OK/NG Visual / Manual प्रतिदिन",
+        "specification": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें",
+        "control_method": "Visual / Manual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 20,
+        "checkpoint": "चके करेंकक ररजेक्ट िुए Parts के Hand over का िरीका सिी िों | OK/NG सपु रवाइजर के द्वारा प्रतिदिन",
+        "specification": "ररजेक्ट िुए Parts के Hand over का िरीका सिी िों",
+        "control_method": "Supervisor's verification",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 21,
+        "checkpoint": "ESD Shoes/Sleepers पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों | visual प्रतिदिन",
+        "specification": "ESD Shoes/Sleepers पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 22,
+        "checkpoint": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों | Shop Floor पर उपलब्ध िों और Valid Date Expire ना िों | visual प्रतिदिन",
+        "specification": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 23,
+        "checkpoint": "चके करेंकक ESD Shoes / Sleepers OK िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "ESD Shoes / Sleepers OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 24,
+        "checkpoint": "चके करेंकक िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें| (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 25,
+        "checkpoint": "कार्यशरू करनेसेपिलेCuring Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "Curing Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    }
+   
+]

@@ -24,7 +24,6 @@ CONTROL_NUMBER_CHOICES = (
         ('51-00-3228-3', '51-00-3228-3'),
         ('56-00-2450-3', '56-00-2450-3'),
         ('52-00-1035-1', '52-00-1035-1'),
-        # Add more controls as needed
     )
 
 MACHINE_LOCATION_CHOICES = (
@@ -88,6 +87,53 @@ class Screen(models.Model):
         return f"Screen {self.screen_id} at {self.manager} for {self.product}"
     
 
+from django.db import models
+
+class Defects(models.Model):
+    VISUAL_CHOICES = [
+        ('Dry Solder', 'Dry Solder'),
+        ('No Solder', 'No Solder'),
+        ('Shorting/ Bridging', 'Shorting/ Bridging'),
+        ('Pad Damage', 'Pad Damage'),
+        ('Component Tombstone', 'Component Tombstone'),
+        ('Solder Ball', 'Solder Ball'),
+        ('Green Masking improper', 'Green Masking improper'),
+        ('Masking Improper', 'Masking Improper'),
+        ('Component Shifted', 'Component Shifted'),
+        ('Pad Lifted', 'Pad Lifted'),
+        ('Component Damage/Break', 'Component Damage/Break'),
+        ('Solder Projection', 'Solder Projection'),
+        ('Track Cut (Open)', 'Track Cut (Open)'),
+        ('Wrong Polarity', 'Wrong Polarity'),
+        ('PTH Shorting', 'PTH Shorting'),
+        ('Component Wrong', 'Component Wrong'),
+        ('Component Missing', 'Component Missing'),
+        ('Solder Dust', 'Solder Dust'),
+        ('Pin Hole', 'Pin Hole'),
+        ('Component Up Side Down', 'Component Up Side Down'),
+        ('LED Defects', 'LED Defects'),
+        ('Microcontroller Pin Bend/Damage', 'Microcontroller Pin Bend/Damage'),
+        ('Solder Crack', 'Solder Crack'),
+        ('Others', 'Others'),
+    ]
+
+    PROGRAMMING_CHOICES = [
+        ('Programme does not accept', 'Programme does not accept'),
+        ('Pin Voltage low', 'Pin Voltage low'),
+        ('Others', 'Others'),
+    ]
+
+    AUTOMATIC_TESTING_CHOICES = [
+        ('Testing fail', 'Testing fail'),
+        ('Others', 'Others'),
+    ]
+
+    visual_defect = models.CharField(max_length=100, choices=VISUAL_CHOICES, default='Others',blank=True)
+    programming_defect = models.CharField(max_length=100, choices=PROGRAMMING_CHOICES, default='Others',blank=True)
+    automatic_testing_defect = models.CharField(max_length=100, choices=AUTOMATIC_TESTING_CHOICES, default='Others',blank=True)
+
+    def __str__(self):
+        return f"{self.visual_defect} | {self.programming_defect} | {self.automatic_testing_defect}"
 
 #  PDFs
 # ----------------------------------------------------------------
@@ -214,8 +260,8 @@ class RejectionSheet(models.Model):
     station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
     month = models.DateField(default=timezone.now,blank=True)
     date=models.DateField(default=timezone.now,blank=True)
-    stage = models.CharField(max_length=7, choices=STAGE_CHOICES)
-    part_description = models.CharField(max_length=15,choices=STAGE_CHOICES)
+    stage = models.CharField(max_length=200, choices=STATION_CHOICES)
+    part_description = models.CharField(max_length=250,choices=STATION_CHOICES)
 
     # Quantity fields
     opening_balance = models.IntegerField(validators=[MinValueValidator(0)])
@@ -224,7 +270,7 @@ class RejectionSheet(models.Model):
     total_rejection_qty = models.IntegerField(validators=[MinValueValidator(0)])
     closing_balance = models.IntegerField(validators=[MinValueValidator(0)])
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
-
+    defects=models.ManyToManyField(Defects, blank=True)
     # defects = models.TextField(blank=True)
     # Signature fields
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
@@ -302,7 +348,7 @@ class SolderingBitRecord(models.Model):
     station = models.CharField(max_length=100, default='DSL01_S01')
     doc_number = models.CharField(max_length=50, verbose_name="Doc. No.", default='Doc-QSF-12-15', blank=True)
     part_name = models.CharField(max_length=100, choices=PART_CHOICES)
-    machine_no = models.CharField(max_length=150, choices=MACHINE_CHOICES)
+    machine_no = models.CharField(max_length=150, choices=MACHINE_LOCATION_CHOICES)
     machine_location = models.CharField(max_length=150,choices=LOCATION_CHOICES)
     month = models.DateField(default=timezone.now, blank=True)
     time = models.TimeField(default=timezone.now, blank=True)
@@ -660,12 +706,12 @@ class MonthlyChecklistItem(models.Model):
     
     date = models.DateField(default=timezone.now,blank=True)
     # Fields for check points with default values
-    check_point_12 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Machine Earthing (Leakage Voltage)')
+    check_point_12 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Machine Earthing (Leakage Voltage)',blank=True)
     # Fields for requirement ranges with default values
-    requirement_range_12 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='< 2 V')
+    requirement_range_12 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='< 2 V',blank=True)
 
     # Field for method of checking
-    method_of_checking_12 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Parameter')
+    method_of_checking_12 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Parameter',blank=True)
 
     TICK_CHOICES = [
         ('✔', 'OK'),
@@ -804,3 +850,81 @@ class ControlChartStatistics(models.Model):
 
 # > python -m pip uninstall channels
 # > python -m pip install -Iv channels==3.0.5
+
+
+
+
+class StartUpCheckSheet(models.Model):
+    # General Information
+    revision_no = models.IntegerField(verbose_name="Rev. No.")
+    effective_date = models.DateField(verbose_name="Eff. Date",default=timezone.now, blank=True)
+    process_operation = models.CharField(max_length=300, verbose_name="PROCESS/OPERATION",choices=MACHINE_LOCATION_CHOICES)
+    min_skill_required = models.CharField(max_length=100, verbose_name="MIN. SKILL REQUIRED")
+    month = models.DateField(default=timezone.now, blank=True)
+
+    # Choices for Checkpoints
+    OKAY_CHOICES = [
+        ('✔', 'OK'),
+        ('✘', 'Not OK'),
+    ]
+
+    # Checkpoints with choices
+    checkpoint_1 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 1")
+    checkpoint_2 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 2")
+    checkpoint_3 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 3")
+    checkpoint_4 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 4")
+    checkpoint_5 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 5")
+    checkpoint_6 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 6")
+    checkpoint_7 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 7")
+    checkpoint_8 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 8")
+    checkpoint_9 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 9")
+    checkpoint_10 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 10")
+    checkpoint_11 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 11")
+    checkpoint_12 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 12")
+    checkpoint_13 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 13")
+    checkpoint_14 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 14")
+    checkpoint_15 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 15")
+    checkpoint_16 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 16")
+    checkpoint_17 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 17")
+    checkpoint_18 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 18")
+    checkpoint_19 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 19")
+    checkpoint_20 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 20")
+    checkpoint_21 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 21")
+    checkpoint_22 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 22")
+    checkpoint_23 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 23")
+    checkpoint_24 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 24")
+    checkpoint_25 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 25")
+
+    class Meta:
+        verbose_name = "Start Up Check Sheet"
+        verbose_name_plural = "Start Up Check Sheets"
+
+    def save(self, *args, **kwargs):
+        # Call the parent save method
+        super().save(*args, **kwargs)
+
+        # Send notifications if any checkpoint is 'Not OK'
+        channel_layer = get_channel_layer()
+
+        checkpoints = [
+            self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
+            self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
+            self.checkpoint_9, self.checkpoint_10, self.checkpoint_11, self.checkpoint_12,
+            self.checkpoint_13, self.checkpoint_14, self.checkpoint_15, self.checkpoint_16,
+            self.checkpoint_17, self.checkpoint_18, self.checkpoint_19, self.checkpoint_20,
+            self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
+            self.checkpoint_25
+        ]
+        for i, checkpoint in enumerate(checkpoints, start=1):
+            if checkpoint == '✘':  # 'Not OK'
+                async_to_sync(channel_layer.group_send)(
+                    'test',
+                    {
+                        'type': 'chat_message',
+                        'message': f'StartUp Check Sheet Record {self.pk}: Check Point {i} is Not OK'
+                    }
+                )
+
+    def __str__(self):
+        return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
+

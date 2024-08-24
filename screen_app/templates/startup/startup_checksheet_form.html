@@ -1,0 +1,86 @@
+{% extends 'base.html' %}  <!-- Assuming you have a base template -->
+
+{% load custom_filters %}
+
+{% block content %}
+<h1>Create Start-Up Check Sheet</h1>
+
+<div class="container">
+
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+    
+    <form method="post" action="{% url 'checksheet_create' %}">
+        {% csrf_token %}
+        
+        {{ form.non_field_errors }}
+        
+        <div class="form-group">
+            {{ form.revision_no.label_tag }}
+            {{ form.revision_no }}
+            {{ form.revision_no.errors }}
+        </div>
+        
+        {% comment %} <div class="form-group">
+            {{ form.effective_date.label_tag }}
+            {{ form.effective_date }}
+            {{ form.effective_date.errors }}
+        </div> {% endcomment %}
+        
+        <div class="form-group">
+            {{ form.process_operation.label_tag }}
+            {{ form.process_operation }}
+            {{ form.process_operation.errors }}
+        </div>
+        
+        <div class="form-group">
+            {{ form.min_skill_required.label_tag }}
+            {{ form.min_skill_required }}
+            {{ form.min_skill_required.errors }}
+        </div>
+        
+        {% comment %} <div class="form-group">
+            {{ form.month.label_tag }}
+            {{ form.month }}
+            {{ form.month.errors }}
+        </div> {% endcomment %}
+        
+        <table id="checklistTable">
+            <thead>
+                <tr>
+                    <th>S.No.</th>
+                    <th>CHECK POINTS</th>
+                    <th>Specification</th>
+                    <th>Control Method</th>
+                    <th>Frequency</th>
+                    <th>Input</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in json_data %}
+                <tr>
+                    <td>{{ item.s_no }}</td>
+                    <td>{{ item.checkpoint }}</td>
+                    <td>{{ item.specification }}</td>
+                    <td>{{ item.control_method }}</td>
+                    <td>{{ item.frequency }}</td>
+                    <td>
+                        {{ checkpoint_fields|index:forloop.counter0 }}
+                        {% if checkpoint_fields|index:forloop.counter0.errors %}
+                        <span class="error">{{ checkpoint_fields|index:forloop.counter0.errors }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <button type="submit">Save</button>
+    </form>
+</div>
+    {% endblock %}

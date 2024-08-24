@@ -1,0 +1,67 @@
+{% extends 'base.html' %}  <!-- Assuming you have a base template -->
+
+{% load custom_filters %}
+
+{% block content %}
+<h1>Start-Up Check Sheet Details</h1>
+
+<div class="container">
+
+    <div class="form-section">
+        <div class="form-group">
+            <label>Rev. No.</label>
+            <span>{{ check_sheet.revision_no }}</span>
+        </div>
+        
+        <div class="form-group">
+            <label>Eff. Date</label>
+            <span>{{ check_sheet.effective_date }}</span>
+        </div>
+        
+        <div class="form-group">
+        <label>PROCESS/OPERATION</label>
+        <span>{{ check_sheet.get_process_operation_display }}</span>
+    </div>
+    
+    <div class="form-group">
+        <label>MIN. SKILL REQUIRED</label>
+        <span>{{ check_sheet.min_skill_required }}</span>
+    </div>
+    
+    <div class="form-group">
+        <label>Month</label>
+        <span>{{ check_sheet.month|date:"F Y" }}</span>
+    </div>
+</div>
+
+<table id="checklistTable">
+    <thead>
+        <tr>
+            <th>S.No.</th>
+            <th>CHECK POINTS</th>
+            <th>Specification</th>
+            <th>Control Method</th>
+            <th>Frequency</th>
+            <th>Input</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in json_data %}
+        <tr>
+            <td>{{ item.s_no }}</td>
+            <td>{{ item.checkpoint }}</td>
+            <td>{{ item.specification }}</td>
+            <td>{{ item.control_method }}</td>
+            <td>{{ item.frequency }}</td>
+            <td>
+                {{ checkpoint_fields|get_item:forloop.counter0 }}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<a href="{% url 'checksheet_list' %}" class="btn btn-secondary">Back to List</a>
+</div>
+
+{% endblock %}

@@ -112,7 +112,7 @@ class AddFixtureCleaningRecordView(View):
             fixture_record = form.save(commit=False)  # Create the object but don't save it yet
             fixture_record.operator_name = request.user  # Set the logged-in user as the operator_name
             fixture_record.save()  # Now save the object to the database
-            return redirect('list_fixture_cleaning_records')
+            return redirect('add_fixture_cleaning_record')
         return render(request, 'fixture_records/add_fixture_cleaning_record.html', {'form': form})
 
 
@@ -167,7 +167,7 @@ class AddRejectionSheetView(View):
             rejection_sheet = form.save(commit=False)  # Create the object but don't save it yet
             rejection_sheet.operator_name = request.user  # Set the logged-in user as the operator_name
             rejection_sheet.save()  # Now save the object to the database
-            return redirect('list_rejection_sheets')
+            return redirect('add_rejection_sheet')
         return render(request, 'Rejection_records/add_rejection_sheet.html', {'form': form})
 
 @method_decorator(staff_member_required, name='dispatch')
@@ -223,7 +223,7 @@ class AddSolderingBitRecordView(View):
             soldering_record = form.save(commit=False)
             soldering_record.operator_name = request.user  # Automatically set the operator name
             soldering_record.save()
-            return redirect('list_soldering_bit_records')
+            return redirect('add_soldering_bit_record')
         return render(request, 'SolderingBitRecord/add_soldering_bit_record.html', {'form': form})
 
 @method_decorator(staff_member_required, name='dispatch')
@@ -278,7 +278,7 @@ class AddDailyChecklistItem(View):
         form = DailyChecklistItemForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('list_daily')
+            return redirect('add_daily')
         else:
             print(form.errors)  
 
@@ -437,7 +437,7 @@ class AddWeeklyChecklistItem(View):
         form = WeeklyChecklistItemForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('list_weekly')
+            return redirect('add_weekly')
         else:
             print(form.errors)  
 
@@ -485,7 +485,7 @@ class AddMonthlyChecklistItem(View):
         form = MonthlyChecklistItemForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('list_monthly')
+            return redirect('add_monthly')
         else:
             print(form.errors)  
 
@@ -556,7 +556,7 @@ class ReadingCreateView(CreateView):
     model = ControlChartReading
     form_class = ControlChartReadingForm
     template_name = 'reading_form.html'
-    success_url = reverse_lazy('reading_list')
+    success_url = reverse_lazy('reading_create')
 
 class ReadingUpdateView(UpdateView):
     model = ControlChartReading
@@ -626,3 +626,459 @@ from django.shortcuts import render
 
 def index(request):
     return render(request, 'index.html')
+
+
+
+
+
+
+from django.template.defaulttags import register
+
+@register.filter
+def index(indexable, i):
+    return indexable[i]
+
+
+# ----------------------------------------------------------------
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views.generic import ListView, CreateView, DetailView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import StartUpCheckSheet
+from .forms import StartUpCheckSheetForm
+
+# ListView to display all StartUpCheckSheet entries
+class StartUpCheckSheetListView(ListView):
+    model = StartUpCheckSheet
+    template_name = 'startup/startup_checksheet_list.html'  # Create this template
+    context_object_name = 'check_sheets'
+
+# CreateView to create a new StartUpCheckSheet entry
+from django.contrib import messages
+from .forms import StartUpCheckSheetForm
+from .models import StartUpCheckSheet
+from django.views.decorators.http import require_http_methods
+
+
+
+@require_http_methods(["GET", "POST"])
+def startup_checksheet_create_view(request):
+    if request.method == 'POST':
+        form = StartUpCheckSheetForm(request.POST)
+        if form.is_valid():
+            try:
+                checksheet = form.save(commit=False)
+                
+                # Handle the dynamic checkpoint fields
+                for i in range(1, 26):  # Assuming 25 checkpoints
+                    checkpoint_key = f'checkpoint_{i}'
+                    if checkpoint_key in request.POST:
+                        setattr(checksheet, checkpoint_key, request.POST[checkpoint_key])
+                
+                checksheet.save()
+                messages.success(request, 'Check sheet created successfully.')
+                return redirect('checksheet_create')  # Make sure this URL name is correct
+            except Exception as e:
+                messages.error(request, f'Error saving check sheet: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = StartUpCheckSheetForm()
+
+    # Prepare checkpoint fields
+    checkpoint_fields = [form[f'checkpoint_{i}'] for i in range(1, 26)]  # Assuming 25 checkpoints
+
+    # Replace this with your actual data source
+    json_data = [
+    {
+        "s_no": 1,
+        "checkpoint": "Plan के अनसु ार Part assy & Child parts Working Table पर रखें| प्लान के अनसु ार | visual प्रतिदिन",
+        "specification": "Part assy & Child parts",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 2,
+        "checkpoint": "अपनेकार्स्य थल को साफ करे| कार्स्य थल धलू रदिि िोना चादिए | visual प्रतिदिन",
+        "specification": "साफ करे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 3,
+        "checkpoint": "कार्यकरनेसेपिलेWorking table पर सेअनावश्र्क Part / material िटा िें, और उसेउसकी जगि पर रखें| अनावश्र्क Part / material Working Table पर ना िों | visual प्रतिदिन",
+        "specification": "Working table पर सेअनावश्र्क Part / material िटा िें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 4,
+        "checkpoint": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे| Dirty Tray Area visual प्रतिदिन",
+        "specification": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 5,
+        "checkpoint": "चके करेंकक Fixture / Machine Condition OK िों और उसके सभी Connections ठीक िों, Loose ना िों | Fixture / Machine Condition OK, No loose connections visual प्रतिदिन",
+        "specification": "Fixture / Machine Condition OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 6,
+        "checkpoint": "चके करेंकक Fixture / Machine मेंलगेCalibration / Verification Tag की Date Expire ना िों | Verification Tag / Calibration Tag visual प्रतिदिन",
+        "specification": "Calibration / Verification Tag की Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 7,
+        "checkpoint": "चके करेंकक ESD Wrist Band OK िों | (Where Applicable) लाल / िरा SIGNAL (As per Work instruction) Wrist Band tester प्रतिदिन",
+        "specification": "ESD Wrist Band OK",
+        "control_method": "Wrist Band tester",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 8,
+        "checkpoint": "ESD wrist band पिनें| (Where Applicable) कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD wrist band पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 9,
+        "checkpoint": "Face mask पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों| (As per Work instruction) visual प्रतिदिन",
+        "specification": "Face mask पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 10,
+        "checkpoint": "ESD Jacket & Cap, ESD Gloves/Finger coats पिनें| कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD Jacket & Cap, ESD Gloves/Finger coats",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 11,
+        "checkpoint": "चके करेंकक Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 12,
+        "checkpoint": "चके करेंकक Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों | Reject Tag, OK Tag, Abnormal Situation Tag etc. visual प्रतिदिन",
+        "specification": "Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 13,
+        "checkpoint": "चके करेंकक Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 14,
+        "checkpoint": "चके करेंकक कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों | Setup & FPA, Daily monthly Rejection sheet,Control Charts etc. visual प्रतिदिन",
+        "specification": "कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 15,
+        "checkpoint": "चके करेंकक Line पर OK/NG Master sample उपलब्ध िो और उसकी Date Expire ना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Line पर OK/NG Master sample उपलब्ध िो",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 16,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 17,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 18,
+        "checkpoint": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 19,
+        "checkpoint": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें| (Where FRL Applicable) OK/NG Visual / Manual प्रतिदिन",
+        "specification": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें",
+        "control_method": "Visual / Manual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 20,
+        "checkpoint": "चके करेंकक ररजेक्ट िुए Parts के Hand over का िरीका सिी िों | OK/NG सपु रवाइजर के द्वारा प्रतिदिन",
+        "specification": "ररजेक्ट िुए Parts के Hand over का िरीका सिी िों",
+        "control_method": "Supervisor's verification",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 21,
+        "checkpoint": "ESD Shoes/Sleepers पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों | visual प्रतिदिन",
+        "specification": "ESD Shoes/Sleepers पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 22,
+        "checkpoint": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों | Shop Floor पर उपलब्ध िों और Valid Date Expire ना िों | visual प्रतिदिन",
+        "specification": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 23,
+        "checkpoint": "चके करेंकक ESD Shoes / Sleepers OK िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "ESD Shoes / Sleepers OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 24,
+        "checkpoint": "चके करेंकक िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें| (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 25,
+        "checkpoint": "कार्यशरू करनेसेपिलेCuring Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "Curing Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    }
+   
+]
+    context = {
+        'form': form,
+        'json_data': json_data,
+        'checkpoint_fields': checkpoint_fields,
+    }
+
+
+    return render(request, 'startup/startup_checksheet_form.html',context)
+
+# DetailView to view details of a StartUpCheckSheet entry
+class StartUpCheckSheetDetailView(DetailView):
+    model = StartUpCheckSheet
+    template_name = 'startup/startup_checksheet_detail.html'  # Create this template
+    context_object_name = 'check_sheet'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['json_data'] = [
+    {
+        "s_no": 1,
+        "checkpoint": "Plan के अनसु ार Part assy & Child parts Working Table पर रखें| प्लान के अनसु ार | visual प्रतिदिन",
+        "specification": "Part assy & Child parts",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 2,
+        "checkpoint": "अपनेकार्स्य थल को साफ करे| कार्स्य थल धलू रदिि िोना चादिए | visual प्रतिदिन",
+        "specification": "साफ करे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 3,
+        "checkpoint": "कार्यकरनेसेपिलेWorking table पर सेअनावश्र्क Part / material िटा िें, और उसेउसकी जगि पर रखें| अनावश्र्क Part / material Working Table पर ना िों | visual प्रतिदिन",
+        "specification": "Working table पर सेअनावश्र्क Part / material िटा िें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 4,
+        "checkpoint": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे| Dirty Tray Area visual प्रतिदिन",
+        "specification": "Dirty tray को लाइन पर use ना करेउसको उसकी तनधायररि जगि पर सफाई के ललए रख िे",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 5,
+        "checkpoint": "चके करेंकक Fixture / Machine Condition OK िों और उसके सभी Connections ठीक िों, Loose ना िों | Fixture / Machine Condition OK, No loose connections visual प्रतिदिन",
+        "specification": "Fixture / Machine Condition OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 6,
+        "checkpoint": "चके करेंकक Fixture / Machine मेंलगेCalibration / Verification Tag की Date Expire ना िों | Verification Tag / Calibration Tag visual प्रतिदिन",
+        "specification": "Calibration / Verification Tag की Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 7,
+        "checkpoint": "चके करेंकक ESD Wrist Band OK िों | (Where Applicable) लाल / िरा SIGNAL (As per Work instruction) Wrist Band tester प्रतिदिन",
+        "specification": "ESD Wrist Band OK",
+        "control_method": "Wrist Band tester",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 8,
+        "checkpoint": "ESD wrist band पिनें| (Where Applicable) कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD wrist band पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 9,
+        "checkpoint": "Face mask पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों| (As per Work instruction) visual प्रतिदिन",
+        "specification": "Face mask पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 10,
+        "checkpoint": "ESD Jacket & Cap, ESD Gloves/Finger coats पिनें| कार्यकरिेसमर् Visual प्रतिदिन",
+        "specification": "ESD Jacket & Cap, ESD Gloves/Finger coats",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 11,
+        "checkpoint": "चके करेंकक Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Red Drawer मेंNG Parts रखनेके ललए Tray उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 12,
+        "checkpoint": "चके करेंकक Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों | Reject Tag, OK Tag, Abnormal Situation Tag etc. visual प्रतिदिन",
+        "specification": "Drawer मेंजरूरि के अनसु ी र सभी टैग & PPE's उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 13,
+        "checkpoint": "चके करेंकक Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Drawer मेंकोई भी अनपुर्ोगी वस्िुना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 14,
+        "checkpoint": "चके करेंकक कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों | Setup & FPA, Daily monthly Rejection sheet,Control Charts etc. visual प्रतिदिन",
+        "specification": "कार्स्य थल पर जरुरि के अनसु ी र सभी Documents उपलब्ध िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 15,
+        "checkpoint": "चके करेंकक Line पर OK/NG Master sample उपलब्ध िो और उसकी Date Expire ना िों | कार्यशरूु करनेसेपिले visual प्रतिदिन",
+        "specification": "Line पर OK/NG Master sample उपलब्ध िो",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 16,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् अपनेSetup / System को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 17,
+        "checkpoint": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break और Lunch मेंबािर जािेसमर् LIGHT को OFF करके जाएँ",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 18,
+        "checkpoint": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें| Tea break & Lunch visual प्रतिदिन",
+        "specification": "Tea Break & Lunch मेंर्दि Shop Floor के अन्िर िैंिो Jacket & Cap पिन कर रखें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 19,
+        "checkpoint": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें| (Where FRL Applicable) OK/NG Visual / Manual प्रतिदिन",
+        "specification": "FRL (Pressure gauge) मेंलगी Pin को Push करके 10~12 Sec िक Air को तनकालें, र्दि Air के साथ साथ पानी भी आ रिा िो िो िरुंि अपनेसपु रवाइजर को सचूचि करें",
+        "control_method": "Visual / Manual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 20,
+        "checkpoint": "चके करेंकक ररजेक्ट िुए Parts के Hand over का िरीका सिी िों | OK/NG सपु रवाइजर के द्वारा प्रतिदिन",
+        "specification": "ररजेक्ट िुए Parts के Hand over का िरीका सिी िों",
+        "control_method": "Supervisor's verification",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 21,
+        "checkpoint": "ESD Shoes/Sleepers पिनें| (Where Applicable) Shop Floor पर उपलब्ध िों | visual प्रतिदिन",
+        "specification": "ESD Shoes/Sleepers पिन",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 22,
+        "checkpoint": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों | Shop Floor पर उपलब्ध िों और Valid Date Expire ना िों | visual प्रतिदिन",
+        "specification": "Skill level Card को चके करेंकक उसकी Valid Date Expire ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 23,
+        "checkpoint": "चके करेंकक ESD Shoes / Sleepers OK िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "ESD Shoes / Sleepers OK",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 24,
+        "checkpoint": "चके करेंकक िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें| (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "िर लशफ्ट मेंकार्यशरू करनेसेपिले POGO Pins की ठीक सेसफाई करें",
+        "control_method": "visual",
+        "frequency": "daily"
+    },
+    {
+        "s_no": 25,
+        "checkpoint": "कार्यशरू करनेसेपिलेCuring Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों | (Where Applicable) OK/NG visual प्रतिदिन",
+        "specification": "Curing Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों",
+        "control_method": "visual",
+        "frequency": "daily"
+    }
+   
+    ]
+        check_sheet = self.object
+        context['checkpoint_fields'] = []
+        for i in range(1, 26):  # Assuming 25 checkpoints
+            field_name = f'checkpoint_{i}'
+            field_value = getattr(check_sheet, field_name, '')
+            context['checkpoint_fields'].append(field_value)
+        
+        return context
+        
+# UpdateView to update an existing StartUpCheckSheet entry
+class StartUpCheckSheetUpdateView(UpdateView):
+    model = StartUpCheckSheet
+    form_class = StartUpCheckSheetForm
+    template_name = 'startup/startup_checksheet_form.html'  # Reuse the form template
+    success_url = reverse_lazy('checksheet_list')  # Redirect to list view after update
+
+# DeleteView to delete a StartUpCheckSheet entry
+class StartUpCheckSheetDeleteView(DeleteView):
+    model = StartUpCheckSheet
+    template_name = 'startup/startup_checksheet_confirm_delete.html'  # Create this template
+    success_url = reverse_lazy('checksheet_list')  # Redirect to list view after deletion
