@@ -1,4 +1,4 @@
-{% extends 'base.html' %}  <!-- Assuming you have a base template -->
+{% extends 'base.html' %}
 
 {% load custom_filters %}
 
@@ -26,35 +26,23 @@
             {{ form.revision_no.errors }}
         </div>
         
-        {% comment %} <div class="form-group">
-            {{ form.effective_date.label_tag }}
-            {{ form.effective_date }}
-            {{ form.effective_date.errors }}
-        </div> {% endcomment %}
-        
         <div class="form-group">
             {{ form.process_operation.label_tag }}
             {{ form.process_operation }}
             {{ form.process_operation.errors }}
         </div>
         
-        <div class="form-group">
+        <div class="form-group" id="minSkillGroup">
             {{ form.min_skill_required.label_tag }}
             {{ form.min_skill_required }}
             {{ form.min_skill_required.errors }}
         </div>
-        
-        {% comment %} <div class="form-group">
-            {{ form.month.label_tag }}
-            {{ form.month }}
-            {{ form.month.errors }}
-        </div> {% endcomment %}
-        
-        <table id="checklistTable">
+
+        <table id="checklistTable" class="table table-striped">
             <thead>
                 <tr>
                     <th>S.No.</th>
-                    <th>CHECK POINTS</th>
+                    <th>Check Points</th>
                     <th>Specification</th>
                     <th>Control Method</th>
                     <th>Frequency</th>
@@ -70,9 +58,13 @@
                     <td>{{ item.control_method }}</td>
                     <td>{{ item.frequency }}</td>
                     <td>
-                        {{ checkpoint_fields|index:forloop.counter0 }}
-                        {% if checkpoint_fields|index:forloop.counter0.errors %}
-                        <span class="error">{{ checkpoint_fields|index:forloop.counter0.errors }}</span>
+                        {% if checkpoint_fields|index:forloop.counter0 %}
+                            {{ checkpoint_fields|index:forloop.counter0 }}
+                            {% if checkpoint_fields|index:forloop.counter0.errors %}
+                            <span class="error">{{ checkpoint_fields|index:forloop.counter0.errors }}</span>
+                            {% endif %}
+                        {% else %}
+                            <input type="text" name="checkpoint_{{ forloop.counter }}" />
                         {% endif %}
                     </td>
                 </tr>
@@ -80,7 +72,68 @@
             </tbody>
         </table>
         
-        <button type="submit">Save</button>
+        <button type="submit" class="btn btn-primary">Save</button>
     </form>
 </div>
-    {% endblock %}
+
+<script>
+        
+    document.addEventListener('DOMContentLoaded', function () {
+        console.log('DOM fully loaded and parsed.');
+    
+        const processOperationField = document.querySelector('[name="process_operation"]');
+        const minSkillRequiredField = document.querySelector('[name="min_skill_required"]');
+        const formGroup = document.getElementById('minSkillGroup');
+    
+        console.log('processOperationField:', processOperationField);
+        console.log('minSkillRequiredField:', minSkillRequiredField);
+        console.log('formGroup:', formGroup);
+    
+        if (!processOperationField) {
+            console.error('Process operation field is missing in the DOM.');
+        }
+        if (!minSkillRequiredField) {
+            console.error('Min skill required field is missing in the DOM.');
+        }
+        if (!formGroup) {
+            console.error('Form group for min skill required is missing in the DOM.');
+        }
+    
+        if (!processOperationField || !minSkillRequiredField || !formGroup) {
+            return;
+        }
+    
+        function updateFormBasedOnOperation() {
+            const selectedValue = processOperationField.value;
+    
+            if (selectedValue) {
+                fetch(`/screen/get-process-info/${selectedValue}/`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data.required_skill) {
+                            formGroup.style.display = 'block';
+                            minSkillRequiredField.value = data.required_skill;
+                        } else {
+                            formGroup.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            } else {
+                formGroup.style.display = 'none';
+            }
+        }
+    
+        // Initial check
+        updateFormBasedOnOperation();
+    
+        // Add event listener for changes
+        processOperationField.addEventListener('change', updateFormBasedOnOperation);
+    });
+    </script>
+    
+{% endblock %}

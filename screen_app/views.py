@@ -277,13 +277,14 @@ class AddDailyChecklistItem(View):
     def post(self, request):
         form = DailyChecklistItemForm(request.POST)
         if form.is_valid():
-            form.save()
+            daily_checklist_item = form.save(commit=False)  # Do not save to the database yet
+            daily_checklist_item.manager = request.user  # Set the manager to the logged-in user
+            daily_checklist_item.save()  # Now save the instance to the database            
             return redirect('add_daily')
         else:
             print(form.errors)  
 
         return render(request, 'Maintenance/Daily/add_daily.html', {'form': form})
-
 
 
 # ----------------------------------------------------------------
@@ -436,10 +437,12 @@ class AddWeeklyChecklistItem(View):
     def post(self, request):
         form = WeeklyChecklistItemForm(request.POST)
         if form.is_valid():
-            form.save()
+            weekly_checklist_item = form.save(commit=False)  # Do not save to the database yet
+            weekly_checklist_item.manager = request.user  # Set the manager to the logged-in user
+            weekly_checklist_item.save()  # Now save the instance to the database
             return redirect('add_weekly')
         else:
-            print(form.errors)  
+            print(form.errors)
 
         return render(request, 'Maintenance/weekly/add_weekly.html', {'form': form})
 
@@ -484,10 +487,12 @@ class AddMonthlyChecklistItem(View):
     def post(self, request):
         form = MonthlyChecklistItemForm(request.POST)
         if form.is_valid():
-            form.save()
+            monthly_checklist_item = form.save(commit=False)  # Do not save to the database yet
+            monthly_checklist_item.manager = request.user  # Set the manager to the logged-in user
+            monthly_checklist_item.save()  # Now save the instance to the database
             return redirect('add_monthly')
         else:
-            print(form.errors)  
+            print(form.errors)
 
         return render(request, 'Maintenance/monthly/add_monthly.html', {'form': form})
 
@@ -655,34 +660,46 @@ class StartUpCheckSheetListView(ListView):
 # CreateView to create a new StartUpCheckSheet entry
 from django.contrib import messages
 from .forms import StartUpCheckSheetForm
-from .models import StartUpCheckSheet
+from user_app.models import Profile
+from .models import StartUpCheckSheet, MachineLocation
 from django.views.decorators.http import require_http_methods
 
 
 
 @require_http_methods(["GET", "POST"])
 def startup_checksheet_create_view(request):
+    try:
+        profile = Profile.objects.get(user=request.user)
+        user_skill_level = profile.my_skill
+    except Profile.DoesNotExist:
+        user_skill_level = 0  # Default skill level if no profile exists
+    
     if request.method == 'POST':
         form = StartUpCheckSheetForm(request.POST)
         if form.is_valid():
-            try:
-                checksheet = form.save(commit=False)
+            process_operation = form.cleaned_data['process_operation']
+            if user_skill_level < process_operation.min_skill_required:
+                form.add_error('process_operation', 'Your skill level is not sufficient for this operation.')
+                messages.error(request, 'Your skill level is not sufficient for this operation.')
+            else:
+                try:
+                    checksheet = form.save(commit=False)
                 
                 # Handle the dynamic checkpoint fields
-                for i in range(1, 26):  # Assuming 25 checkpoints
-                    checkpoint_key = f'checkpoint_{i}'
-                    if checkpoint_key in request.POST:
-                        setattr(checksheet, checkpoint_key, request.POST[checkpoint_key])
-                
-                checksheet.save()
-                messages.success(request, 'Check sheet created successfully.')
-                return redirect('checksheet_create')  # Make sure this URL name is correct
-            except Exception as e:
-                messages.error(request, f'Error saving check sheet: {str(e)}')
+                    for i in range(1, 26):  # Assuming 25 checkpoints
+                        checkpoint_key = f'checkpoint_{i}'
+                        if checkpoint_key in request.POST:
+                            setattr(checksheet, checkpoint_key, request.POST[checkpoint_key])
+                    
+                    checksheet.save()
+                    messages.success(request, 'Check sheet created successfully.')
+                    return redirect('checksheet_create')  # Make sure this URL name is correct
+                except Exception as e:
+                    messages.error(request, f'Error saving check sheet: {str(e)}')
         else:
-            messages.error(request, 'Please correct the errors below.')
+                messages.error(request, 'Please correct the errors below.')
     else:
-        form = StartUpCheckSheetForm()
+            form = StartUpCheckSheetForm()
 
     # Prepare checkpoint fields
     checkpoint_fields = [form[f'checkpoint_{i}'] for i in range(1, 26)]  # Assuming 25 checkpoints
@@ -1082,3 +1099,23 @@ class StartUpCheckSheetDeleteView(DeleteView):
     model = StartUpCheckSheet
     template_name = 'startup/startup_checksheet_confirm_delete.html'  # Create this template
     success_url = reverse_lazy('checksheet_list')  # Redirect to list view after deletion
+
+
+
+
+
+from django.http import JsonResponse
+from .models import MachineLocation
+
+def get_process_info(request):
+    process_operation_id = request.GET.get('process_operation_id')
+    try:
+        process_operation = MachineLocation.objects.get(id=process_operation_id)
+        data = {
+            'name': process_operation.name,
+            'min_skill_required': process_operation.min_skill_required,
+            # Add any other necessary fields here
+        }
+        return JsonResponse(data)
+    except MachineLocation.DoesNotExist:
+        return JsonResponse({'error': 'Process operation not found'}, status=404)

@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Profile List</h2>
+    <div class="row">
+        {% for profile in profiles %}
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ profile.user.username }}</h5>
+                    <p class="card-text">Skill Level: {{ profile.my_skill }}</p>
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'profile_detail' profile.pk %}" class="btn btn-primary btn-sm">View</a>
+                        <div>
+                            <a href="{% url 'profile_update' profile.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="{% url 'profile_delete' profile.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+        <a href="{% url 'profile_create' %}" class="btn btn-success">Create New Profile</a>
+    </div>
+</div>
+{% endblock %}

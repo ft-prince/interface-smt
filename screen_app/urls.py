@@ -104,6 +104,8 @@ urlpatterns = [
     path('startup/<int:pk>/edit/', StartUpCheckSheetUpdateView.as_view(), name='checksheet_edit'),
     path('startup/<int:pk>/delete/', StartUpCheckSheetDeleteView.as_view(), name='checksheet_delete'),
 
+# ----------------------------------------------------------------
+    path('get-process-info/', views.get_process_info, name='get_process_info'),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

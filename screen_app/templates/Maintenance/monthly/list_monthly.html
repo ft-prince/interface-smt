@@ -40,7 +40,7 @@
             <tr>
                 <td>{{record.doc_number}}</td>
                 <td>{{record.get_machine_name_display}}</td>
-                <td>{{record.get_machine_location_display}}</td>
+                <td>{{record.machine_location}}</td>
                 <td>{{record.month_year|date:"F Y"}}</td>
                 <td>
                     <a href="{% url 'monthly_detail' record.pk %}" class="action-btn view-btn">View</a>

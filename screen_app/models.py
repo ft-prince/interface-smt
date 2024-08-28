@@ -3,7 +3,6 @@ from django.db import models
 from django.contrib.auth.models import User
 import django
 
-
 CONTROL_NUMBER_CHOICES = (
         ('51-00-4283-3', '51-00-4283-3'),
         ('51-00-2603-3', '51-00-2603-3'),
@@ -25,6 +24,12 @@ CONTROL_NUMBER_CHOICES = (
         ('56-00-2450-3', '56-00-2450-3'),
         ('52-00-1035-1', '52-00-1035-1'),
     )
+class MachineLocation(models.Model):
+    location_name = models.CharField(max_length=100, unique=True, verbose_name="Machine Location")
+    min_skill_required = models.IntegerField(verbose_name="Minimum Skill Required")
+
+    def __str__(self):
+        return self.location_name
 
 MACHINE_LOCATION_CHOICES = (
         ('visual_inspection', 'Visual Inspection'),
@@ -299,8 +304,6 @@ class RejectionSheet(models.Model):
         self.total_pass_qty = self.calculate_total_pass_qty()
         super().save(*args, **kwargs)
 
-
-
 # ----------------------------------------------------------------
 # SolderingBitRecord
 from django.db import models
@@ -348,7 +351,7 @@ class SolderingBitRecord(models.Model):
     station = models.CharField(max_length=100, default='DSL01_S01')
     doc_number = models.CharField(max_length=50, verbose_name="Doc. No.", default='Doc-QSF-12-15', blank=True)
     part_name = models.CharField(max_length=100, choices=PART_CHOICES)
-    machine_no = models.CharField(max_length=150, choices=MACHINE_LOCATION_CHOICES)
+    machine_no = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
     machine_location = models.CharField(max_length=150,choices=LOCATION_CHOICES)
     month = models.DateField(default=timezone.now, blank=True)
     time = models.TimeField(default=timezone.now, blank=True)
@@ -409,14 +412,14 @@ class DailyChecklistItem(models.Model):
         ('', 'Not Checked')
     ]
 
-        
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)           
     station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01',blank=True)
     doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
     rev_number = models.CharField(max_length=10, default="02")
     rev_date = models.DateField(default=timezone.now)
     machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
     control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.CharField(max_length=100,choices=MACHINE_LOCATION_CHOICES)
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
     month_year = models.DateField(default=timezone.now,blank=True)
     date=models.DateField(default=django.utils.timezone.now,blank=True)
     # Main Item filled by Operator 
@@ -563,13 +566,14 @@ class WeeklyChecklistItem(models.Model):
         ('✘', 'Not OK'),
         ('', 'Not Checked')
     ]
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)       
     station = models.CharField(max_length=10, choices=STATION_CHOICES, default='DSL01_S01')
     doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
     rev_number = models.CharField(max_length=10, default="02")
     rev_date = models.DateField(default=timezone.now)
     machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
     control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.CharField(max_length=100,choices=MACHINE_LOCATION_CHOICES)
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
     month_year = models.DateField(default=timezone.now,blank=True)
         
 
@@ -670,16 +674,15 @@ class MonthlyChecklistItem(models.Model):
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked')
-    ]
-
-        
-    station=models.ForeignKey(Screen, on_delete=models.CASCADE, default=None)
+    ]        
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)    
+    station=models.CharField(max_length=200,choices=STATION_CHOICES)
     doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
     rev_number = models.CharField(max_length=10, default="02")
     rev_date = models.DateField(default="2022-12-31")
     machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
     control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.CharField(max_length=100,choices=MACHINE_LOCATION_CHOICES)
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
     month_year = models.DateField(default=timezone.now)
 
     CHECK_POINT_CHOICES = (
@@ -687,7 +690,7 @@ class MonthlyChecklistItem(models.Model):
         ('Check all parameter', 'Check all parameter'),
         ('Check Working condition', 'Check Working condition'),
         ('Check Operation of Sensors', 'Check Operation of Sensors'),
-        ('Check condition of all fixture', 'Check condition of all fixture'),
+        ('Check condition of all fixture','Check condition of all fixture'),
     )
     # Choices for requirement ranges
     REQUIREMENT_RANGE_CHOICES = (
@@ -858,10 +861,8 @@ class StartUpCheckSheet(models.Model):
     # General Information
     revision_no = models.IntegerField(verbose_name="Rev. No.")
     effective_date = models.DateField(verbose_name="Eff. Date",default=timezone.now, blank=True)
-    process_operation = models.CharField(max_length=300, verbose_name="PROCESS/OPERATION",choices=MACHINE_LOCATION_CHOICES)
-    min_skill_required = models.CharField(max_length=100, verbose_name="MIN. SKILL REQUIRED")
+    process_operation = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
     month = models.DateField(default=timezone.now, blank=True)
-
     # Choices for Checkpoints
     OKAY_CHOICES = [
         ('✔', 'OK'),
