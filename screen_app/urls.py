@@ -105,7 +105,9 @@ urlpatterns = [
     path('startup/<int:pk>/delete/', StartUpCheckSheetDeleteView.as_view(), name='checksheet_delete'),
 
 # ----------------------------------------------------------------
-    path('get-process-info/', views.get_process_info, name='get_process_info'),
+    path('get-process-info/<int:location_id>', views.get_process_info, name='get_process_info'),
+    path('get-machine-skill/<int:machine_id>/', views.get_machine_skill, name='get_machine_skill'),
+    
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

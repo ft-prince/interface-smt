@@ -276,13 +276,32 @@ class AddDailyChecklistItem(View):
 
     def post(self, request):
         form = DailyChecklistItemForm(request.POST)
+
+        # Fetch user skill level
+        try:
+            profile = Profile.objects.get(user=request.user)
+            user_skill_level = profile.my_skill
+        except Profile.DoesNotExist:
+            user_skill_level = 0  # Default skill level if no profile exists
+        
         if form.is_valid():
             daily_checklist_item = form.save(commit=False)  # Do not save to the database yet
-            daily_checklist_item.manager = request.user  # Set the manager to the logged-in user
-            daily_checklist_item.save()  # Now save the instance to the database            
-            return redirect('add_daily')
+
+            # Check skill level against the form's requirements
+            # Ensure 'machine_location' and 'min_skill_required' are correctly referenced
+            if daily_checklist_item.machine_location.min_skill_required > user_skill_level:
+                form.add_error('machine_location', 'Your skill level is insufficient for the selected option.')
+                messages.error(request, 'Your skill level is insufficient for the selected option.')
+            else:
+                try:
+                    daily_checklist_item.manager = request.user  # Set the manager to the logged-in user
+                    daily_checklist_item.save()  # Save the instance to the database
+                    messages.success(request, 'Daily checklist item added successfully.')
+                    return redirect('add_daily')  # Ensure this URL name is correct
+                except Exception as e:
+                    messages.error(request, f'Error saving checklist item: {str(e)}')
         else:
-            print(form.errors)  
+            messages.error(request, 'Please correct the errors below.')
 
         return render(request, 'Maintenance/Daily/add_daily.html', {'form': form})
 
@@ -427,7 +446,6 @@ class DailyChecklistItemDetailView(View):
 
 
 #  Weekly Checklist
-
 @method_decorator(login_required, name='dispatch')
 class AddWeeklyChecklistItem(View):
     def get(self, request):
@@ -436,13 +454,30 @@ class AddWeeklyChecklistItem(View):
 
     def post(self, request):
         form = WeeklyChecklistItemForm(request.POST)
+        
+        try:
+            profile = Profile.objects.get(user=request.user)
+            user_skill_level = profile.my_skill
+        except Profile.DoesNotExist:
+            user_skill_level = 0  # Default skill level if no profile exists
+        
         if form.is_valid():
-            weekly_checklist_item = form.save(commit=False)  # Do not save to the database yet
-            weekly_checklist_item.manager = request.user  # Set the manager to the logged-in user
-            weekly_checklist_item.save()  # Now save the instance to the database
-            return redirect('add_weekly')
+            monthly_checklist_item = form.save(commit=False)  # Do not save to the database yet
+
+            # Check skill level against the form's requirements
+            if monthly_checklist_item.machine_location.min_skill_required > user_skill_level:
+                form.add_error('machine_location', 'Your skill level is insufficient for the selected Machine Location.')
+                messages.error(request, 'Your skill level is insufficient for the selected Machine Location.')
+            else:
+                try:
+                    monthly_checklist_item.manager = request.user  # Set the manager to the logged-in user
+                    monthly_checklist_item.save()  # Save the instance to the database
+                    messages.success(request, 'Monthly checklist item added successfully.')
+                    return redirect('add_monthly')  # Make sure this URL name is correct
+                except Exception as e:
+                    messages.error(request, f'Error saving checklist item: {str(e)}')
         else:
-            print(form.errors)
+            messages.error(request, 'Please correct the errors below.')
 
         return render(request, 'Maintenance/weekly/add_weekly.html', {'form': form})
 
@@ -486,13 +521,30 @@ class AddMonthlyChecklistItem(View):
 
     def post(self, request):
         form = MonthlyChecklistItemForm(request.POST)
+        # Fetch user skill level
+        try:
+            profile = Profile.objects.get(user=request.user)
+            user_skill_level = profile.my_skill
+        except Profile.DoesNotExist:
+            user_skill_level = 0  # Default skill level if no profile exists
+        
         if form.is_valid():
             monthly_checklist_item = form.save(commit=False)  # Do not save to the database yet
-            monthly_checklist_item.manager = request.user  # Set the manager to the logged-in user
-            monthly_checklist_item.save()  # Now save the instance to the database
-            return redirect('add_monthly')
+            
+            # Check skill level against the form's requirements
+            if monthly_checklist_item.machine_location.min_skill_required > user_skill_level:
+                form.add_error(None, 'Your skill level is insufficient for the selected Machine Location.')
+                messages.error(request, 'Your skill level is insufficient for the selected Machine Location.')
+            else:
+                monthly_checklist_item.manager = request.user  # Set the manager to the logged-in user
+                try:
+                    monthly_checklist_item.save()  # Save the instance to the database
+                    messages.success(request, 'Monthly checklist item added successfully.')
+                    return redirect('add_monthly')  # Make sure this URL name is correct
+                except Exception as e:
+                    messages.error(request, f'Error saving checklist item: {str(e)}')
         else:
-            print(form.errors)
+            messages.error(request, 'Please correct the errors below.')
 
         return render(request, 'Maintenance/monthly/add_monthly.html', {'form': form})
 
@@ -677,6 +729,7 @@ def startup_checksheet_create_view(request):
     if request.method == 'POST':
         form = StartUpCheckSheetForm(request.POST)
         if form.is_valid():
+      
             process_operation = form.cleaned_data['process_operation']
             if user_skill_level < process_operation.min_skill_required:
                 form.add_error('process_operation', 'Your skill level is not sufficient for this operation.')
@@ -684,7 +737,7 @@ def startup_checksheet_create_view(request):
             else:
                 try:
                     checksheet = form.save(commit=False)
-                
+                    checksheet.manager = request.user                
                 # Handle the dynamic checkpoint fields
                     for i in range(1, 26):  # Assuming 25 checkpoints
                         checkpoint_key = f'checkpoint_{i}'
@@ -887,7 +940,8 @@ def startup_checksheet_create_view(request):
         'form': form,
         'json_data': json_data,
         'checkpoint_fields': checkpoint_fields,
-    }
+        'user_skill_level':user_skill_level,
+       }
 
 
     return render(request, 'startup/startup_checksheet_form.html',context)
@@ -1104,18 +1158,51 @@ class StartUpCheckSheetDeleteView(DeleteView):
 
 
 
-from django.http import JsonResponse
-from .models import MachineLocation
+# from django.http import JsonResponse
+# from .models import MachineLocation
 
-def get_process_info(request):
-    process_operation_id = request.GET.get('process_operation_id')
+# def get_process_info(request):
+#     process_operation_id = request.GET.get('process_operation_id')
+#     try:
+#         process_operation = MachineLocation.objects.get(id=process_operation_id)
+#         data = {
+#             'name': process_operation.name,
+#             'min_skill_required': process_operation.min_skill_required,
+#             # Add any other necessary fields here
+#         }
+#         return JsonResponse(data)
+#     except MachineLocation.DoesNotExist:
+#         return JsonResponse({'error': 'Process operation not found'}, status=404)
+    
+    
+    
+from .models import MachineLocation  # Assuming you have imported MachineLocation
+
+def get_process_info(request, location_id):
     try:
-        process_operation = MachineLocation.objects.get(id=process_operation_id)
-        data = {
-            'name': process_operation.name,
-            'min_skill_required': process_operation.min_skill_required,
-            # Add any other necessary fields here
-        }
-        return JsonResponse(data)
-    except MachineLocation.DoesNotExist:
-        return JsonResponse({'error': 'Process operation not found'}, status=404)
+        machine_location = get_object_or_404(MachineLocation, id=location_id)
+        return JsonResponse({'required_skill': machine_location.min_skill_required})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+def get_machine_skill(request, machine_id):
+    try:
+        machine = get_object_or_404(MachineLocation, id=machine_id)
+        try:
+            profile = Profile.objects.get(user=request.user)
+            user_skill_level = profile.my_skill
+        except Profile.DoesNotExist:
+            user_skill_level = 0
+
+        return JsonResponse({
+            'required_skill': machine.min_skill_required,
+            'user_skill_level': user_skill_level
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+# def get_process_info(request, process_operation_id):
+#     process_operation = get_object_or_404(ProcessOperation, id=process_operation_id)
+#     return JsonResponse({'required_skill': process_operation.min_skill_required})
+    
+    
+    

@@ -1,8 +1,12 @@
-{% extends "base.html" %} {% block title %}
+{% extends "base.html" %}
+
+{% block title %}
 <title>
   {% if form.instance.pk %}Update{% else %}Add{% endif %} Daily Checklist Item
 </title>
-{% endblock title %} {% block content %}
+{% endblock title %}
+
+{% block content %}
 <style>
   .container {
     max-width: 1200px;
@@ -50,15 +54,31 @@
     text-decoration: none;
     margin-left: 10px;
   }
+  .error-message {
+    color: red;
+    font-size: 0.875em;
+    margin-top: 5px;
+  }
+  .form-group {
+    margin-bottom: 15px;
+  }
 </style>
 
-<div class="container-fluid">
+<div class="container">
   <h1>
     {% if form.instance.pk %}Update{% else %}Add{% endif %} Daily Checklist Item
   </h1>
 
   <form method="post">
     {% csrf_token %}
+
+    {% if messages %}
+    <ul class="error-message">
+        {% for message in messages %}
+            <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+    </ul>
+{% endif %}
 
     <div class="section">
       <div class="d-flex justify-content-between align-items-center">
@@ -68,10 +88,8 @@
 
       <table class="excel-table">
         <tr>
-          {% comment %}
           <th>{{ form.doc_number.label_tag }}</th>
           <td>{{ form.doc_number }}</td>
-          {% endcomment %}
           <th>{{ form.rev_number.label_tag }}</th>
           <td>{{ form.rev_number }}</td>
           <th>{{ form.rev_date.label_tag }}</th>
@@ -88,12 +106,6 @@
           <td>{{ form.control_number }}</td>
           <th>{{ form.station.label_tag }}</th>
           <td>{{ form.station }}</td>
-        </tr>
-        <tr>
-          {% comment %}
-          <th>{{ form.month_year.label_tag }}</th>
-          <td>{{ form.month_year }}</td>
-          {% endcomment %}
         </tr>
       </table>
     </div>
@@ -127,48 +139,30 @@
         </tr>
         <tr>
           <td>Check any Abnormal Sound in M/C</td>
-          <td>No any Abnormal Sound</td>
+          <td>No Abnormal Sound</td>
           <td>By Ear</td>
           <td>{{ form.Remark_4 }}</td>
         </tr>
         <tr>
           <td>Check Spray Nozzle</td>
-          <td>No Blockage No leakage</td>
+          <td>No Blockage or Leakage</td>
           <td>Visual Inspection</td>
           <td>{{ form.Remark_5 }}</td>
         </tr>
         <tr>
-          <td>Check all Tubbing & Feeder pipe</td>
-          <td>No Cut & No Damage</td>
+          <td>Check all Tubing & Feeder Pipe</td>
+          <td>No Cuts or Damage</td>
           <td>Visual Inspection</td>
           <td>{{ form.Remark_6 }}</td>
         </tr>
         <tr>
           <td>Check Maintenance & Calibration Tag</td>
-          <td>No Expiry date on tag</td>
+          <td>No Expiry Date on Tag</td>
           <td>Visual Inspection</td>
           <td>{{ form.Remark_7 }}</td>
         </tr>
       </table>
     </div>
-
-    {% comment %}
-    <div class="section">
-      <h2>Approval</h2>
-      <table class="excel-table">
-        <tr>
-          <th>{{ form.checked_by_Operator.label_tag }}</th>
-          <td>{{ form.checked_by_Operator }}</td>
-        </tr>
-        {% if form.instance.pk %}
-        <tr>
-          <th>{{ form.approved_by_Supervisor.label_tag }}</th>
-          <td>{{ form.approved_by_Supervisor }}</td>
-        </tr>
-        {% endif %}
-      </table>
-    </div>
-    {% endcomment %}
 
     <button type="submit" class="btn-submit">Save</button>
     <a href="{% url 'list_daily' %}" class="btn-back">Back to List</a>

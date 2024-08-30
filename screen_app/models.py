@@ -24,6 +24,7 @@ CONTROL_NUMBER_CHOICES = (
         ('56-00-2450-3', '56-00-2450-3'),
         ('52-00-1035-1', '52-00-1035-1'),
     )
+
 class MachineLocation(models.Model):
     location_name = models.CharField(max_length=100, unique=True, verbose_name="Machine Location")
     min_skill_required = models.IntegerField(verbose_name="Minimum Skill Required")
@@ -395,7 +396,7 @@ class SolderingBitRecord(models.Model):
 
         # Notification logic for WebSocket
         if self.prepared_by == '✘' or self.approved_by == '✘':
-            message = f"Record {self.doc_number} marked as 'Not OK'."
+            message = f"Record {self.doc_number} marked as 'Not OK'. {self.machine_location}"
             self.send_notification(message)
 
         super().save(*args, **kwargs)
@@ -504,7 +505,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 1 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 1 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_2 == '✘':
@@ -512,7 +513,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 2 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 2 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_3 == '✘':
@@ -520,7 +521,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 3 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 3 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_4 == '✘':
@@ -528,7 +529,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 4 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 4 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_5 == '✘':
@@ -536,7 +537,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 5 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 5 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_6 == '✘':
@@ -544,7 +545,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 6 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 6 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_7 == '✘':
@@ -552,7 +553,7 @@ class DailyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 7 is Not OK'
+                    'message': f'Daily Checklist Item {self.pk}: Remark 7 is Not OK {self.machine_location}'
                 }
             )
 
@@ -638,7 +639,7 @@ class WeeklyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 8 is Not OK'
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 8 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_9 == '✘':
@@ -646,7 +647,7 @@ class WeeklyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 9 is Not OK'
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 9 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_10 == '✘':
@@ -654,7 +655,7 @@ class WeeklyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 10 is Not OK'
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 10 is Not OK {self.machine_location}'
                 }
             )
         if self.Remark_11 == '✘':
@@ -662,7 +663,7 @@ class WeeklyChecklistItem(models.Model):
                 'test',
                 {
                     'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 11 is Not OK'
+                    'message': f'Weekly Checklist Item {self.pk}: Remark 11 is Not OK {self.machine_location}'
                 }
             )
 
@@ -722,7 +723,6 @@ class MonthlyChecklistItem(models.Model):
         ('', 'Not Checked')
     ]
     Remark_12=models.CharField(max_length=100,choices=TICK_CHOICES)
-
     checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='',blank=True)
     approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES ,default='',blank=True)
     
@@ -742,7 +742,7 @@ class MonthlyChecklistItem(models.Model):
                 'test',  # Use the same group name as in the WebSocket consumer
                 {
                     'type': 'chat_message',
-                    'message': f'Notification: Remark 12 is Not OK for MonthlyChecklistItem {self.pk}'
+                    'message': f'Notification: {self.machine_location} Not OK for MonthlyChecklistItem {self.pk} '
                 }
             )
         
@@ -895,6 +895,9 @@ class StartUpCheckSheet(models.Model):
     checkpoint_23 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 23")
     checkpoint_24 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 24")
     checkpoint_25 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 25")
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)    
+    # defects = models.TextField(blank=True)
+    verified_by = models.CharField(max_length=1, choices=OKAY_CHOICES, default='✘',blank=True)
 
     class Meta:
         verbose_name = "Start Up Check Sheet"
@@ -922,7 +925,7 @@ class StartUpCheckSheet(models.Model):
                     'test',
                     {
                         'type': 'chat_message',
-                        'message': f'StartUp Check Sheet Record {self.pk}: Check Point {i} is Not OK'
+                        'message': f'StartUp Check Sheet Record {self.pk}: Check Point {i} is Not OK {self.process_operation}'
                     }
                 )
 

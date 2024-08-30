@@ -3,8 +3,34 @@
 {% load custom_filters %}
 
 {% block content %}
+<style>
+    /* Add custom styling for form errors */
+    .error {
+        color: #dc3545; /* Bootstrap red for errors */
+        font-size: 0.875rem; /* Slightly smaller font size for errors */
+        margin-top: 0.25rem; /* Space above the error message */
+    }
+    
+    .form-group {
+        margin-bottom: 1rem; /* Space below each form group */
+    }
+    
+    .form-group label {
+        font-weight: bold; /* Make labels bold */
+    }
+    
+    .btn-primary {
+        background-color: #007bff; /* Bootstrap primary color */
+        border: none;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0056b3; /* Darker blue for hover effect */
+    }
+    </style>
+    
 <h1>Create Start-Up Check Sheet</h1>
-
 <div class="container">
 
     {% if messages %}
@@ -18,24 +44,33 @@
     <form method="post" action="{% url 'checksheet_create' %}">
         {% csrf_token %}
         
-        {{ form.non_field_errors }}
-        
+        <!-- Display non-field errors with styling -->
+        <div class="form-group">
+            {{ form.non_field_errors }}
+        </div>
+
         <div class="form-group">
             {{ form.revision_no.label_tag }}
             {{ form.revision_no }}
-            {{ form.revision_no.errors }}
+            {% if form.revision_no.errors %}
+            <span class="error">{{ form.revision_no.errors }}</span>
+            {% endif %}
         </div>
         
         <div class="form-group">
             {{ form.process_operation.label_tag }}
             {{ form.process_operation }}
-            {{ form.process_operation.errors }}
+            {% if form.process_operation.errors %}
+            <span class="error">{{ form.process_operation.errors }}</span>
+            {% endif %}
         </div>
         
         <div class="form-group" id="minSkillGroup">
             {{ form.min_skill_required.label_tag }}
             {{ form.min_skill_required }}
-            {{ form.min_skill_required.errors }}
+            {% if form.min_skill_required.errors %}
+            <span class="error">{{ form.min_skill_required.errors }}</span>
+            {% endif %}
         </div>
 
         <table id="checklistTable" class="table table-striped">
@@ -105,9 +140,9 @@
     
         function updateFormBasedOnOperation() {
             const selectedValue = processOperationField.value;
-    
+    console.log(selectedValue)
             if (selectedValue) {
-                fetch(`/screen/get-process-info/${selectedValue}/`)
+                fetch(`/screen/get-machine-skill/${selectedValue}/`)
                     .then(response => {
                         if (!response.ok) {
                             throw new Error('Network response was not ok');
