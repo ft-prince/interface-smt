@@ -1,7 +1,7 @@
 # admin.py
 from django.contrib import admin
 #from django.contrib.auth.admin import UserAdmin
-from .models import Product, Screen ,DailyChecklistItem,MonthlyChecklistItem,WeeklyChecklistItem,StartUpCheckSheet,RejectionSheet,Defects,MachineLocation,SolderingBitRecord
+from .models import Product, Screen ,DailyChecklistItem,MonthlyChecklistItem,WeeklyChecklistItem,StartUpCheckSheet,RejectionSheet,Defects,MachineLocation,SolderingBitRecord,PChartData
 
 
 
@@ -26,3 +26,5 @@ class MachineLocationAdmin(admin.ModelAdmin):
 class StartUpCheckSheetAdmin(admin.ModelAdmin):
     list_display = ('process_operation', 'revision_no', 'effective_date', 'month')
     list_filter = ('process_operation', 'month')
+
+admin.site.register(PChartData)

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>P-Chart Data Detail</h1>
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">{{ pchart_data.part_number_and_name }}</h5>
+            <p class="card-text"><strong>Location:</strong> {{ pchart_data.location }}</p>
+            <p class="card-text"><strong>Operation:</strong> {{ pchart_data.operation_number_and_stage_name }}</p>
+            <p class="card-text"><strong>Department:</strong> {{ pchart_data.department }}</p>
+            <p class="card-text"><strong>Month:</strong> {{ pchart_data.month }}</p>
+            <p class="card-text"><strong>Sample Size:</strong> {{ pchart_data.sample_size }}</p>
+            <p class="card-text"><strong>Nonconforming Units:</strong> {{ pchart_data.nonconforming_units }}</p>
+            <p class="card-text"><strong>Proportion:</strong> {{ pchart_data.proportion|floatformat:4 }}</p>
+            <h6>Control Limits:</h6>
+            <p class="card-text"><strong>UCL-np:</strong> {{ ucl_np|floatformat:4 }}</p>
+            <p class="card-text"><strong>LCL-np:</strong> {{ lcl_np|floatformat:4 }}</p>
+            <p class="card-text"><strong>UCL-p:</strong> {{ ucl_p|floatformat:4 }}</p>
+            <p class="card-text"><strong>LCL-p:</strong> {{ lcl_p|floatformat:4 }}</p>
+            <p class="card-text"><strong>UCL-c:</strong> {{ ucl_c|floatformat:4 }}</p>
+            <p class="card-text"><strong>LCL-c:</strong> {{ lcl_c|floatformat:4 }}</p>
+            <p class="card-text"><strong>UCL-u:</strong> {{ ucl_u|floatformat:4 }}</p>
+            <p class="card-text"><strong>LCL-u:</strong> {{ lcl_u|floatformat:4 }}</p>
+        </div>
+        <p>Debug Info:</p>
+<p>average_sample_size: {{ pchart_data.average_sample_size }}</p>
+<p>proportion: {{ pchart_data.proportion }}</p>
+<p>nonconforming_units: {{ pchart_data.nonconforming_units }}</p>
+    </div>
+    <a href="{% url 'pchart_list' %}" class="btn btn-primary mt-3">Back to List</a>
+</div>
+{% endblock %}

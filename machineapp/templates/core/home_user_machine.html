@@ -1,0 +1,53 @@
+{% extends 'core/base.html' %}
+
+{% block title %}User and Machine Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0">Welcome, {{ user.username }}!</h2>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <h3>User Information</h3>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Username:</th>
+                        <td>{{ user.username }}</td>
+                    </tr>
+                    <tr>
+                        <th>Skill Level:</th>
+                        <td>{{ user_profile.my_skill }}</td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h3>Active Machine</h3>
+                <table class="table table-bordered">
+                    <tr>
+                        <th>Machine Name:</th>
+                        <td>{{ machine.name }}</td>
+                    </tr>
+                    <tr>
+                        <th>Required Skill:</th>
+                        <td>{{ machine.required_skills }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        {% if user_profile.my_skill >= machine.required_skills %}
+            <div class="alert alert-success mt-3">
+                You have sufficient skills to operate this machine.
+            </div>
+            <div class="text-center mt-4">
+                <a href="{% url 'dashboard' %}" class="btn btn-lg btn-success">Go to Dashboard</a>
+            </div>
+        {% else %}
+            <div class="alert alert-danger mt-3">
+                Warning: Your skill level is insufficient for this machine.
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

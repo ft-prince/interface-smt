@@ -113,3 +113,20 @@ class StartUpCheckSheetForm(forms.ModelForm):
         model = StartUpCheckSheet
         fields = '__all__'  # Include all fields from the model
  
+ 
+ 
+#  -------------------------------------------------------------------------
+from .models import PChartData
+
+class PChartDataForm(forms.ModelForm):
+    class Meta:
+        model = PChartData
+        fields = [
+            'location', 'part_number_and_name', 'operation_number_and_stage_name',
+            'department', 'month', 'date_control_limits_calculated',
+            'average_sample_size', 'frequency', 'sample_size', 'nonconforming_units'
+        ]
+        widgets = {
+            'month': forms.DateInput(attrs={'type': 'date'}),
+            'date_control_limits_calculated': forms.DateInput(attrs={'type': 'date'}),
+        }

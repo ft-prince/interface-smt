@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1>P-Chart Data List</h1>
+    <a href="{% url 'pchart_create' %}" class="btn btn-primary mb-3">Add New Data</a>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Part Number and Name</th>
+                <th>Month</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in pchart_data %}
+            <tr>
+                <td>{{ data.location }}</td>
+                <td>{{ data.part_number_and_name }}</td>
+                <td>{{ data.month }}</td>
+                <td>
+                    <a href="{% url 'pchart_detail' data.pk %}" class="btn btn-info btn-sm">View</a>
+                    <a href="{% url 'pchart_update' data.pk %}" class="btn btn-warning btn-sm">Edit</a>
+                    <a href="{% url 'pchart_delete' data.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

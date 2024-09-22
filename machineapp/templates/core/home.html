@@ -1,0 +1,34 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Welcome to Machine User Auth{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0">Welcome to Machine User Auth</h2>
+    </div>
+    <div class="card-body">
+        <p class="lead">Please log in as a user or machine to get started.</p>
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">User Login</h3>
+                        <p class="card-text">Access your account and manage machines.</p>
+                        <a href="{% url 'login' %}" class="btn btn-primary">User Login</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Machine Login</h3>
+                        <p class="card-text">Log in a machine for operation.</p>
+                        <a href="{% url 'machine_login' %}" class="btn btn-success">Machine Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

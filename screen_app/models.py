@@ -343,22 +343,26 @@ class SolderingBitRecord(models.Model):
         ('final_testing', 'Final Testing'),
     )
 
-    TICK_CHOICES = [
+    TICK_CHOICES_Mark = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked'),
+    ]
+    TICK_CHOICES = [
+        ('20d', '20D'),
+        ('30d', '30D'),
     ]
 
     station = models.CharField(max_length=100, default='DSL01_S01')
     doc_number = models.CharField(max_length=50, verbose_name="Doc. No.", default='Doc-QSF-12-15', blank=True)
     part_name = models.CharField(max_length=100, choices=PART_CHOICES)
     machine_no = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
-    machine_location = models.CharField(max_length=150,choices=LOCATION_CHOICES)
+    machine_location = models.CharField(max_length=150,choices=STATION_CHOICES)
     month = models.DateField(default=timezone.now, blank=True)
     time = models.TimeField(default=timezone.now, blank=True)
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     soldering_points_per_part = models.IntegerField(default=10)
-    bit_size = models.CharField(max_length=20, default="20DV")
+    bit_size = models.CharField(max_length=50, choices=TICK_CHOICES)
     date = models.DateField(default=timezone.now, blank=True)
     produce_quantity_shift_a = models.IntegerField(verbose_name="Produce Quantity Shift A")
     produce_quantity_shift_b = models.IntegerField(verbose_name="Produce Quantity Shift B")
@@ -366,8 +370,8 @@ class SolderingBitRecord(models.Model):
     total_soldering_points = models.IntegerField(verbose_name="Total Soldering points/day", default=500)
     bit_life_remaining = models.IntegerField(verbose_name="Bit Life Remaining (Parts in Nos.)", default=500)
     bit_change_date = models.DateField(verbose_name="Bit Change Date")
-    prepared_by = models.CharField(max_length=100, choices=TICK_CHOICES, blank=True)
-    approved_by = models.CharField(max_length=100, choices=TICK_CHOICES, blank=True)
+    prepared_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
+    approved_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
 
     class Meta:
         verbose_name = "Robotic Soldering Bit Replacement Record"
@@ -388,16 +392,23 @@ class SolderingBitRecord(models.Model):
         )
 
     def save(self, *args, **kwargs):
+        # Determine soldering points per part and bit life remaining based on bit size
+        if self.bit_size == '20d':
+            self.soldering_points_per_part = 10
+            bit_life_initial = 12000
+        elif self.bit_size == '30d':
+            self.soldering_points_per_part = 4  # Assuming this is the per part value
+            bit_life_initial = 6000
+        else:
+            self.soldering_points_per_part = 0
+            bit_life_initial = 0
+        
         # Calculate total quantity and total soldering points
         self.total_quantity = self.produce_quantity_shift_a + self.produce_quantity_shift_b
         self.total_soldering_points = self.total_quantity * self.soldering_points_per_part
+        
         # Calculate bit life remaining
-        self.bit_life_remaining = 12000 - self.total_quantity
-
-        # Notification logic for WebSocket
-        if self.prepared_by == '✘' or self.approved_by == '✘':
-            message = f"Record {self.doc_number} marked as 'Not OK'. {self.machine_location}"
-            self.send_notification(message)
+        self.bit_life_remaining = bit_life_initial - self.total_soldering_points
 
         super().save(*args, **kwargs)
 
@@ -932,3 +943,38 @@ class StartUpCheckSheet(models.Model):
     def __str__(self):
         return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
 
+
+
+
+
+# ---------------------------------------------------------------------
+
+from django.db import models
+from django.db.models import Avg, Sum, F, ExpressionWrapper, StdDev, Variance
+from django.db.models.functions import Sqrt
+
+class PChartData(models.Model):
+    location = models.CharField(max_length=200,choices=MACHINE_LOCATION_CHOICES)
+    part_number_and_name = models.CharField(max_length=200)
+    operation_number_and_stage_name = models.CharField(max_length=200,choices=STATION_CHOICES)
+    department = models.CharField(max_length=100)
+    month = models.DateField(default=timezone.now, blank=True)
+    date_control_limits_calculated = models.DateField(default=timezone.now)
+    average_sample_size = models.IntegerField()
+    frequency = models.IntegerField()
+
+    sample_size = models.IntegerField()
+    nonconforming_units = models.IntegerField()
+    proportion = models.FloatField(default=0.0)
+
+    def save(self, *args, **kwargs):
+        self.proportion = self.nonconforming_units / self.sample_size
+        self.ucl_np = self.average_sample_size * self.proportion + 3 * Sqrt(self.average_sample_size * self.proportion * (1 - self.proportion))
+        self.lcl_np = self.average_sample_size * self.proportion - 3 * Sqrt(self.average_sample_size * self.proportion * (1 - self.proportion))
+        self.ucl_p = self.proportion + 3 * Sqrt(self.proportion * (1 - self.proportion) / self.average_sample_size)
+        self.lcl_p = self.proportion - 3 * Sqrt(self.proportion * (1 - self.proportion) / self.average_sample_size)
+        self.ucl_c = self.nonconforming_units + 3 * Sqrt(self.nonconforming_units)
+        self.lcl_c = self.nonconforming_units - 3 * Sqrt(self.nonconforming_units)
+        self.ucl_u = self.nonconforming_units / self.average_sample_size + 3 * Sqrt(self.nonconforming_units / (self.average_sample_size ** 2))
+        self.lcl_u = self.nonconforming_units / self.average_sample_size - 3 * Sqrt(self.nonconforming_units / (self.average_sample_size ** 2))
+        super().save(*args, **kwargs)

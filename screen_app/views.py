@@ -1206,3 +1206,35 @@ def get_machine_skill(request, machine_id):
     
     
     
+
+from django.views.generic import ListView, DetailView, CreateView, UpdateView, DeleteView
+from django.urls import reverse_lazy
+from .models import PChartData
+from .forms import PChartDataForm
+
+class PChartDataListView(ListView):
+    model = PChartData
+    template_name = 'pchart/pchart_list.html'
+    context_object_name = 'pchart_data'
+
+class PChartDataDetailView(DetailView):
+    model = PChartData
+    template_name = 'pchart/pchart_detail.html'
+    context_object_name = 'pchart_data'
+
+class PChartDataCreateView(CreateView):
+    model = PChartData
+    form_class = PChartDataForm
+    template_name = 'pchart/pchart_form.html'
+    success_url = reverse_lazy('pchart_list')
+
+class PChartDataUpdateView(UpdateView):
+    model = PChartData
+    form_class = PChartDataForm
+    template_name = 'pchart/pchart_form.html'
+    success_url = reverse_lazy('pchart_list')
+
+class PChartDataDeleteView(DeleteView):
+    model = PChartData
+    template_name = 'pchart/pchart_confirm_delete.html'
+    success_url = reverse_lazy('pchart_list')    

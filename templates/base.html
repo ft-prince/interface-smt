@@ -200,13 +200,13 @@
         <div class="collapse navbar-collapse" id="navbarContent">
           <ul class="navbar-nav me-auto mb-2 mb-lg-0">
             <li class="nav-item"></li>
-            <li class="nav-item">
+            {% comment %} <li class="nav-item">
               <a
                 class="nav-link {% if request.resolver_match.url_name == 'display_screen_content' %}active{% endif %}"
                 href="{% url 'display_screen_content' %}"
                 >Screen</a
               >
-            </li>
+            </li> {% endcomment %}
             {% if user.is_authenticated %}
             <li class="nav-item">
               <a
@@ -216,13 +216,13 @@
               >
             </li>
             {% if user.is_staff %}
-            <li class="nav-item">
+            {% comment %} <li class="nav-item">
               <a
                 class="nav-link {% if request.resolver_match.url_name == 'activate_product' %}active{% endif %}"
                 href="{% url 'activate_product' %}"
                 >Activate</a
               >
-            </li>
+            </li> {% endcomment %}
             {% endif %} {% endif %}
           </ul>
 

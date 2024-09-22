@@ -36,7 +36,7 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'channels',
-    
+    'machineapp'
   
 ]
 
@@ -135,7 +135,6 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 CRISPY_TEMPLATE_PACK = 'bootstrap5'
 CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 
-LOGIN_REDIRECT_URL = 'display_screen_content'
-LOGIN_URL = 'login'
-
-
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/'
+LOGOUT_REDIRECT_URL = '/'

@@ -1,0 +1,28 @@
+{% extends 'core/base.html' %}
+
+{% block title %}User Dashboard{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h2 class="mb-0">Welcome, {{ user.username }}!</h2>
+    </div>
+    <div class="card-body">
+        <h3>User Information</h3>
+        <table class="table table-bordered">
+            <tr>
+                <th>Username:</th>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <th>Skill Level:</th>
+                <td>{{ user_profile.my_skill }}</td>
+            </tr>
+        </table>
+        <div class="alert alert-info mt-3">
+            No machine is currently logged in. 
+            <a href="{% url 'machine_login' %}" class="btn btn-primary btn-sm">Log in a Machine</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -108,6 +108,13 @@ urlpatterns = [
     path('get-process-info/<int:location_id>', views.get_process_info, name='get_process_info'),
     path('get-machine-skill/<int:machine_id>/', views.get_machine_skill, name='get_machine_skill'),
     
+    # 
+
+    path('pchart/', views.PChartDataListView.as_view(), name='pchart_list'),
+    path('pchart/detail/<int:pk>/', views.PChartDataDetailView.as_view(), name='pchart_detail'),
+    path('pchart/create/', views.PChartDataCreateView.as_view(), name='pchart_create'),
+    path('pchart/update/<int:pk>/', views.PChartDataUpdateView.as_view(), name='pchart_update'),
+    path('pchart/delete/<int:pk>/', views.PChartDataDeleteView.as_view(), name='pchart_delete'),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 
