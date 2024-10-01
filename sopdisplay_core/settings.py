@@ -36,7 +36,8 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'channels',
-    'machineapp'
+    'machineapp',
+    'station_app'
   
 ]
 
@@ -138,3 +139,5 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = 'bootstrap5'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+MEDIA_URL = '/media/'

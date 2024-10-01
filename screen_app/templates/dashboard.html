@@ -1,312 +1,404 @@
-{% extends "base.html" %}
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% if user.is_staff %}Supervisor{% else %}Operator{% endif %} Dashboard</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      {% if user.is_staff %}Supervisor{% else %}Operator{% endif %} Dashboard
+    </title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #1a202c;
-            color: #f7fafc;
-            margin: 0;
-            padding: 0;
-        }
-        .dashboard-container {
-            display: flex;
-            height: 100vh;
-        }
-        .main-dashboard {
-            width: 75%;
-            padding: 1.5rem;
-            overflow: auto;
-        }
-        .notification-bar {
-            width: 25%;
-            background-color: #2d3748;
-            padding: 1.5rem;
-            overflow: auto;
-        }
-        h1 {
-            font-size: 1.875rem;
-            font-weight: bold;
-            margin-bottom: 2rem;
-            color: #63b3ed;
-        }
-        h2 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #90cdf4;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #1a202c;
+        color: #f7fafc;
+        margin: 0;
+        padding: 0;
+      }
+      .dashboard-container {
+        display: flex;
+        height: 100vh;
+      }
+      .main-dashboard {
+        width: 75%;
+        padding: 1.5rem;
+        overflow: auto;
+      }
+      .notification-bar {
+        width: 25%;
+        background-color: #2d3748;
+        padding: 1.5rem;
+        overflow: auto;
+      }
+      h1 {
+        font-size: 1.875rem;
+        font-weight: bold;
+        margin-bottom: 2rem;
+        color: #63b3ed;
+      }
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: #90cdf4;
+      }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1.5rem;
+      }
+      @media (min-width: 768px) {
         .card-grid {
-            display: grid;
-            grid-template-columns: repeat(1, 1fr);
-            gap: 1.5rem;
+          grid-template-columns: repeat(2, 1fr);
         }
-        @media (min-width: 768px) {
-            .card-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        @media (min-width: 1024px) {
-            .card-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-        }
-        .card {
-            background-color: #2d3748;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            transition: background-color 0.3s;
-        }
-        .card:hover {
-            background-color: #4a5568;
-        }
-        .button-container {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .button {
-            display: block;
-            background-color: #3182ce;
-            color: white;
-            font-weight: bold;
-            padding: 0.5rem 1rem;
-            border-radius: 0.25rem;
-            text-decoration: none;
-            text-align: center;
-            transition: background-color 0.3s;
-        }
-        .button:hover {
-            background-color: #2c5282;
-        }
-        .button.secondary {
-            background-color: #4a5568;
-        }
-        .button.secondary:hover {
-            background-color: #718096;
-        }
-        .notification {
-            background-color: #4a5568;
-            border-radius: 0.25rem;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-        .notification-title {
-            font-weight: 600;
-        }
-        .notification-body {
-            font-size: 0.875rem;
-            color: #cbd5e0;
-        }
-
-        .notification-bar {
-          width: 25%;
-          background-color: #2d3748;
-          padding: 1.5rem;
-          overflow-y: auto;
       }
-  
-      #messagesList {
-          list-style-type: none;
-          padding: 0;
-          margin: 0;
+      @media (min-width: 1024px) {
+        .card-grid {
+          grid-template-columns: repeat(3, 1fr);
+        }
       }
-  
+      .card {
+        background-color: #2d3748;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        padding: 1.5rem;
+        transition: background-color 0.3s;
+      }
+      .card:hover {
+        background-color: #4a5568;
+      }
+      .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .button {
+        display: block;
+        background-color: #3182ce;
+        color: white;
+        font-weight: bold;
+        padding: 0.5rem 1rem;
+        border-radius: 0.25rem;
+        text-decoration: none;
+        text-align: center;
+        transition: background-color 0.3s;
+      }
+      .button:hover {
+        background-color: #2c5282;
+      }
+      .button.secondary {
+        background-color: #4a5568;
+      }
+      .button.secondary:hover {
+        background-color: #718096;
+      }
       .notification {
-          background-color: #4a5568;
-          border-radius: 0.25rem;
-          padding: 1rem;
-          margin-bottom: 1rem;
-          animation: fadeIn 0.5s ease-out;
+        background-color: #4a5568;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
       }
-  
-      @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(-10px); }
-          to { opacity: 1; transform: translateY(0); }
-      }
-  
       .notification-title {
-          font-weight: 600;
-          margin-bottom: 0.5rem;
+        font-weight: 600;
       }
-  
       .notification-body {
-          font-size: 0.875rem;
-          color: #cbd5e0;
+        font-size: 0.875rem;
+        color: #cbd5e0;
       }
-  
+
+      .notification-bar {
+        width: 25%;
+        background-color: #2d3748;
+        padding: 1.5rem;
+        overflow-y: auto;
+      }
+
+      #messagesList {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .notification {
+        background-color: #4a5568;
+        border-radius: 0.25rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        animation: fadeIn 0.5s ease-out;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .notification-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      .notification-body {
+        font-size: 0.875rem;
+        color: #cbd5e0;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="dashboard-container">
-        <!-- Main Dashboard -->
-        <div class="main-dashboard">
-            <h1>
-                {% if user.is_staff %}Supervisor{% else %}Operator{% endif %} Dashboard
-            </h1>
+      <!-- Main Dashboard -->
+      <div class="main-dashboard">
+        <h1>
+          {% if user.is_staff %}Supervisor{% else %}Operator{% endif %}
+          Dashboard
+        </h1>
 
-            <div class="card-grid">
-                {% if user.is_staff %}
-                <!-- Supervisor Dashboard -->
-                <div class="card">
-                    <h2>Fixture Cleaning</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_fixture_cleaning_record' %}" class="button">Add Record</a>
-                        <a href="{% url 'list_fixture_cleaning_records' %}" class="button secondary">View Records</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Rejection Sheets</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_rejection_sheet' %}" class="button">Add Sheet</a>
-                        <a href="{% url 'list_rejection_sheets' %}" class="button secondary">View Sheets</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Soldering Bit Records</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_soldering_bit_record' %}" class="button">Add Record</a>
-                        <a href="{% url 'list_soldering_bit_records' %}" class="button secondary">View Records</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Maintenance Checklists</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
-                        <a href="{% url 'list_daily' %}" class="button secondary">View Daily</a>
-                        <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
-                        <a href="{% url 'list_weekly' %}" class="button secondary">View Weekly</a>
-                        <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
-                        <a href="{% url 'list_monthly' %}" class="button secondary">View Monthly</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Reading List</h2>
-                    <div class="button-container">
-                        <a href="{% url 'reading_create' %}" class="button">Add Reading</a>
-                        <a href="{% url 'reading_list' %}" class="button secondary">View Readings</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Control Chart</h2>
-                    <div class="button-container">
-                        <a href="{% url 'control_chart' %}" class="button">View Chart</a>
-                    </div>
-                </div>
-
-                
-                <div class="card">
-                    <h2>Startup checklist</h2>
-                    <div class="button-container">
-                        <a href="{% url 'checksheet_create' %}" class="button">Add Reading </a>
-             
-                        <a href="{% url 'checksheet_list' %}" class="button"> view Startup checklist</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Operators list</h2>
-                    <div class="button-container">
-                        <a href="{% url 'profile_list' %}" class="button">view </a>
-             
-                    </div>
-                </div>
-
-                {% else %}
-                <!-- Operator Dashboard -->
-                <div class="card">
-                    <h2>Fixture Cleaning</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_fixture_cleaning_record' %}" class="button">Add Record</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Rejection Sheets</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_rejection_sheet' %}" class="button">Add Sheet</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Soldering Bit Records</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_soldering_bit_record' %}" class="button">Add Record</a>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h2>Maintenance Checklists</h2>
-                    <div class="button-container">
-                        <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
-                        <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
-                        <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>Reading List</h2>
-                    <div class="button-container">
-                        <a href="{% url 'reading_create' %}" class="button">Add Reading</a>
-                    </div>
-                </div>
-                <div class="card">
-                    <h2>Startup checklist</h2>
-                    <div class="button-container">
-                        <a href="{% url 'checksheet_create' %}" class="button">Add Reading </a>
-             
-                        <a href="{% url 'checksheet_list' %}" class="button"> view Startup checklist</a>
-                    </div>
-                </div>
-                {% endif %}
+        <div class="card-grid">
+          {% if user.is_staff %}
+          <!-- Supervisor Dashboard -->
+          <div class="card">
+            <h2>Fixture Cleaning</h2>
+            <div class="button-container">
+              <a href="{% url 'add_fixture_cleaning_record' %}" class="button"
+                >Add Record</a
+              >
+              <a
+                href="{% url 'list_fixture_cleaning_records' %}"
+                class="button secondary"
+                >View Records</a
+              >
             </div>
+          </div>
 
+          <div class="card">
+            <h2>Rejection Sheets</h2>
+            <div class="button-container">
+              <a href="{% url 'add_rejection_sheet' %}" class="button"
+                >Add Sheet</a
+              >
+              <a
+                href="{% url 'list_rejection_sheets' %}"
+                class="button secondary"
+                >View Sheets</a
+              >
+            </div>
+          </div>
 
-            
+          <div class="card">
+            <h2>Soldering Bit Records</h2>
+            <div class="button-container">
+              <a href="{% url 'add_soldering_bit_record' %}" class="button"
+                >Add Record</a
+              >
+              <a
+                href="{% url 'list_soldering_bit_records' %}"
+                class="button secondary"
+                >View Records</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Maintenance Checklists</h2>
+            <div class="button-container">
+              <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
+              <a href="{% url 'list_daily' %}" class="button secondary"
+                >View Daily</a
+              >
+              <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
+              <a href="{% url 'list_weekly' %}" class="button secondary"
+                >View Weekly</a
+              >
+              <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
+              <a href="{% url 'list_monthly' %}" class="button secondary"
+                >View Monthly</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Reading List</h2>
+            <div class="button-container">
+              <a href="{% url 'reading_create' %}" class="button"
+                >Add Reading</a
+              >
+              <a href="{% url 'reading_list' %}" class="button secondary"
+                >View Readings</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Control Chart</h2>
+            <div class="button-container">
+              <a href="{% url 'control_chart' %}" class="button">View Chart</a>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Startup checklist</h2>
+            <div class="button-container">
+              <a href="{% url 'checksheet_create' %}" class="button"
+                >Add Reading
+              </a>
+
+              <a href="{% url 'checksheet_list' %}" class="button">
+                view Startup checklist</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Operators list</h2>
+            <div class="button-container">
+              <a href="{% url 'profile_list' %}" class="button">view </a>
+            </div>
+          </div>
+
+          {% else %}
+          <!-- Operator Dashboard -->
+          <div class="card">
+            <h2>Fixture Cleaning</h2>
+            <div class="button-container">
+              <a href="{% url 'add_fixture_cleaning_record' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Rejection Sheets</h2>
+            <div class="button-container">
+              <a href="{% url 'add_rejection_sheet' %}" class="button"
+                >Add Sheet</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Soldering Bit Records</h2>
+            <div class="button-container">
+              <a href="{% url 'add_soldering_bit_record' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Maintenance Checklists</h2>
+            <div class="button-container">
+              <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
+              <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
+              <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
+            </div>
+          </div>
+          <div class="card">
+            <h2>Reading List</h2>
+            <div class="button-container">
+              <a href="{% url 'reading_create' %}" class="button"
+                >Add Reading</a
+              >
+            </div>
+          </div>
+          <div class="card">
+            <h2>Startup checklist</h2>
+            <div class="button-container">
+              <a href="{% url 'checksheet_create' %}" class="button"
+                >Add Reading
+              </a>
+
+              <a href="{% url 'checksheet_list' %}" class="button">
+                view Startup checklist</a
+              >
+            </div>
+          </div>
+          {% endif %}
         </div>
+      </div>
 
-        <!-- Notification Bar -->
-        {% if user.is_staff %}
-        <div class="notification-bar">
-          <h2>Notifications</h2>
-          <ul id="messagesList">
-              <!-- Notifications will be inserted here by JavaScript -->
-          </ul>
+      <!-- Notification Bar -->
+      {% if user.is_staff %}
+      <div class="notification-bar">
+        <h2>Notifications</h2>
+        <ul id="messagesList">
+          <!-- Notifications will be inserted here by JavaScript -->
+        </ul>
       </div>
       {% endif %}
-
     </div>
-</body>
-<script>
-const chatSocket = new WebSocket(
-  'ws://' + window.location.host + '/ws/socket-server/'
-  );
+  </body>
+  <script>
+    // Function to store a notification in local storage
+    function storeNotification(notification) {
+      const notifications = JSON.parse(
+        localStorage.getItem("notifications") || "[]"
+      );
+      notifications.push({
+        message: notification,
+        timestamp: new Date().getTime(),
+      });
+      localStorage.setItem("notifications", JSON.stringify(notifications));
+    }
 
-  chatSocket.onmessage = function(e) {
+    // Function to retrieve and display stored notifications
+    function displayStoredNotifications() {
+      const notifications = JSON.parse(
+        localStorage.getItem("notifications") || "[]"
+      );
+      const currentTime = new Date().getTime();
+      const messagesList = document.querySelector("#messagesList");
+
+      notifications.forEach((notification, index) => {
+        // Check if the notification is less than 7 hours old
+        if (currentTime - notification.timestamp < 7 * 60 * 60 * 1000) {
+          const listItem = document.createElement("li");
+          listItem.className = "notification";
+          listItem.innerHTML = `
+                    <p class="notification-title">Stored Notification</p>
+                    <p class="notification-message">${notification.message}</p>
+                `;
+          messagesList.prepend(listItem);
+        } else {
+          // Remove old notifications
+          notifications.splice(index, 1);
+        }
+      });
+
+      // Update local storage with cleaned notifications
+      localStorage.setItem("notifications", JSON.stringify(notifications));
+    }
+
+    const chatSocket = new WebSocket(
+      "ws://" + window.location.host + "/ws/socket-server/"
+    );
+
+    chatSocket.onmessage = function (e) {
       const data = JSON.parse(e.data);
-      const messagesList = document.querySelector('#messagesList');
-      const listItem = document.createElement('li');
-      listItem.className = 'notification';
+      const messagesList = document.querySelector("#messagesList");
+      const listItem = document.createElement("li");
+      listItem.className = "notification";
       listItem.innerHTML = `
-          <p class="notification-title">New Notification</p>
-          <p class="notification-message">${data.message}</p>
-      `;
+            <p class="notification-title">New Notification</p>
+            <p class="notification-message">${data.message}</p>
+        `;
       messagesList.prepend(listItem);
-  };
 
-  chatSocket.onclose = function(e) {
-      console.error('Chat socket closed unexpectedly');
-  };
-</script>
+      // Store the new notification
+      storeNotification(data.message);
+    };
+
+    chatSocket.onclose = function (e) {
+      console.error("Chat socket closed unexpectedly");
+    };
+
+    // Display stored notifications when the page loads
+    window.addEventListener("load", displayStoredNotifications);
+  </script>
 </html>
 {% endblock %}
