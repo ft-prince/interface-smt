@@ -26,9 +26,16 @@ The **Interface With Machine** project is designed to provide an efficient inter
 - Manage machine stations and associated media.
 - Configure settings for media sliders and process information.
 - Real-time data interaction and monitoring.
-- **Manage Fixture Cleaning Records (Create, Update, Delete, View).**
-- **Manage Rejection Sheets.**
-- **Track Soldering Bit Records.**
+- Manage Fixture Cleaning Records (Create, Update, Delete, View)
+- Manage Rejection Sheets
+- Track Soldering Bit Records
+- Daily, Weekly, and Monthly Maintenance Checklists
+- Startup Checksheet Management
+- P-Chart Data Management and Visualization
+- Screen Content Display and Updates
+- Support for PDF and Media Files
+- Control Dashboard for Monitoring Key Metrics
+
 
 ## Installation
 
