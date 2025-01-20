@@ -5,315 +5,213 @@
 {% endblock title %}
 
 {% block content %}
-
-<div class="container">
-  <div class="d-flex justify-content-between align-items-center ms-auto my-3 mx-4">
-    <h1>{% if form.instance.pk %}Update{% else %}Add{% endif %} Soldering Bit Record</h1>
-    <p>QSF-13-06</p>
-  </div>
-    
-    <form method="post">
-        {% csrf_token %}
-        <table class="form-table">
-            <tr>
-                <td>{{ form.station.label_tag }}</td>
-                <td>
-                    {{ form.station }}
-                    {% if form.station.help_text %}
-                        <small class="help-text">{{ form.station.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.station.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.doc_number.label_tag }}</td>
-                <td>
-                    {{ form.doc_number }}
-                    {% if form.doc_number.help_text %}
-                        <small class="help-text">{{ form.doc_number.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.doc_number.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.part_name.label_tag }}</td>
-                <td>
-                    {{ form.part_name }}
-                    {% if form.part_name.help_text %}
-                        <small class="help-text">{{ form.part_name.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.part_name.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.machine_no.label_tag }}</td>
-                <td>
-                    {{ form.machine_no }}
-                    {% if form.machine_no.help_text %}
-                        <small class="help-text">{{ form.machine_no.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.machine_no.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.machine_location.label_tag }}</td>
-                <td>
-                    {{ form.machine_location }}
-                    {% if form.machine_location.help_text %}
-                        <small class="help-text">{{ form.machine_location.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.machine_location.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.month.label_tag }}</td>
-                <td>
-                    {{ form.month }}
-                    {% if form.month.help_text %}
-                        <small class="help-text">{{ form.month.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.month.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            {% comment %} <tr>
-                <td>{{ form.time.label_tag }}</td>
-                <td>
-                    {{ form.time }}
-                    {% if form.time.help_text %}
-                        <small class="help-text">{{ form.time.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.time.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            {% comment %} <tr>
-                <td>{{ form.operator_name.label_tag }}</td>
-                <td>
-                    {{ form.operator_name }}
-                    {% if form.operator_name.help_text %}
-                        <small class="help-text">{{ form.operator_name }}</small>
-                    {% endif %}
-                    {% for error in form.operator_name.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.soldering_points_per_part.label_tag }}</td>
-                <td>
-                    {{ form.soldering_points_per_part }}
-                    {% if form.soldering_points_per_part.help_text %}
-                        <small class="help-text">{{ form.soldering_points_per_part.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.soldering_points_per_part.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.bit_size.label_tag }}</td>
-                <td>
-                    {{ form.bit_size }}
-                    {% if form.bit_size.help_text %}
-                        <small class="help-text">{{ form.bit_size.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.bit_size.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.date.label_tag }}</td>
-                <td>
-                    {{ form.date }}
-                    {% if form.date.help_text %}
-                        <small class="help-text">{{ form.date.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.date.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.produce_quantity_shift_a.label_tag }}</td>
-                <td>
-                    {{ form.produce_quantity_shift_a }}
-                    {% if form.produce_quantity_shift_a.help_text %}
-                        <small class="help-text">{{ form.produce_quantity_shift_a.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.produce_quantity_shift_a.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.produce_quantity_shift_b.label_tag }}</td>
-                <td>
-                    {{ form.produce_quantity_shift_b }}
-                    {% if form.produce_quantity_shift_b.help_text %}
-                        <small class="help-text">{{ form.produce_quantity_shift_b.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.produce_quantity_shift_b.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.total_soldering_points.label }}</td>
-                <td>
-                    {{ form.total_soldering_points }}
-                    {% if form.total_quantity.help_text %}
-                        <small class="help-text">{{ form.total_quantity.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.total_quantity.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            {% comment %} <tr>
-              <td>{{ form.total_soldering_points.label }}</td>
-              <td>
-                  {{ form.total_soldering_points }}
-                  {% if form.total_soldering_points.help_text %}
-                      <small class="help-text">{{ form.total_soldering_points.help_text }}</small>
-                  {% endif %}
-                  {% for error in form.total_soldering_points.errors %}
-                      <small class="error-text">{{ error }}</small>
-                  {% endfor %}
-              </td>
-          </tr>
-          
-          <tr>
-              <td>{{ form.total_quantity.label }}</td>
-              <td>
-                  {{ form.total_quantity }}
-                  {% if form.total_quantity.help_text %}
-                      <small class="help-text">{{ form.total_quantity.help_text }}</small>
-                  {% endif %}
-                  {% for error in form.total_quantity.errors %}
-                      <small class="error-text">{{ error }}</small>
-                  {% endfor %}
-              </td>
-          </tr>
-          
-          <tr>
-              <td>{{ form.bit_life_remaining.label }}</td>
-              <td>
-                  {{ form.bit_life_remaining }}
-                  {% if form.bit_life_remaining.help_text %}
-                      <small class="help-text">{{ form.bit_life_remaining.help_text }}</small>
-                  {% endif %}
-                  {% for error in form.bit_life_remaining.errors %}
-                      <small class="error-text">{{ error }}</small>
-                  {% endfor %}
-              </td>
-          </tr> {% endcomment %}
-          
-            {% comment %} <tr>
-                <td>{{ form.total_soldering_points.label_tag }}</td>
-                <td>
-                    {{ form.total_soldering_points }}
-                    {% if form.total_soldering_points.help_text %}
-                        <small class="help-text">{{ form.total_soldering_points.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.total_soldering_points.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            {% comment %} <tr>
-                <td>{{ form.bit_life_remaining.label_tag }}</td>
-                <td>
-                    {{ form.bit_life_remaining }}
-                    {% if form.bit_life_remaining.help_text %}
-                        <small class="help-text">{{ form.bit_life_remaining.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.bit_life_remaining.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.bit_change_date.label_tag }}</td>
-                <td>
-                    {{ form.bit_change_date }}
-                    {% if form.bit_change_date.help_text %}
-                        <small class="help-text">{{ form.bit_change_date.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.bit_change_date.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.prepared_by.label_tag }}</td>
-                <td>
-                    {{ form.prepared_by }}
-                    {% if form.prepared_by.help_text %}
-                        <small class="help-text">{{ form.prepared_by.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.prepared_by.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.approved_by.label_tag }}</td>
-                <td>
-                    {{ form.approved_by }}
-                    {% if form.approved_by.help_text %}
-                        <small class="help-text">{{ form.approved_by.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.approved_by.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-        </table>
-        <div class="button-container">
-            <button type="submit" class="btn btn-primary">Save</button>
-            <a href="{% url 'list_soldering_bit_records' %}" class="btn btn-secondary">Back to List</a>
+<div class="background-container">
+    <div class="container content-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Soldering Bit Record</h1>
+            <p class="text-secondary">QSF-13-06</p>
         </div>
-    </form>
+
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
+                            {{ form.station }}
+                            {% if form.station.errors %}
+                                <div class="text-danger">{{ form.station.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.part_name.id_for_label }}" class="form-label">{{ form.part_name.label }}</label>
+                            {{ form.part_name }}
+                            {% if form.part_name.errors %}
+                                <div class="text-danger">{{ form.part_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.machine_no.id_for_label }}" class="form-label">{{ form.machine_no.label }}</label>
+                            {{ form.machine_no }}
+                            {% if form.machine_no.errors %}
+                                <div class="text-danger">{{ form.machine_no.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.machine_location.id_for_label }}" class="form-label">{{ form.machine_location.label }}</label>
+                            {{ form.machine_location }}
+                            {% if form.machine_location.errors %}
+                                <div class="text-danger">{{ form.machine_location.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.soldering_points_per_part.id_for_label }}" class="form-label">{{ form.soldering_points_per_part.label }}</label>
+                            {{ form.soldering_points_per_part }}
+                            {% if form.soldering_points_per_part.errors %}
+                                <div class="text-danger">{{ form.soldering_points_per_part.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.bit_size.id_for_label }}" class="form-label">{{ form.bit_size.label }}</label>
+                            {{ form.bit_size }}
+                            {% if form.bit_size.errors %}
+                                <div class="text-danger">{{ form.bit_size.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.produce_quantity_shift_a.id_for_label }}" class="form-label">{{ form.produce_quantity_shift_a.label }}</label>
+                            {{ form.produce_quantity_shift_a }}
+                            {% if form.produce_quantity_shift_a.errors %}
+                                <div class="text-danger">{{ form.produce_quantity_shift_a.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.produce_quantity_shift_b.id_for_label }}" class="form-label">{{ form.produce_quantity_shift_b.label }}</label>
+                            {{ form.produce_quantity_shift_b }}
+                            {% if form.produce_quantity_shift_b.errors %}
+                                <div class="text-danger">{{ form.produce_quantity_shift_b.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.bit_change_date.id_for_label }}" class="form-label">{{ form.bit_change_date.label }}</label>
+                            {{ form.bit_change_date }}
+                            {% if form.bit_change_date.errors %}
+                                <div class="text-danger">{{ form.bit_change_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="{% url 'list_soldering_bit_records' %}" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --notification-bg: #34445e;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
 
-  .form-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-.form-table td {
-    padding: 10px;
-    border: 1px solid #ddd;
-}
-.form-table td:first-child {
-    width: 30%;
-    font-weight: bold;
-}
-.help-text {
-    color: #6c757d;
-    display: block;
-    margin-top: 5px;
-}
-.error-text {
-    color: #dc3545;
-    display: block;
-    margin-top: 5px;
-}
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
 
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+        position: relative;
+    }
+
+    .background-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 102, 51, 0.1) 0%, rgba(0, 51, 204, 0.1) 100%);
+        pointer-events: none;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .form-label {
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #002299;
+        border-color: #002299;
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: #FF4500;
+        border-color: #FF4500;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .text-danger {
+        color: #dc3545;
+    }
 </style>
 {% endblock content %}

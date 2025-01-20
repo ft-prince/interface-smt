@@ -1,23 +1,126 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h1>{% if form.instance.pk %}Edit{% else %}Create{% endif %} P-Chart Data</h1>
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-        <div class="mb-3">
-            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-            {{ field }}
-            {% if field.errors %}
-            <div class="alert alert-danger">
-                {{ field.errors }}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                <h1 class="h3 mb-0">{% if form.instance.pk %}Edit{% else %}Add New{% endif %} P-Chart Data</h1>
+                <span class="badge bg-secondary">Quality Control</span>
             </div>
-            {% endif %}
         </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{% url 'pchart_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+
+                <!-- Location and Process Information -->
+                <div class="row mb-4">
+                    <h5 class="mb-3">Location and Process Details</h5>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.location.id_for_label }}" class="form-label">Location</label>
+                        {{ form.location }}
+                        {% if form.location.errors %}
+                            <div class="text-danger">{{ form.location.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.department.id_for_label }}" class="form-label">Department</label>
+                        {{ form.department }}
+                        {% if form.department.errors %}
+                            <div class="text-danger">{{ form.department.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Part and Operation Information -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.part_number_and_name.id_for_label }}" class="form-label">Part Number/Name</label>
+                        {{ form.part_number_and_name }}
+                        {% if form.part_number_and_name.errors %}
+                            <div class="text-danger">{{ form.part_number_and_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.operation_number_and_stage_name.id_for_label }}" class="form-label">Operation Stage</label>
+                        {{ form.operation_number_and_stage_name }}
+                        {% if form.operation_number_and_stage_name.errors %}
+                            <div class="text-danger">{{ form.operation_number_and_stage_name.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Dates -->
+                <div class="row mb-4">
+                    <h5 class="mb-3">Date Information</h5>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.month.id_for_label }}" class="form-label">Month</label>
+                        {{ form.month }}
+                        {% if form.month.errors %}
+                            <div class="text-danger">{{ form.month.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.date_control_limits_calculated.id_for_label }}" class="form-label">Control Limits Calculation Date</label>
+                        {{ form.date_control_limits_calculated }}
+                        {% if form.date_control_limits_calculated.errors %}
+                            <div class="text-danger">{{ form.date_control_limits_calculated.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sample Information -->
+                <div class="row mb-4">
+                    <h5 class="mb-3">Sample Data</h5>
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.average_sample_size.id_for_label }}" class="form-label">Average Sample Size</label>
+                        {{ form.average_sample_size }}
+                        {% if form.average_sample_size.errors %}
+                            <div class="text-danger">{{ form.average_sample_size.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.frequency.id_for_label }}" class="form-label">Frequency</label>
+                        {{ form.frequency }}
+                        {% if form.frequency.errors %}
+                            <div class="text-danger">{{ form.frequency.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.sample_size.id_for_label }}" class="form-label">Sample Size</label>
+                        {{ form.sample_size }}
+                        {% if form.sample_size.errors %}
+                            <div class="text-danger">{{ form.sample_size.errors }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="{{ form.nonconforming_units.id_for_label }}" class="form-label">Nonconforming Units</label>
+                        {{ form.nonconforming_units }}
+                        {% if form.nonconforming_units.errors %}
+                            <div class="text-danger">{{ form.nonconforming_units.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'pchart_list' %}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">
+                        {% if form.instance.pk %}Update{% else %}Create{% endif %} Record
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 {% endblock %}

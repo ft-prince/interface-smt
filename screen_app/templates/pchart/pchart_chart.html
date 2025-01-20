@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                <h1 class="h3 mb-0">P-Chart Analysis</h1>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Selection -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Select Location</h5>
+                    <form method="GET">
+                        <select name="location" class="form-select" onchange="this.form.submit()">
+                            <option value="">All Locations</option>
+                            {% for value, name in locations.items %}
+                                <option value="{{ value }}" {% if value == selected_location %}selected{% endif %}>
+                                    {{ name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#p-chart">P Chart</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#np-chart">NP Chart</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="p-chart">
+                            <canvas id="pChart" style="height: 400px;"></canvas>
+                        </div>
+                        <div class="tab-pane fade" id="np-chart">
+                            <canvas id="npChart" style="height: 400px;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const chartData = {{ chart_data|safe }};
+    
+    // P-Chart
+    new Chart(document.getElementById('pChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Proportion',
+                data: chartData.proportion,
+                borderColor: '#0d6efd',
+                tension: 0.1
+            }, {
+                label: 'UCL',
+                data: chartData.ucl_p,
+                borderColor: '#dc3545',
+                borderDash: [5, 5]
+            }, {
+                label: 'LCL',
+                data: chartData.lcl_p,
+                borderColor: '#dc3545',
+                borderDash: [5, 5]
+            }, {
+                label: 'Center Line',
+                data: chartData.center_line,
+                borderColor: '#198754',
+                borderDash: [2, 2]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // NP-Chart
+    new Chart(document.getElementById('npChart'), {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Number of Defects',
+                data: chartData.np_value,
+                borderColor: '#0d6efd',
+                tension: 0.1
+            }, {
+                label: 'UCL',
+                data: chartData.ucl_np,
+                borderColor: '#dc3545',
+                borderDash: [5, 5]
+            }, {
+                label: 'LCL',
+                data: chartData.lcl_np,
+                borderColor: '#dc3545',
+                borderDash: [5, 5]
+            }, {
+                label: 'Center Line',
+                data: chartData.center_line_np,
+                borderColor: '#198754',
+                borderDash: [2, 2]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+});
+</script>{% endblock %}

@@ -38,7 +38,16 @@ from .views import (
     startup_checksheet_create_view,
     StartUpCheckSheetDetailView,
     StartUpCheckSheetUpdateView,
-    StartUpCheckSheetDeleteView
+    StartUpCheckSheetDeleteView,
+    
+    # fixture 
+    ListFixtureCleaningRecordView,
+    AddFixtureCleaningRecordView,
+    UpdateFixtureCleaningRecordView,
+    DeleteFixtureCleaningRecordView,
+    FixtureCleaningRecordDetailView,
+    AuditHistoryView
+
    
 )
 
@@ -115,6 +124,10 @@ urlpatterns = [
     path('pchart/create/', views.PChartDataCreateView.as_view(), name='pchart_create'),
     path('pchart/update/<int:pk>/', views.PChartDataUpdateView.as_view(), name='pchart_update'),
     path('pchart/delete/<int:pk>/', views.PChartDataDeleteView.as_view(), name='pchart_delete'),
+    path('pchart/chart/', views.PChartView.as_view(), name='pchart_chart'),
+
+# ----------------------------------------------------------------
+    path('audit-history/', AuditHistoryView.as_view(), name='audit_history'),
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

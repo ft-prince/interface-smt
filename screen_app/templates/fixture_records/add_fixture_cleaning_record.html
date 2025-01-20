@@ -1,241 +1,232 @@
 {% extends "base.html" %}
 
 {% block title %}
-    <title>{% if form.instance.pk %}Update{% else %}Add{% endif %} Record</title>
+    <title>{% if form.instance.pk %}Update{% else %}Add{% endif %} Fixture Cleaning Record</title>
 {% endblock %}
 
 {% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Fixture Cleaning Record</h1>
+            <p class="text-secondary">QSF-13-06</p>
+        </div>
 
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
 
-<div class="d-flex justify-content-between align-items-center ms-auto my-3 mx-4">
-    <h1>{% if form.instance.pk %}Update{% else %}Add{% endif %} Fixture Cleaning Record</h1>
-    <p>QSF-13-06</p>
-</div>
-
-<div class='container'>
-    <form method="post">
-        {% csrf_token %}
-        <table class="form-table">
-            <tr>
-                <td>{{ form.station.label_tag }}</td>
-                <td>
-                    {{ form.station }}
-                    {% if form.station.help_text %}
-                        <small class="help-text">{{ form.station.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.station.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.doc_number.label_tag }}</td>
-                <td>
-                    {{ form.doc_number }}
-                    {% if form.doc_number.help_text %}
-                        <small class="help-text">{{ form.doc_number.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.doc_number.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.month_year.label_tag }}</td>
-                <td>
-                    {{ form.month_year }}
-                    {% if form.month_year.help_text %}
-                        <small class="help-text">{{ form.month_year.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.month_year.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.shift.label_tag }}</td>
-                <td>
-                    {{ form.shift }}
-                    {% if form.shift.help_text %}
-                        <small class="help-text">{{ form.shift.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.shift.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.fixture_location.label_tag }}</td>
-                <td>
-                    {{ form.fixture_location }}
-                    {% if form.fixture_location.help_text %}
-                        <small class="help-text">{{ form.fixture_location.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.fixture_location.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.fixture_control_no.label_tag }}</td>
-                <td>
-                    {{ form.fixture_control_no }}
-                    {% if form.fixture_control_no.help_text %}
-                        <small class="help-text">{{ form.fixture_control_no.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.fixture_control_no.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.fixture_installation_date.label_tag }}</td>
-                <td>
-                    {{ form.fixture_installation_date }}
-                    {% if form.fixture_installation_date.help_text %}
-                        <small class="help-text">{{ form.fixture_installation_date.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.fixture_installation_date.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.date.label_tag }}</td>
-                <td>
-                    {{ form.date }}
-                    {% if form.date.help_text %}
-                        <small class="help-text">{{ form.date.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.date.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.time.label_tag }}</td>
-                <td>
-                    {{ form.time }}
-                    {% if form.time.help_text %}
-                        <small class="help-text">{{ form.time.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.time.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            {% comment %} <tr>
-                <td>{{ form.operator_name.label_tag }}</td>
-                <td>
-                    {{ form.operator_name }}
-                    {% if form.operator_name.help_text %}
-                        <small class="help-text">{{ form.operator_name.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.operator_name.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-            <tr>
-                <td>{{ form.verification_tag_available.label_tag }}</td>
-                <td>
-                    {{ form.verification_tag_available }}
-                    {% if form.verification_tag_available.help_text %}
-                        <small class="help-text">{{ form.verification_tag_available.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.verification_tag_available.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.verification_tag_condition.label_tag }}</td>
-                <td>
-                    {{ form.verification_tag_condition }}
-                    {% if form.verification_tag_condition.help_text %}
-                        <small class="help-text">{{ form.verification_tag_condition.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.verification_tag_condition.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.no_dust_on_fixture.label_tag }}</td>
-                <td>
-                    {{ form.no_dust_on_fixture }}
-                    {% if form.no_dust_on_fixture.help_text %}
-                        <small class="help-text">{{ form.no_dust_on_fixture.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.no_dust_on_fixture.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.no_epoxy_coating_on_fixture.label_tag }}</td>
-                <td>
-                    {{ form.no_epoxy_coating_on_fixture }}
-                    {% if form.no_epoxy_coating_on_fixture.help_text %}
-                        <small class="help-text">{{ form.no_epoxy_coating_on_fixture.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.no_epoxy_coating_on_fixture.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            {% comment %} <tr>
-                <td>{{ form.operator_signature.label_tag }}</td>
-                <td>
-                    {{ form.operator_signature }}
-                    {% if form.operator_signature.help_text %}
-                        <small class="help-text">{{ form.operator_signature.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.operator_signature.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr>
-            <tr>
-                <td>{{ form.supervisor_signature.label_tag }}</td>
-                <td>
-                    {{ form.supervisor_signature }}
-                    {% if form.supervisor_signature.help_text %}
-                        <small class="help-text">{{ form.supervisor_signature.help_text }}</small>
-                    {% endif %}
-                    {% for error in form.supervisor_signature.errors %}
-                        <small class="error-text">{{ error }}</small>
-                    {% endfor %}
-                </td>
-            </tr> {% endcomment %}
-        </table>
-        <button type="submit">Save</button>
-    </form>
-    <a href="{% url 'list_fixture_cleaning_records' %}" class="btn" style="margin-top: 20px;">Back to List</a>
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
+                            {{ form.station }}
+                            {% if form.station.errors %}
+                                <div class="text-danger">{{ form.station.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.month_year.id_for_label }}" class="form-label">{{ form.month_year.label }}</label>
+                            {{ form.month_year }}
+                            {% if form.month_year.errors %}
+                                <div class="text-danger">{{ form.month_year.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.shift.id_for_label }}" class="form-label">{{ form.shift.label }}</label>
+                            {{ form.shift }}
+                            {% if form.shift.errors %}
+                                <div class="text-danger">{{ form.shift.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fixture_location.id_for_label }}" class="form-label">{{ form.fixture_location.label }}</label>
+                            {{ form.fixture_location }}
+                            {% if form.fixture_location.errors %}
+                                <div class="text-danger">{{ form.fixture_location.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fixture_control_no.id_for_label }}" class="form-label">{{ form.fixture_control_no.label }}</label>
+                            {{ form.fixture_control_no }}
+                            {% if form.fixture_control_no.errors %}
+                                <div class="text-danger">{{ form.fixture_control_no.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.fixture_installation_date.id_for_label }}" class="form-label">{{ form.fixture_installation_date.label }}</label>
+                            {{ form.fixture_installation_date }}
+                            {% if form.fixture_installation_date.errors %}
+                                <div class="text-danger">{{ form.fixture_installation_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.verification_tag_available }}
+                                <label class="form-check-label" for="{{ form.verification_tag_available.id_for_label }}">
+                                    {{ form.verification_tag_available.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.verification_tag_condition }}
+                                <label class="form-check-label" for="{{ form.verification_tag_condition.id_for_label }}">
+                                    {{ form.verification_tag_condition.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.no_dust_on_fixture }}
+                                <label class="form-check-label" for="{{ form.no_dust_on_fixture.id_for_label }}">
+                                    {{ form.no_dust_on_fixture.label }}
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                {{ form.no_epoxy_coating_on_fixture }}
+                                <label class="form-check-label" for="{{ form.no_epoxy_coating_on_fixture.id_for_label }}">
+                                    {{ form.no_epoxy_coating_on_fixture.label }}
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="{% url 'list_fixture_cleaning_records' %}" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>
 
 <style>
-    .form-table {
-        width: 100%;
-        border-collapse: collapse;
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --notification-bg: #34445e;
+        --grid-color: rgba(0, 51, 204, 0.1);
     }
-    .form-table td {
-        padding: 10px;
-        border: 1px solid #ddd;
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
     }
-    .form-table td:first-child {
-        width: 30%;
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+        position: relative;
+    }
+
+    .background-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 102, 51, 0.1) 0%, rgba(0, 51, 204, 0.1) 100%);
+        pointer-events: none;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+        color: var(--primary-color);
         font-weight: bold;
     }
-    .help-text {
-        color: #6c757d;
-        display: block;
-        margin-top: 5px;
+
+    .form-label {
+        color: var(--text-color);
+        font-weight: 500;
     }
-    .error-text {
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #002299;
+        border-color: #002299;
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: #FF4500;
+        border-color: #FF4500;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .form-check-label {
+        color: var(--text-color);
+    }
+
+    .text-danger {
         color: #dc3545;
-        display: block;
-        margin-top: 5px;
     }
 </style>
 {% endblock content %}

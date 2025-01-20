@@ -1,163 +1,266 @@
 {% extends "base.html" %}
 
 {% block title %}
-<title>
-  {% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist Item
-</title>
+<title>{% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist Item</title>
 {% endblock title %}
 
 {% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist Item</h1>
+            <p class="text-secondary">QSF-13-06</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <h2 class="mb-3">General Information</h2>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.rev_number.id_for_label }}" class="form-label">{{ form.rev_number.label }}</label>
+                            {{ form.rev_number }}
+                            {% if form.rev_number.errors %}
+                                <div class="text-danger">{{ form.rev_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.rev_date.id_for_label }}" class="form-label">{{ form.rev_date.label }}</label>
+                            {{ form.rev_date }}
+                            {% if form.rev_date.errors %}
+                                <div class="text-danger">{{ form.rev_date.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.machine_name.id_for_label }}" class="form-label">{{ form.machine_name.label }}</label>
+                            {{ form.machine_name }}
+                            {% if form.machine_name.errors %}
+                                <div class="text-danger">{{ form.machine_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.machine_location.id_for_label }}" class="form-label">{{ form.machine_location.label }}</label>
+                            {{ form.machine_location }}
+                            {% if form.machine_location.errors %}
+                                <div class="text-danger">{{ form.machine_location.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.control_number.id_for_label }}" class="form-label">{{ form.control_number.label }}</label>
+                            {{ form.control_number }}
+                            {% if form.control_number.errors %}
+                                <div class="text-danger">{{ form.control_number.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.month_year.id_for_label }}" class="form-label">{{ form.month_year.label }}</label>
+                            {{ form.month_year }}
+                            {% if form.month_year.errors %}
+                                <div class="text-danger">{{ form.month_year.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
+                            {{ form.station }}
+                            {% if form.station.errors %}
+                                <div class="text-danger">{{ form.station.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <h2 class="mb-3">Check Points</h2>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Check Point</th>
+                                    <th>Requirement Range</th>
+                                    <th>Method of Checking</th>
+                                    <th>Remark</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Check Conveyor Belts</td>
+                                    <td>No Damage</td>
+                                    <td>By Hand</td>
+                                    <td>{{ form.Remark_8 }}{% if form.Remark_8.errors %}<div class="text-danger">{{ form.Remark_8.errors }}</div>{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td>Check Solder bit Assembly. For any Bolts & Screw Loose</td>
+                                    <td>Proper Tight</td>
+                                    <td>By Hand</td>
+                                    <td>{{ form.Remark_9 }}{% if form.Remark_9.errors %}<div class="text-danger">{{ form.Remark_9.errors }}</div>{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td>Check Wire & Cable</td>
+                                    <td>No Damage No Broken</td>
+                                    <td>By Hand</td>
+                                    <td>{{ form.Remark_10 }}{% if form.Remark_10.errors %}<div class="text-danger">{{ form.Remark_10.errors }}</div>{% endif %}</td>
+                                </tr>
+                                <tr>
+                                    <td>Electrical Insulation</td>
+                                    <td>No Cut & No Damage Wire</td>
+                                    <td>By Hand</td>
+                                    <td>{{ form.Remark_11 }}{% if form.Remark_11.errors %}<div class="text-danger">{{ form.Remark_11.errors }}</div>{% endif %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        <a href="{% url 'list_weekly' %}" class="btn btn-secondary">Back to List</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  h1,
-  h2 {
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
-  }
-  .excel-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-  }
-  .excel-table th,
-  .excel-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-  }
-  .excel-table th {
-    background-color: #f2f2f2;
-    font-weight: bold;
-  }
-  .section {
-    margin-bottom: 30px;
-  }
-  .btn-submit {
-    background-color: #4caf50;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    cursor: pointer;
-  }
-  .btn-submit:hover {
-    background-color: #45a049;
-  }
-  .btn-back {
-    background-color: #f44336;
-    color: white;
-    padding: 10px 20px;
-    text-decoration: none;
-    margin-left: 10px;
-  }
-  .error-message {
-    color: red;
-    font-size: 0.875em;
-    margin-top: 5px;
-  }
-  .form-group {
-    margin-bottom: 15px;
-  }
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --notification-bg: #34445e;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+        position: relative;
+    }
+
+    .background-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 102, 51, 0.1) 0%, rgba(0, 51, 204, 0.1) 100%);
+        pointer-events: none;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    h1, h2 {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .form-label {
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #002299;
+        border-color: #002299;
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: #FF4500;
+        border-color: #FF4500;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .text-danger {
+        color: #dc3545;
+    }
+
+    .table {
+        background-color: var(--card-bg);
+    }
+
+    .table th {
+        background-color: var(--primary-color);
+        color: white;
+    }
 </style>
 
-<div class="container">
-  <h1>
-    {% if form.instance.pk %}Update{% else %}Add{% endif %} Weekly Checklist Item
-  </h1>
-
-  {% if messages %}
-    <ul class="messages error-message">
-      {% for message in messages %}
-        <li class="{{ message.tags }}">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-
-  <form method="post">
-    {% csrf_token %}
-
-    <!-- Display non-field errors -->
-    {% if form.non_field_errors %}
-      <div class="error-message">
-        {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    <div class="section">
-      <div class="d-flex justify-content-between align-items-center">
-        <h2>General Information</h2>
-        <p>QSF-13-06</p>
-      </div>
-      <table class="excel-table">
-        <tr>
-          <th>{{ form.rev_number.label_tag }}</th>
-          <td>{{ form.rev_number }}{% if form.rev_number.errors %}<span class="error-message">{{ form.rev_number.errors }}</span>{% endif %}</td>
-          <th>{{ form.rev_date.label_tag }}</th>
-          <td>{{ form.rev_date }}{% if form.rev_date.errors %}<span class="error-message">{{ form.rev_date.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <th>{{ form.machine_name.label_tag }}</th>
-          <td>{{ form.machine_name }}{% if form.machine_name.errors %}<span class="error-message">{{ form.machine_name.errors }}</span>{% endif %}</td>
-          <th>{{ form.machine_location.label_tag }}</th>
-          <td>{{ form.machine_location }}{% if form.machine_location.errors %}<span class="error-message">{{ form.machine_location.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <th>{{ form.control_number.label_tag }}</th>
-          <td>{{ form.control_number }}{% if form.control_number.errors %}<span class="error-message">{{ form.control_number.errors }}</span>{% endif %}</td>
-          <th>{{ form.month_year.label_tag }}</th>
-          <td>{{ form.month_year }}{% if form.month_year.errors %}<span class="error-message">{{ form.month_year.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <th>{{ form.station.label_tag }}</th>
-          <td>{{ form.station }}{% if form.station.errors %}<span class="error-message">{{ form.station.errors }}</span>{% endif %}</td>
-        </tr>
-      </table>
-    </div>
-
-    <div class="section">
-      <h2>Check Points</h2>
-      <table class="excel-table">
-        <tr>
-          <th>Check Point</th>
-          <th>Requirement Range</th>
-          <th>Method of Checking</th>
-          <th>Remark</th>
-        </tr>
-        <tr>
-          <td>Check Conveyor Belts</td>
-          <td>No Damage</td>
-          <td>By Hand</td>
-          <td>{{ form.Remark_8 }}{% if form.Remark_8.errors %}<span class="error-message">{{ form.Remark_8.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <td>Check Solder bit Assembly. For any Bolts & Screw Loose</td>
-          <td>Proper Tight</td>
-          <td>By Hand</td>
-          <td>{{ form.Remark_9 }}{% if form.Remark_9.errors %}<span class="error-message">{{ form.Remark_9.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <td>Check Wire & Cable</td>
-          <td>No Damage No Broken</td>
-          <td>By Hand</td>
-          <td>{{ form.Remark_10 }}{% if form.Remark_10.errors %}<span class="error-message">{{ form.Remark_10.errors }}</span>{% endif %}</td>
-        </tr>
-        <tr>
-          <td>Electrical Insulation</td>
-          <td>No Cut & No Damage Wire</td>
-          <td>By Hand</td>
-          <td>{{ form.Remark_11 }}{% if form.Remark_11.errors %}<span class="error-message">{{ form.Remark_11.errors }}</span>{% endif %}</td>
-        </tr>
-      </table>
-    </div>
-
-    <button type="submit" class="btn-submit">Save</button>
-    <a href="{% url 'list_weekly' %}" class="btn-back">Back to List</a>
-  </form>
-</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var alertList = document.querySelectorAll('.alert');
+        alertList.forEach(function (alert) {
+            new bootstrap.Alert(alert);
+        });
+    });
+</script>
 {% endblock content %}

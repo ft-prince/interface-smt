@@ -10,61 +10,217 @@
             padding: 0;
             height: 100%;
             overflow: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
-        .slider-container {
+        
+        .main-wrapper {
             display: flex;
-            justify-content: center;
-            align-items: center;
             height: 100vh;
             width: 100vw;
-            background-color: black;
+            background-color: #0f172a;
             position: relative;
         }
-        .slider-container video{
+
+        /* Styled Sidebar */
+        .side-heading {
+            flex: 0 0 8%;
+            background: linear-gradient(145deg, #1e293b, #0f172a);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .side-heading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+
+        .user-info {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1.5rem;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-name {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 0 0 1rem 0;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.025em;
+            text-align: center;
+        }
+
+        .user-skill {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .skill-badge {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .user-id {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+            padding-top: 0.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .glow {
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Dashboard Button in Sidebar */
+        .dashboard-button {
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            color: white;
+            padding: 0.75rem 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            text-align: center;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .dashboard-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
+        }
+
+        .dashboard-button:active {
+            transform: translateY(0);
+        }
+
+        /* Slider Container */
+        .slider-container {
+            flex: 0 0 95%;
+            height: 100vh;
+            position: relative;
+            z-index: 0;
+            background-color: #000;
+        }
+        
+        .slider-container video {
             height: 100%;
             width: 100%;
             display: none;
             position: absolute;
             top: 0;
             left: 0;
-            object-fit:cover;
-            transform:rotate(180deg);
-
+            object-fit: cover;
+            transform: rotate(180deg);
         }
-        .slider-container video.active, .slider-container embed.active {
+        
+        .slider-container video.active, 
+        .slider-container embed.active {
             display: block;
         }
+        
         .slider-container embed {
-            height: 100%;
-            width: 80%;
+            height: 98%;
+            width: 95%;
             display: none;
             position: absolute;
             top: 0;
-            left: 10%;
-            object-fit:none;
-
+            left: 0;
+            object-fit: cover;
         }
     </style>
 </head>
 <body>
-    <div class="slider-container" id="slider-container"></div>
-
-    <script>
+    <div class="main-wrapper">
+        <div class="side-heading">
+            <div class="user-info">
+                <div class="glow"></div>
+                <h2 class="user-name">{{ request.user.username }}</h2>
+                <h3 class="user-skill">
+                    Skill Level
+                    <span class="skill-badge">{{ request.user.profile.my_skill }}</span>
+                </h3>
+                <p class="user-id">ID: {{ request.user.profile.user_Id }}</p>
+            </div>
+            <a 
+                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                href="{% url 'dashboard' %}"
+            >
+                <button class="dashboard-button">Dashboard</button>
+            </a>
+        </div>
+        
+        <div class="slider-container" id="slider-container">
+        </div>
+    </div>
+    {% comment %} <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const stationId = {{ station.id }};
+            const stationId = `{{ station.id }}`;
+            const refreshDuration = {{ refresh_duration }} * 60 * 1000; // Convert minutes to milliseconds
             const url = `/station/${stationId}/media/`;
             let currentIndex = 0;
             const mediaElements = [];
             let slideshowTimer;
+            
+            // Set up page refresh timer independent of media playback
+            const setupPageRefresh = () => {
+                console.log(`Page will refresh in ${refreshDuration/1000} seconds`);
+                setTimeout(() => {
+                    console.log('Refreshing page...');
+                    window.location.reload();
+                }, refreshDuration);
+            };
 
             const playCurrentMedia = () => {
                 const currentMedia = mediaElements[currentIndex];
-                let duration = currentMedia.dataset.duration || 10000; // Default to 10 seconds
-
+                
                 if (currentMedia.tagName === 'VIDEO') {
                     currentMedia.play().catch(e => console.error("Error playing video:", e));
-                    duration = currentMedia.duration * 1000 || 15000; // Use the video's duration
+                    // Video duration is handled by the 'ended' event listener
                 } else if (currentMedia.tagName === 'EMBED') {
+                    // Use the duration from the media data
+                    const duration = parseInt(currentMedia.dataset.duration) * 1000;
                     slideshowTimer = setTimeout(switchMedia, duration);
                 }
             };
@@ -101,14 +257,14 @@
                                 mediaElement.controls = false;
                                 mediaElement.loop = false;
                                 mediaElement.muted = true;
-                                mediaElement.dataset.duration = media.duration * 1000; // Convert to milliseconds
+                                mediaElement.dataset.duration = media.duration;
                                 mediaElement.className = index === 0 ? 'active' : '';
                                 mediaElement.addEventListener('ended', switchMedia);
                             } else if (media.type === 'pdf') {
                                 mediaElement = document.createElement('embed');
-                                mediaElement.src = media.url+'#toolbar=0';
+                                mediaElement.src = media.url + '#toolbar=0';
                                 mediaElement.type = 'application/pdf';
-                                mediaElement.dataset.duration = media.duration * 1000;
+                                mediaElement.dataset.duration = media.duration;
                                 mediaElement.className = index === 0 ? 'active' : '';
                             }
                             sliderContainer.appendChild(mediaElement);
@@ -116,6 +272,7 @@
                         });
 
                         playCurrentMedia();
+                        setupPageRefresh(); // Initialize page refresh timer after media is loaded
                     } else {
                         console.error('No media found for this station.');
                     }
@@ -123,6 +280,115 @@
                 .catch(error => {
                     console.error('Error fetching media:', error);
                 });
+        });
+    </script> {% endcomment %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stationId = `{{ station.id }}`;
+            const refreshDuration = {{ refresh_duration }} * 60 * 1000;
+            let currentIndex = 0;
+            const mediaElements = [];
+            let slideshowTimer;
+            let currentMediaData = [];
+    
+            // Initialize streaming connection
+            const setupMediaStream = () => {
+                const eventSource = new EventSource(`/station/${stationId}/updates/`);
+                
+                eventSource.onmessage = (event) => {
+                    const newMediaData = JSON.parse(event.data);
+                    updateMediaElements(newMediaData);
+                };
+    
+                eventSource.onerror = (error) => {
+                    console.error('EventSource failed:', error);
+                    eventSource.close();
+                    setTimeout(setupMediaStream, 5000);
+                };
+            };
+    
+            const updateMediaElements = (mediaData) => {
+                const sliderContainer = document.getElementById('slider-container');
+                const currentMedia = mediaElements[currentIndex];
+                
+                if (JSON.stringify(mediaData) !== JSON.stringify(currentMediaData)) {
+                    sliderContainer.innerHTML = '';
+                    mediaElements.length = 0;
+                    
+                    mediaData.forEach((media, index) => {
+                        createMediaElement(media, index, sliderContainer);
+                    });
+                    
+                    if (!currentMedia || !currentMedia.classList.contains('active')) {
+                        currentIndex = 0;
+                        playCurrentMedia();
+                    }
+                }
+                currentMediaData = mediaData;
+            };
+    
+            const createMediaElement = (media, index, container) => {
+                let mediaElement;
+                
+                // Extract the relative path from the full URL
+                const getRelativePath = (url) => {
+                    const urlObj = new URL(url, window.location.origin);
+                    return urlObj.pathname.replace('/media/', '');
+                };
+                
+                if (['mp4', 'mov'].includes(media.type)) {
+                    mediaElement = document.createElement('video');
+                    mediaElement.src = `/station/stream/video/${getRelativePath(media.url)}`;
+                    mediaElement.controls = false;
+                    mediaElement.loop = false;
+                    mediaElement.muted = true;
+                    mediaElement.dataset.duration = media.duration;
+                    mediaElement.className = index === 0 ? 'active' : '';
+                    mediaElement.addEventListener('ended', switchMedia);
+                } else if (media.type === 'pdf') {
+                    mediaElement = document.createElement('embed');
+                    mediaElement.src = `/station/stream/pdf/${getRelativePath(media.url)}#toolbar=0`;
+                    mediaElement.type = 'application/pdf';
+                    mediaElement.dataset.duration = media.duration;
+                    mediaElement.className = index === 0 ? 'active' : '';
+                }
+                
+                container.appendChild(mediaElement);
+                mediaElements.push(mediaElement);
+            };
+    
+            const playCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.play().catch(e => console.error("Error playing video:", e));
+                } else if (currentMedia.tagName === 'EMBED') {
+                    const duration = parseInt(currentMedia.dataset.duration) * 1000;
+                    slideshowTimer = setTimeout(switchMedia, duration);
+                }
+            };
+    
+            const stopCurrentMedia = () => {
+                const currentMedia = mediaElements[currentIndex];
+                if (currentMedia.tagName === 'VIDEO') {
+                    currentMedia.pause();
+                    currentMedia.currentTime = 0;
+                } else {
+                    clearTimeout(slideshowTimer);
+                }
+            };
+    
+            const switchMedia = () => {
+                stopCurrentMedia();
+                mediaElements[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % mediaElements.length;
+                mediaElements[currentIndex].classList.add('active');
+                playCurrentMedia();
+            };
+    
+            // Initialize the media stream and start the application
+            setupMediaStream();
         });
     </script>
 </body>

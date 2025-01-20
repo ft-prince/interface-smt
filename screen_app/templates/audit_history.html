@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">System Audit Log</h2>
+        <button id="refreshButton" class="btn btn-primary d-flex align-items-center gap-2">
+            <i class="fas fa-sync-alt"></i>
+            Refresh
+        </button>
+    </div>
+    
+    <div class="card shadow">
+        <div class="card-header bg-white py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="mb-0 text-gray-800">Activity History</h5>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-nowrap">Timestamp</th>
+                            <th>Module</th>
+                            <th>Event</th>
+                            <th>User</th>
+                            <th width="40%">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in history_records %}
+                        <tr>
+                            <td class="text-nowrap">
+                                <small class="text-muted">
+                                    {{ record.history_date|date:"M d, Y" }}<br>
+                                    {{ record.history_date|time:"H:i:s" }}
+                                </small>
+                            </td>
+                            <td>
+                                <span class="fw-medium">{{ record.model_name }}</span>
+                            </td>
+                            <td>
+                                {% if record.history_type == '+' %}
+                                    <span class="badge rounded-pill bg-success">Created</span>
+                                {% elif record.history_type == '~' %}
+                                    <span class="badge rounded-pill bg-warning">Modified</span>
+                                {% else %}
+                                    <span class="badge rounded-pill bg-danger">Deleted</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fas fa-user-circle text-muted"></i>
+                                    <span>{{ record.history_user|default:"System" }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if record.change_list %}
+                                    {% for change in record.change_list %}
+                                        <div class="mb-2">
+                                            <div class="fw-medium text-dark">{{ change.field }}</div>
+                                            <div class="d-flex gap-2 align-items-center">
+                                                <span class="text-danger"><small>{{ change.old|default:"Empty" }}</small></span>
+                                                <i class="fas fa-arrow-right text-muted"></i>
+                                                <span class="text-success"><small>{{ change.new|default:"Empty" }}</small></span>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% elif record.history_type == '+' %}
+                                    <span class="text-muted">New record created</span>
+                                {% elif record.history_type == '-' %}
+                                    <span class="text-muted">Record deleted</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            {% include 'includes/pagination.html' %}
+        </div>
+    </div>
+</div>
+
+<!-- Add this before closing body tag -->
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshButton = document.getElementById('refreshButton');
+    
+    refreshButton.addEventListener('click', function() {
+        // Add spinning animation
+        const icon = refreshButton.querySelector('i');
+        icon.classList.add('fa-spin');
+        refreshButton.disabled = true;
+        
+        // Reload the page
+        window.location.reload();
+    });
+});
+</script>
+{% endblock %}
+{% endblock %}

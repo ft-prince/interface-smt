@@ -1,25 +1,173 @@
 {% extends 'base.html' %}
 
-{% block title %}{% if form.instance.pk %}Edit Reading{% else %}Add Reading{% endif %}{% endblock %}
+{% block title %}
+<title>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Control Chart Reading</title>
+{% endblock title %}
 
 {% block content %}
-    <h1>{% if form.instance.pk %}Edit Reading{% else %}Add Reading{% endif %}</h1>
-    <form method="post">
-        {% csrf_token %}
-        {% for field in form %}
-            <div class="mb-3">
-                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                {{ field.as_widget }}
-                {% if field.errors %}
-                    <div class="text-danger">
-                        {% for error in field.errors %}
-                            {{ error }}
-                        {% endfor %}
+<div class="background-container">
+    <div class="container content-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary">{% if form.instance.pk %}Edit{% else %}Add{% endif %} Control Chart Reading</h1>
+            <p class="text-secondary">QSF-13-06</p>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{% if message.tags %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <label for="{{ form.date.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar-alt me-2"></i>Date
+                            </label>
+                            {{ form.date }}
+                            {% if form.date.errors %}
+                                <div class="text-danger">{{ form.date.errors }}</div>
+                            {% endif %}
+                        </div>
                     </div>
+
+                    <h2 class="mb-3">Readings</h2>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <div class="card reading-card">
+                                <div class="card-body">
+                                    <label for="{{ form.reading1.id_for_label }}" class="form-label">Reading 1</label>
+                                    {{ form.reading1 }}
+                                    {% if form.reading1.errors %}
+                                        <div class="text-danger">{{ form.reading1.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card reading-card">
+                                <div class="card-body">
+                                    <label for="{{ form.reading2.id_for_label }}" class="form-label">Reading 2</label>
+                                    {{ form.reading2 }}
+                                    {% if form.reading2.errors %}
+                                        <div class="text-danger">{{ form.reading2.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card reading-card">
+                                <div class="card-body">
+                                    <label for="{{ form.reading3.id_for_label }}" class="form-label">Reading 3</label>
+                                    {{ form.reading3 }}
+                                    {% if form.reading3.errors %}
+                                        <div class="text-danger">{{ form.reading3.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card reading-card">
+                                <div class="card-body">
+                                    <label for="{{ form.reading4.id_for_label }}" class="form-label">Reading 4</label>
+                                    {{ form.reading4 }}
+                                    {% if form.reading4.errors %}
+                                        <div class="text-danger">{{ form.reading4.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card reading-card">
+                                <div class="card-body">
+                                    <label for="{{ form.reading5.id_for_label }}" class="form-label">Reading 5</label>
+                                    {{ form.reading5 }}
+                                    {% if form.reading5.errors %}
+                                        <div class="text-danger">{{ form.reading5.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+<!-- Add this after the readings section -->
+<h2 class="mb-3">Specification Limits</h2>
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <label for="{{ form.usl.id_for_label }}" class="form-label">Upper Specification Limit (USL)</label>
+                {{ form.usl }}
+                {% if form.usl.errors %}
+                    <div class="text-danger">{{ form.usl.errors }}</div>
                 {% endif %}
             </div>
-        {% endfor %}
-        <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{% url 'reading_list' %}" class="btn btn-secondary">Cancel</a>
-    </form>
-{% endblock %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <label for="{{ form.lsl.id_for_label }}" class="form-label">Lower Specification Limit (LSL)</label>
+                {{ form.lsl }}
+                {% if form.lsl.errors %}
+                    <div class="text-danger">{{ form.lsl.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>Save Reading
+                        </button>
+                        <a href="{% url 'reading_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Previous styles remain the same */
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize date picker
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr("#{{ form.date.id_for_label }}", {
+            dateFormat: "Y-m-d",
+            maxDate: "today",
+        });
+    }
+
+    // Add input validation for readings
+    const readingInputs = document.querySelectorAll('input[type="number"]');
+    readingInputs.forEach(input => {
+        input.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            if (value < 0) {
+                this.value = 0;
+            }
+        });
+    });
+});
+</script>
+{% endblock content %}

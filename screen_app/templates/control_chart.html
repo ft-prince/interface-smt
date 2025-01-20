@@ -1,142 +1,296 @@
 {% extends 'base.html' %}
 
-{% block title %}Control Chart{% endblock %}
-
 {% block content %}
-    
-<div class="sections">
-    <div class="d-flex justify-content-between align-items-center">
-        
-        <h1>Control Chart</h1>
-        <p>QSF-13-06</p>
+<div class="container py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
+                <h1 class="h3 mb-0">Quality Control Chart</h1>
+                <span class="badge bg-secondary">QSF-13-06</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Month Selection and Summary -->
+    <div class="row mb-4">
+        <!-- Month Selection -->
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Select Period</h5>
+                    <form method="GET">
+                        <select name="month" class="form-select mb-3" onchange="this.form.submit()">
+                            {% for month in available_months %}
+                                <option value="{{ month.month|date:'Y-m' }}" 
+                                        {% if selected_month == month.month|date:'Y-m' %}selected{% endif %}>
+                                    {{ month.month|date:"F Y" }} ({{ month.days_count }} days)
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Summary -->
+        {% if monthly_summary %}
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">{{ monthly_summary.month_name }} {{ monthly_summary.year }} Overview</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <div class="mb-3">
+                                <label class="small text-muted d-block">Progress</label>
+                                <h4>{{ monthly_summary.days_with_data }} / {{ monthly_summary.total_days }} Days</h4>
+                                <div class="progress">
+                                    <div class="progress-bar" role="progressbar" 
+                                         style="width: {{ monthly_summary.completion_percentage }}%"
+                                         aria-valuenow="{{ monthly_summary.completion_percentage }}" 
+                                         aria-valuemin="0" aria-valuemax="100">
+                                        {{ monthly_summary.completion_percentage|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6">
+                            <div class="mb-3">
+                                <label class="small text-muted d-block">Key Metrics</label>
+                                <div class="d-flex justify-content-between">
+                                    <span>Average X-Bar:</span>
+                                    <strong>{{ monthly_summary.x_bar_avg|floatformat:2 }}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Average Range:</span>
+                                    <strong>{{ monthly_summary.r_avg|floatformat:2 }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#xbar-chart">X-Bar Chart</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#r-chart">R Chart</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="xbar-chart">
+                            <canvas id="xBarChart"></canvas>
+                        </div>
+                        <div class="tab-pane fade" id="r-chart">
+                            <canvas id="rChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Control Limits</h5>
+                </div>
+                <div class="card-body">
+                    {% if control_limits %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>X-Bar Average:</th>
+                                    <td class="text-end">{{ control_limits.x_bar_avg|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>UCL X-Bar:</th>
+                                    <td class="text-end">{{ control_limits.ucl_x_bar|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>LCL X-Bar:</th>
+                                    <td class="text-end">{{ control_limits.lcl_x_bar|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>UCL R:</th>
+                                    <td class="text-end">{{ control_limits.ucl_r|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>LCL R:</th>
+                                    <td class="text-end">{{ control_limits.lcl_r|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No control limits data available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Process Capability</h5>
+                </div>
+                <div class="card-body">
+                    {% if capability_indices %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Cp:</th>
+                                    <td class="text-end">{{ capability_indices.cp|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Cpk:</th>
+                                    <td class="text-end">{{ capability_indices.cpk|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Standard Deviation:</th>
+                                    <td class="text-end">{{ capability_indices.std_dev|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- Add this after the Process Capability card -->
+<div class="col-md-6 mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Specification Limits</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>Upper Specification Limit (USL):</th>
+                            <td class="text-end">{{ specification_limits.usl|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Lower Specification Limit (LSL):</th>
+                            <td class="text-end">{{ specification_limits.lsl|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+                    {% else %}
+                    <p class="text-muted">No capability indices available</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
-
-    <h2>X-Bar Chart</h2>
-    <canvas id="xBarChart"></canvas>
-
-    <h2>R Chart</h2>
-    <canvas id="rChart"></canvas>
-
-    <h2>Statistics</h2>
-
-    
-    {% if control_limits %}
-        <dl class="row">
-            <dt class="col-sm-3">X-Bar Average</dt>
-            <dd class="col-sm-9">{{ control_limits.x_bar_avg|floatformat:2 }}</dd>
-            <dt class="col-sm-3">UCL X-Bar</dt>
-            <dd class="col-sm-9">{{ control_limits.ucl_x_bar|floatformat:2 }}</dd>
-            <dt class="col-sm-3">LCL X-Bar</dt>
-            <dd class="col-sm-9">{{ control_limits.lcl_x_bar|floatformat:2 }}</dd>
-            <dt class="col-sm-3">UCL R</dt>
-            <dd class="col-sm-9">{{ control_limits.ucl_r|floatformat:2 }}</dd>
-            <dt class="col-sm-3">LCL R</dt>
-            <dd class="col-sm-9">{{ control_limits.lcl_r|floatformat:2 }}</dd>
-        </dl>
-    {% else %}
-        <p>No control limits data available</p>
-    {% endif %}
-
-    {% if capability_indices %}
-        <h2>Capability Indices</h2>
-        <dl class="row">
-            <dt class="col-sm-3">Cp</dt>
-            <dd class="col-sm-9">{{ capability_indices.cp|floatformat:2 }}</dd>
-            <dt class="col-sm-3">Cpk</dt>
-            <dd class="col-sm-9">{{ capability_indices.cpk|floatformat:2 }}</dd>
-            <dt class="col-sm-3">Standard Deviation</dt>
-            <dd class="col-sm-9">{{ capability_indices.std_dev|floatformat:2 }}</dd>
-        </dl>
-    {% else %}
-        <p>No capability indices data available</p>
-    {% endif %}
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const xBarCtx = document.getElementById('xBarChart').getContext('2d');
-            new Chart(xBarCtx, {
-                type: 'line',
-                data: {
-                    labels: [{% for stat in statistics %}'{{ stat.date|date:"Y-m-d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
-                    datasets: [{
-                        label: 'X-Bar',
-                        data: [{% for stat in statistics %}{{ stat.x_bar }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                        borderColor: 'blue',
-                        fill: false
-                    }, {
-                        label: 'UCL X-Bar',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.ucl_x_bar }}),
-                        borderColor: 'red',
-                        borderDash: [5, 5],
-                        fill: false
-                    }, {
-                        label: 'LCL X-Bar',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.lcl_x_bar }}),
-                        borderColor: 'red',
-                        borderDash: [5, 5],
-                        fill: false
-                    }, {
-                        label: 'X-Bar Average',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.x_bar_avg }}),
-                        borderColor: 'green',
-                        borderDash: [2, 2],
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'X-Bar Control Chart'
-                        }
-                    }
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
                 }
-            });
-
-            const rCtx = document.getElementById('rChart').getContext('2d');
-            new Chart(rCtx, {
-                type: 'line',
-                data: {
-                    labels: [{% for stat in statistics %}'{{ stat.date|date:"Y-m-d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
-                    datasets: [{
-                        label: 'R',
-                        data: [{% for stat in statistics %}{{ stat.r }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                        borderColor: 'blue',
-                        fill: false
-                    }, {
-                        label: 'UCL R',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.ucl_r }}),
-                        borderColor: 'red',
-                        borderDash: [5, 5],
-                        fill: false
-                    }, {
-                        label: 'LCL R',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.lcl_r }}),
-                        borderColor: 'red',
-                        borderDash: [5, 5],
-                        fill: false
-                    }, {
-                        label: 'R-Bar',
-                        data: Array({{ statistics|length }}).fill({{ control_limits.r_bar }}),
-                        borderColor: 'green',
-                        borderDash: [2, 2],
-                        fill: false
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    plugins: {
-                        title: {
-                            display: true,
-                            text: 'R Control Chart'
-                        }
-                    }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
                 }
-            });
+            }
+        };
+
+        // X-Bar Chart
+        const xBarCtx = document.getElementById('xBarChart').getContext('2d');
+        new Chart(xBarCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for stat in statistics %}'{{ stat.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'X-Bar',
+                    data: [{% for stat in statistics %}{{ stat.x_bar }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    borderColor: '#0d6efd',
+                    tension: 0.1
+                }, {
+                    label: 'UCL',
+                    data: Array({{ statistics|length }}).fill({{ control_limits.ucl_x_bar|default:0 }}),
+                    borderColor: '#dc3545',
+                    borderDash: [5, 5]
+                }, {
+                    label: 'LCL',
+                    data: Array({{ statistics|length }}).fill({{ control_limits.lcl_x_bar|default:0 }}),
+                    borderColor: '#dc3545',
+                    borderDash: [5, 5]
+                }, {
+                    label: 'Mean',
+                    data: Array({{ statistics|length }}).fill({{ control_limits.x_bar_avg|default:0 }}),
+                    borderColor: '#198754',
+                    borderDash: [2, 2]
+                },
+                // In the X-Bar Chart datasets, add these two new datasets
+{
+    label: 'USL',
+    data: Array({{ statistics|length }}).fill({{ specification_limits.usl }}),
+    borderColor: '#ffc107',
+    borderDash: [5, 5]
+}, {
+    label: 'LSL',
+    data: Array({{ statistics|length }}).fill({{ specification_limits.lsl }}),
+    borderColor: '#ffc107',
+    borderDash: [5, 5]
+}]
+            },
+            options: chartOptions
         });
-    </script>
+
+        // R Chart
+        const rCtx = document.getElementById('rChart').getContext('2d');
+        new Chart(rCtx, {
+            type: 'line',
+            data: {
+                labels: [{% for stat in statistics %}'{{ stat.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                datasets: [{
+                    label: 'Range',
+                    data: [{% for stat in statistics %}{{ stat.r }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    borderColor: '#0d6efd',
+                    tension: 0.1
+                }, {
+                    label: 'UCL',
+                    data: Array({{ statistics|length }}).fill({{ control_limits.ucl_r|default:0 }}),
+                    borderColor: '#dc3545',
+                    borderDash: [5, 5]
+                }, {
+                    label: 'LCL',
+                    data: Array({{ statistics|length }}).fill({{ control_limits.lcl_r|default:0 }}),
+                    borderColor: '#dc3545',
+                    borderDash: [5, 5]
+                }]
+            },
+            options: chartOptions
+        });
+    });
+</script>
 {% endblock %}

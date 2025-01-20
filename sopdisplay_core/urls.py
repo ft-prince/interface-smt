@@ -8,6 +8,10 @@ from django.urls import include, path
 from django.conf import settings
 from django.conf.urls.static import static
 
+admin.site.site_header = 'InterfaceAuto  Admin Panel'
+admin.site.site_title = 'Company Portal'
+admin.site.index_title = 'Welcome to Administration'
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("screen/", include("screen_app.urls")),

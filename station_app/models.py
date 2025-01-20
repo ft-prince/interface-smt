@@ -32,3 +32,14 @@ class Station(models.Model):
 
     def get_absolute_url(self):
         return reverse('station_detail', kwargs={'pk': self.pk})
+    
+    
+    
+    
+class Refresher(models.Model):
+    time_duration=models.IntegerField(default=3,blank=True,help_text="Duration in minutes (for updating the page )")    
+    
+    
+    def __str__(self):
+        return f"{self.time_duration}"
+    

@@ -2,6 +2,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 import django
+from simple_history.models import HistoricalRecords
 
 CONTROL_NUMBER_CHOICES = (
         ('51-00-4283-3', '51-00-4283-3'),
@@ -198,6 +199,9 @@ class FixtureCleaningRecord(models.Model):
     no_epoxy_coating_on_fixture = models.CharField(max_length=25, choices=TAG_CHOICES)
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
     supervisor_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✘',blank=True)
+    history = HistoricalRecords()
+
+    
 
     class Meta:
         verbose_name = "Fixture Cleaning Record"
@@ -281,6 +285,7 @@ class RejectionSheet(models.Model):
     # Signature fields
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
     verified_by = models.CharField(max_length=1, choices=TICK_CHOICES, default='✘',blank=True)
+    history = HistoricalRecords()
 
     # # Additional fields for flexibility
     # notes = models.TextField(blank=True)
@@ -372,6 +377,7 @@ class SolderingBitRecord(models.Model):
     bit_change_date = models.DateField(verbose_name="Bit Change Date")
     prepared_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
     approved_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Robotic Soldering Bit Replacement Record"
@@ -497,6 +503,7 @@ class DailyChecklistItem(models.Model):
     
     checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='✔',blank=True)
     approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES,default='✘',blank=True)
+    history = HistoricalRecords()
     
     class Meta:
         verbose_name = "Maintenance Checklist For Daily "
@@ -636,6 +643,7 @@ class WeeklyChecklistItem(models.Model):
     
     checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='✔',blank=True)
     approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES,default='✘',blank=True)
+    history = HistoricalRecords()
 
     
     
@@ -736,6 +744,7 @@ class MonthlyChecklistItem(models.Model):
     Remark_12=models.CharField(max_length=100,choices=TICK_CHOICES)
     checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='',blank=True)
     approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES ,default='',blank=True)
+    history = HistoricalRecords()
     
     
     def __str__(self):
@@ -753,7 +762,7 @@ class MonthlyChecklistItem(models.Model):
                 'test',  # Use the same group name as in the WebSocket consumer
                 {
                     'type': 'chat_message',
-                    'message': f'Notification: {self.machine_location} Not OK for MonthlyChecklistItem {self.pk} '
+                    'message': f'Notification: {self.machine_location} Not OK for MonthlyChecklistItem by  {self.manager} '
                 }
             )
         
@@ -780,50 +789,140 @@ class ControlChartReading(models.Model):
     reading3 = models.FloatField()
     reading4 = models.FloatField()
     reading5 = models.FloatField()
+    usl = models.FloatField(default=375, validators=[MinValueValidator(0)])
+    lsl = models.FloatField(default=355, validators=[MinValueValidator(0)])
+    history = HistoricalRecords()
 
     def save(self, *args, **kwargs):
-        self.clean()
-        super().save(*args, **kwargs)
-        self.calculate_statistics()
+        try:
+            self.clean()
+            super().save(*args, **kwargs)
+            self._create_or_update_statistics()
+        except Exception as e:
+            print(f"Error saving reading or statistics: {e}")
+            raise
 
     def clean(self):
         readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
-        if any(reading < 0 for reading in readings):  # Example validation
-            raise ValueError("Readings cannot be negative.")
+        if any(reading < 0 for reading in readings):
+            raise ValidationError("Readings cannot be negative.")
+        if self.usl <= self.lsl:
+            raise ValidationError("Upper specification limit must be greater than lower specification limit.")
 
-    def calculate_statistics(self):
+    def _create_or_update_statistics(self):
         readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
         x_bar = sum(readings) / len(readings)
         r = max(readings) - min(readings)
 
         try:
-            stats, created = ControlChartStatistics.objects.get_or_create(date=self.date)
-            stats.x_bar = x_bar
-            stats.r = r
-            stats.save()
-        except IntegrityError:
-            print("IntegrityError occurred while saving statistics.")
+            stats = ControlChartStatistics.objects.filter(date=self.date).first()
+            if stats:
+                stats.x_bar = x_bar
+                stats.r = r
+                stats.usl = self.usl
+                stats.lsl = self.lsl
+                stats.save()
+            else:
+                ControlChartStatistics.objects.create(
+                    date=self.date,
+                    x_bar=x_bar,
+                    r=r,
+                    usl=self.usl,
+                    lsl=self.lsl
+                )
+        except Exception as e:
+            print(f"Error creating/updating statistics: {e}")
+            raise
 
-
-import math
+        
+# models.py
 from django.db import models
-from django.db.models import Avg, StdDev
+from django.db.models import Avg, StdDev, Count
+from django.db.models.functions import TruncMonth
+import calendar
+
+# models.py
 
 class ControlChartStatistics(models.Model):
     date = models.DateField(unique=True)
     x_bar = models.FloatField()
     r = models.FloatField()
+    usl = models.FloatField(default=375)
+    lsl = models.FloatField(default=355)
+    history = HistoricalRecords()
+
+    @classmethod
+    def get_monthly_statistics(cls):
+        try:
+            monthly_stats = cls.objects.annotate(
+                month=TruncMonth('date')
+            ).values('month').annotate(
+                days_count=Count('id'),
+                monthly_x_bar=Avg('x_bar'),
+                monthly_r=Avg('r'),
+                monthly_std_dev=StdDev('x_bar')
+            ).order_by('-month')
+
+            processed_stats = []
+            for stat in monthly_stats:
+                if stat['month']:
+                    # Get total calendar days in the month
+                    total_days = calendar.monthrange(
+                        stat['month'].year,
+                        stat['month'].month
+                    )[1]
+                    
+                    monthly_data = {
+                        'month': stat['month'],
+                        'days_count': stat['days_count'],
+                        'completion_percentage': (stat['days_count'] / total_days) * 100,
+                        'monthly_x_bar': stat['monthly_x_bar'] or 0,
+                        'monthly_r': stat['monthly_r'] or 0,
+                        'monthly_std_dev': stat['monthly_std_dev'] or 0
+                    }
+
+                    if stat['monthly_r']:
+                        monthly_data.update({
+                            'monthly_ucl_x_bar': stat['monthly_x_bar'] + 0.58 * stat['monthly_r'],
+                            'monthly_lcl_x_bar': stat['monthly_x_bar'] - 0.58 * stat['monthly_r'],
+                            'monthly_ucl_r': 2.11 * stat['monthly_r'],
+                            'monthly_lcl_r': 0
+                        })
+                    else:
+                        monthly_data.update({
+                            'monthly_ucl_x_bar': 0,
+                            'monthly_lcl_x_bar': 0,
+                            'monthly_ucl_r': 0,
+                            'monthly_lcl_r': 0
+                        })
+
+                    processed_stats.append(monthly_data)
+
+            return processed_stats
+
+        except Exception as e:
+            print(f"Error calculating monthly statistics: {e}")
+            return []
+    
 
     @classmethod
     def calculate_control_limits(cls):
         data = cls.objects.all()
         if not data.exists():
-            return None  # Handle cases where no data exists
+            return {
+                'x_bar_avg': 0,
+                'r_bar': 0,
+                'ucl_x_bar': 0,
+                'lcl_x_bar': 0,
+                'ucl_r': 0,
+                'lcl_r': 0
+            }
 
         x_bar_avg = data.aggregate(Avg('x_bar'))['x_bar__avg']
         r_bar = data.aggregate(Avg('r'))['r__avg']
 
-        a2, d3, d4 = 0.58, 0, 2.11  # Constants for n=5 from the chart
+        # Constants for n=5 subgroup size
+        a2, d3, d4 = 0.58, 0, 2.11
 
         ucl_x_bar = x_bar_avg + a2 * r_bar
         lcl_x_bar = x_bar_avg - a2 * r_bar
@@ -840,16 +939,29 @@ class ControlChartStatistics(models.Model):
         }
 
     @classmethod
-    def calculate_capability_indices(cls, usl, lsl):
+    def calculate_capability_indices(cls):
         data = cls.objects.all()
         if not data.exists():
-            return None  # Handle cases where no data exists
+            return {
+                'cp': 0,
+                'cpk': 0,
+                'std_dev': 0
+            }
 
+        latest_record = data.latest('date')
         x_bar_avg = data.aggregate(Avg('x_bar'))['x_bar__avg']
         std_dev = data.aggregate(StdDev('x_bar'))['x_bar__stddev']
 
         if std_dev is None or std_dev == 0:
-            std_dev = 1  # Avoid division by zero
+            return {
+                'cp': 0,
+                'cpk': 0,
+                'std_dev': 0
+            }
+
+        # Use the specification limits from the latest record
+        usl = latest_record.usl
+        lsl = latest_record.lsl
 
         cp = (usl - lsl) / (6 * std_dev)
         cpk = min((usl - x_bar_avg) / (3 * std_dev), (x_bar_avg - lsl) / (3 * std_dev))
@@ -857,15 +969,27 @@ class ControlChartStatistics(models.Model):
         return {
             'cp': cp,
             'cpk': cpk,
-            'std_dev': std_dev
+            'std_dev': std_dev,
+            'usl': usl,
+            'lsl': lsl
         }
 
+    def control_chart(request):
+        readings = ControlChartReading.objects.all()
+        statistics = ControlChartStatistics.objects.all()
+        monthly_statistics = ControlChartStatistics.get_monthly_statistics()
+        
+        control_limits = ControlChartStatistics.calculate_control_limits()
+        capability_indices = ControlChartStatistics.calculate_capability_indices(usl=375, lsl=355)
 
-
-# > python -m pip uninstall channels
-# > python -m pip install -Iv channels==3.0.5
-
-
+        context = {
+            'readings': readings,
+            'statistics': statistics,
+            'monthly_statistics': monthly_statistics or [],
+            'control_limits': control_limits,
+            'capability_indices': capability_indices,
+        }
+        return render(request, 'control_chart.html', context)
 
 
 class StartUpCheckSheet(models.Model):
@@ -909,6 +1033,7 @@ class StartUpCheckSheet(models.Model):
     manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)    
     # defects = models.TextField(blank=True)
     verified_by = models.CharField(max_length=1, choices=OKAY_CHOICES, default='✘',blank=True)
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Start Up Check Sheet"
@@ -950,31 +1075,73 @@ class StartUpCheckSheet(models.Model):
 # ---------------------------------------------------------------------
 
 from django.db import models
+from django.utils import timezone
 from django.db.models import Avg, Sum, F, ExpressionWrapper, StdDev, Variance
 from django.db.models.functions import Sqrt
+import math
 
 class PChartData(models.Model):
-    location = models.CharField(max_length=200,choices=MACHINE_LOCATION_CHOICES)
+    # Required input fields
+    location = models.CharField(max_length=200, choices=MACHINE_LOCATION_CHOICES)
     part_number_and_name = models.CharField(max_length=200)
-    operation_number_and_stage_name = models.CharField(max_length=200,choices=STATION_CHOICES)
+    operation_number_and_stage_name = models.CharField(max_length=200, choices=STATION_CHOICES)
     department = models.CharField(max_length=100)
-    month = models.DateField(default=timezone.now, blank=True)
+    month = models.DateField(default=timezone.now)
     date_control_limits_calculated = models.DateField(default=timezone.now)
     average_sample_size = models.IntegerField()
     frequency = models.IntegerField()
-
     sample_size = models.IntegerField()
     nonconforming_units = models.IntegerField()
-    proportion = models.FloatField(default=0.0)
+    history = HistoricalRecords()
+
+    # Automatically calculated fields
+    proportion = models.FloatField(null=True, blank=True)
+    ucl_p = models.FloatField(null=True, blank=True)
+    lcl_p = models.FloatField(null=True, blank=True)
+    ucl_np = models.FloatField(null=True, blank=True)
+    lcl_np = models.FloatField(null=True, blank=True)
+    ucl_c = models.FloatField(null=True, blank=True)
+    lcl_c = models.FloatField(null=True, blank=True)
+    ucl_u = models.FloatField(null=True, blank=True)
+    lcl_u = models.FloatField(null=True, blank=True)
+
+    def calculate_control_limits(self):
+        try:
+            # Calculate proportion
+            self.proportion = self.nonconforming_units / self.sample_size if self.sample_size > 0 else None
+            
+            # P-Chart limits
+            if self.average_sample_size > 0 and self.proportion and 0 < self.proportion < 1:
+                p_std = math.sqrt((self.proportion * (1 - self.proportion)) / self.average_sample_size)
+                self.ucl_p = min(1, self.proportion + 3 * p_std)
+                self.lcl_p = max(0, self.proportion - 3 * p_std)
+            
+            # NP-Chart limits
+            if self.proportion is not None:
+                np_bar = self.average_sample_size * self.proportion
+                if np_bar > 0:
+                    np_std = math.sqrt(np_bar * (1 - self.proportion))
+                    self.ucl_np = np_bar + 3 * np_std
+                    self.lcl_np = max(0, np_bar - 3 * np_std)
+            
+            # C-Chart limits
+            if self.nonconforming_units > 0:
+                c_std = math.sqrt(self.nonconforming_units)
+                self.ucl_c = self.nonconforming_units + 3 * c_std
+                self.lcl_c = max(0, self.nonconforming_units - 3 * c_std)
+            
+            # U-Chart limits
+            if self.average_sample_size > 0:
+                u_bar = self.nonconforming_units / self.average_sample_size
+                if u_bar > 0:
+                    u_std = math.sqrt(u_bar / self.average_sample_size)
+                    self.ucl_u = u_bar + 3 * u_std
+                    self.lcl_u = max(0, u_bar - 3 * u_std)
+
+        except (ZeroDivisionError, ValueError) as e:
+            print(f"Error calculating control limits: {e}")
 
     def save(self, *args, **kwargs):
-        self.proportion = self.nonconforming_units / self.sample_size
-        self.ucl_np = self.average_sample_size * self.proportion + 3 * Sqrt(self.average_sample_size * self.proportion * (1 - self.proportion))
-        self.lcl_np = self.average_sample_size * self.proportion - 3 * Sqrt(self.average_sample_size * self.proportion * (1 - self.proportion))
-        self.ucl_p = self.proportion + 3 * Sqrt(self.proportion * (1 - self.proportion) / self.average_sample_size)
-        self.lcl_p = self.proportion - 3 * Sqrt(self.proportion * (1 - self.proportion) / self.average_sample_size)
-        self.ucl_c = self.nonconforming_units + 3 * Sqrt(self.nonconforming_units)
-        self.lcl_c = self.nonconforming_units - 3 * Sqrt(self.nonconforming_units)
-        self.ucl_u = self.nonconforming_units / self.average_sample_size + 3 * Sqrt(self.nonconforming_units / (self.average_sample_size ** 2))
-        self.lcl_u = self.nonconforming_units / self.average_sample_size - 3 * Sqrt(self.nonconforming_units / (self.average_sample_size ** 2))
+        self.calculate_control_limits()
         super().save(*args, **kwargs)
+        

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from django import forms
-from .models import Product, ProductMedia, Station
+from .models import Product, ProductMedia, Station,Refresher
 
 class ProductMediaInline(admin.TabularInline):
     model = ProductMedia
@@ -100,3 +100,23 @@ class StationAdmin(admin.ModelAdmin):
             product_media = ProductMedia.objects.filter(product__in=station.products.all())
             extra_context['product_media'] = product_media
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
+    
+    
+@admin.register(Refresher)
+class RefresherAdmin(admin.ModelAdmin):
+    list_display = ['id', 'time_duration']
+    list_display_links = ['id']
+    list_editable = ['time_duration']
+    
+    def has_add_permission(self, request):
+        # Only allow creating one Refresher instance
+        if Refresher.objects.exists():
+            return False
+        return True
+    
+    def has_delete_permission(self, request, obj=None):
+        # Prevent deletion of the last Refresher instance
+        if obj and Refresher.objects.count() <= 1:
+            return False
+        return True
+

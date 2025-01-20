@@ -8,124 +8,180 @@
       {% if user.is_staff %}Supervisor{% else %}Operator{% endif %} Dashboard
     </title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #1a202c;
-        color: #f7fafc;
+      :root {
+        --primary-color: #1e40af;
+        --secondary-color: #f97316;
+        --background-color: #f8fafc;
+        --card-bg: #ffffff;
+        --text-color: #1e293b;
+        --notification-bg: #2d3748;
+      }
+
+      * {
         margin: 0;
         padding: 0;
+        box-sizing: border-box;
       }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background-color: var(--background-color);
+        color: var(--text-color);
+        line-height: 1.6;
+        margin: 0;
+        min-height: 100vh;
+      }
+
       .dashboard-container {
         display: flex;
-        height: 100vh;
+        min-height: 100vh;
       }
+
       .main-dashboard {
-        width: 75%;
+        flex: 1;
         padding: 1.5rem;
-        overflow: auto;
+        max-width: 1400px;
+        margin: 0 auto;
       }
-      .notification-bar {
-        width: 25%;
-        background-color: #2d3748;
-        padding: 1.5rem;
-        overflow: auto;
-      }
-      h1 {
-        font-size: 1.875rem;
-        font-weight: bold;
+
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         margin-bottom: 2rem;
-        color: #63b3ed;
+        padding: 1rem;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
-      h2 {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1rem;
-        color: #90cdf4;
+
+      .logo-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
       }
+
+      .logo {
+        width: 180px;
+        height: 80px;
+      }
+
+      .logo svg {
+        margin-top: 2.2em;
+        margin-left: -1.2em;
+        width: 100%;
+        height: 100%;
+        transform: scale(3.1);
+      }
+
+      .logo path,
+      .logo rect {
+        fill: var(--primary-color);
+      }
+
+      .theme-selector {
+        padding: 0.5rem;
+        border: 2px solid var(--primary-color);
+        border-radius: 4px;
+        background-color: var(--card-bg);
+        color: var(--text-color);
+        cursor: pointer;
+      }
+
       .card-grid {
         display: grid;
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
         gap: 1.5rem;
       }
-      @media (min-width: 768px) {
-        .card-grid {
-          grid-template-columns: repeat(2, 1fr);
-        }
-      }
-      @media (min-width: 1024px) {
-        .card-grid {
-          grid-template-columns: repeat(3, 1fr);
-        }
-      }
+
       .card {
-        background-color: #2d3748;
-        border-radius: 0.5rem;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-          0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        padding: 1.5rem;
-        transition: background-color 0.3s;
+        background-color: var(--card-bg);
+        border-radius: 8px;
+        border: 1px solid var(--primary-color);
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
-      .card:hover {
-        background-color: #4a5568;
+
+      .card-header {
+        padding: 1rem;
+        background-color: var(--primary-color);
+        color: white;
       }
-      .button-container {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
+
+      .card-content {
+        padding: 1rem;
       }
+
+      .grid-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: linear-gradient(
+            var(--primary-color) 1px,
+            transparent 1px
+          ),
+          linear-gradient(90deg, var(--primary-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        opacity: 0.05;
+        pointer-events: none;
+      }
+
       .button {
         display: block;
-        background-color: #3182ce;
-        color: white;
-        font-weight: bold;
-        padding: 0.5rem 1rem;
-        border-radius: 0.25rem;
-        text-decoration: none;
+        width: 100%;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border: 2px solid var(--secondary-color);
+        border-radius: 4px;
+        background-color: transparent;
+        color: var(--secondary-color);
         text-align: center;
-        transition: background-color 0.3s;
+        text-decoration: none;
+        font-weight: bold;
+        transition: all 0.3s ease;
       }
+
       .button:hover {
-        background-color: #2c5282;
+        background-color: var(--secondary-color);
+        color: white;
       }
-      .button.secondary {
-        background-color: #4a5568;
-      }
-      .button.secondary:hover {
-        background-color: #718096;
-      }
-      .notification {
-        background-color: #4a5568;
-        border-radius: 0.25rem;
-        padding: 1rem;
+
+      .title {
+        font-size: 1.5rem;
+        color: var(--primary-color);
         margin-bottom: 1rem;
       }
-      .notification-title {
-        font-weight: 600;
-      }
-      .notification-body {
-        font-size: 0.875rem;
-        color: #cbd5e0;
-      }
 
+      /* Notification Bar Styles */
       .notification-bar {
-        width: 25%;
-        background-color: #2d3748;
+        width: 300px;
+        background-color: var(--notification-bg);
         padding: 1.5rem;
         overflow-y: auto;
-      }
-
-      #messagesList {
-        list-style-type: none;
-        padding: 0;
-        margin: 0;
+        border-left: 1px solid var(--primary-color);
       }
 
       .notification {
-        background-color: #4a5568;
-        border-radius: 0.25rem;
+        background-color: var(--card-bg);
+        border-radius: 4px;
         padding: 1rem;
         margin-bottom: 1rem;
         animation: fadeIn 0.5s ease-out;
+        border: 1px solid var(--primary-color);
+      }
+
+      .notification-title {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+      }
+
+      .notification-message {
+        font-size: 0.875rem;
+        color: var(--text-color);
       }
 
       @keyframes fadeIn {
@@ -139,133 +195,282 @@
         }
       }
 
-      .notification-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
+      @media (max-width: 1024px) {
+        .dashboard-container {
+          flex-direction: column;
+        }
+
+        .notification-bar {
+          width: 100%;
+          max-height: 300px;
+          border-left: none;
+          border-top: 1px solid var(--primary-color);
+        }
       }
 
-      .notification-body {
-        font-size: 0.875rem;
-        color: #cbd5e0;
+      @media (max-width: 768px) {
+        .card-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .header {
+          flex-direction: column;
+          gap: 1rem;
+        }
       }
     </style>
   </head>
   <body>
     <div class="dashboard-container">
-      <!-- Main Dashboard -->
       <div class="main-dashboard">
-        <h1>
-          {% if user.is_staff %}Supervisor{% else %}Operator{% endif %}
-          Dashboard
-        </h1>
+        <header class="header">
+          <div class="logo-container">
+            <div class="logo">
+              <svg
+                xmlns:dc="http://purl.org/dc/elements/1.1/"
+                xmlns:cc="http://creativecommons.org/ns#"
+                xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+                xmlns:svg="http://www.w3.org/2000/svg"
+                xmlns="http://www.w3.org/2000/svg"
+                xmlns:xlink="http://www.w3.org/1999/xlink"
+                xml:space="preserve"
+                id="svg2"
+                version="1.1"
+                viewBox="0 0 697.27 841.92"
+              >
+                <metadata id="metadata8">
+                  <rdf:RDF
+                    ><cc:Work rdf:about=""
+                      ><dc:format>image/svg+xml</dc:format
+                      ><dc:type
+                        rdf:resource="http://purl.org/dc/dcmitype/StillImage"
+                      ></dc:type></cc:Work
+                  ></rdf:RDF>
+                </metadata>
+                <defs id="defs6">
+                  <clipPath id="clipPath18" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path16"
+                      d="M 8.871e-6,0 H 595.32001 V 841.92 H 8.871e-6 Z"
+                    ></path>
+                  </clipPath>
+                  <clipPath id="clipPath26" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path24"
+                      d="M 8.871e-6,0 H 595.32001 V 841.92 H 8.871e-6 Z"
+                    ></path>
+                  </clipPath>
+                  <clipPath id="clipPath34" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path32"
+                      d="M 8.871e-6,0 H 595.32001 V 841.92 H 8.871e-6 Z"
+                    ></path>
+                  </clipPath>
+                  <clipPath id="clipPath42" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path40"
+                      d="M 8.871e-6,0 H 595.32001 V 841.92 H 8.871e-6 Z"
+                    ></path>
+                  </clipPath>
+                  <clipPath id="clipPath50" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path48"
+                      d="M 0,6.1035e-5 H 595.32 V 841.92006 H 0 Z"
+                    ></path>
+                  </clipPath>
+                  <clipPath id="clipPath62" clipPathUnits="userSpaceOnUse">
+                    <path
+                      style="clip-rule: evenodd"
+                      id="path60"
+                      d="M 8.871e-6,0 H 595.32001 V 841.92 H 8.871e-6 Z"
+                    ></path>
+                  </clipPath>
+                </defs>
+                <g
+                  transform="matrix(1.3333333,0,0,-1.3333333,0,1122.56)"
+                  id="g10"
+                >
+                  <g id="g12"><g clip-path="url(#clipPath18)" id="g14"></g></g>
+                  <g id="g20"><g clip-path="url(#clipPath26)" id="g22"></g></g>
+                  <g id="g28"><g clip-path="url(#clipPath34)" id="g30"></g></g>
+                  <g id="g36"><g clip-path="url(#clipPath42)" id="g38"></g></g>
+                  <g id="g44">
+                    <g clip-path="url(#clipPath50)" id="g46">
+                      <g transform="matrix(450.95,0,0,88.8,72,591.22)" id="g52">
+                        <image
+                          id="image54"
+                          xlink:href="data:image/png;base64,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"
+                          transform="matrix(1,0,0,-1,0,1)"
+                          preserveAspectRatio="none"
+                          style="image-rendering: optimizeSpeed"
+                          height="1"
+                          width="1"
+                        ></image>
+                      </g>
+                    </g>
+                  </g>
+                  <g id="g56"><g clip-path="url(#clipPath62)" id="g58"></g></g>
+                </g>
+              </svg>
+            </div>
+            <h1 class="title">
+              {% if user.is_staff %}Supervisor{% else %}Operator{% endif %}
+              Dashboard
+            </h1>
+          </div>
+          <select id="themeSelector" class="theme-selector">
+            <option value="royalBlueOrange">Royal Blue & Orange</option>
+            <option value="interfaceTheme">Interface Theme</option>
+
+            <option value="emeraldPurple">Emerald & Purple</option>
+            <option value="crimsonTeal">Crimson & Teal</option>
+          </select>
+        </header>
 
         <div class="card-grid">
           {% if user.is_staff %}
+
           <!-- Supervisor Dashboard -->
           <div class="card">
-            <h2>Fixture Cleaning</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Fixture Cleaning</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_fixture_cleaning_record' %}" class="button"
                 >Add Record</a
               >
-              <a
-                href="{% url 'list_fixture_cleaning_records' %}"
-                class="button secondary"
+              <a href="{% url 'list_fixture_cleaning_records' %}" class="button"
                 >View Records</a
               >
             </div>
           </div>
 
           <div class="card">
-            <h2>Rejection Sheets</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Rejection Sheets</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_rejection_sheet' %}" class="button"
                 >Add Sheet</a
               >
-              <a
-                href="{% url 'list_rejection_sheets' %}"
-                class="button secondary"
+              <a href="{% url 'list_rejection_sheets' %}" class="button"
                 >View Sheets</a
               >
             </div>
           </div>
 
           <div class="card">
-            <h2>Soldering Bit Records</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Soldering Bit Records</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_soldering_bit_record' %}" class="button"
                 >Add Record</a
               >
-              <a
-                href="{% url 'list_soldering_bit_records' %}"
-                class="button secondary"
+              <a href="{% url 'list_soldering_bit_records' %}" class="button"
                 >View Records</a
               >
             </div>
           </div>
 
           <div class="card">
-            <h2>Maintenance Checklists</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Maintenance Checklists</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
-              <a href="{% url 'list_daily' %}" class="button secondary"
-                >View Daily</a
-              >
+              <a href="{% url 'list_daily' %}" class="button">View Daily</a>
               <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
-              <a href="{% url 'list_weekly' %}" class="button secondary"
-                >View Weekly</a
-              >
+              <a href="{% url 'list_weekly' %}" class="button">View Weekly</a>
               <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
-              <a href="{% url 'list_monthly' %}" class="button secondary"
-                >View Monthly</a
-              >
+              <a href="{% url 'list_monthly' %}" class="button">View Monthly</a>
             </div>
           </div>
 
           <div class="card">
-            <h2>Reading List</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Reading List</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'reading_create' %}" class="button"
                 >Add Reading</a
               >
-              <a href="{% url 'reading_list' %}" class="button secondary"
+              <a href="{% url 'reading_list' %}" class="button"
                 >View Readings</a
               >
             </div>
           </div>
 
           <div class="card">
-            <h2>Control Chart</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Control Chart</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'control_chart' %}" class="button">View Chart</a>
             </div>
           </div>
 
           <div class="card">
-            <h2>Startup checklist</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Startup Checklist</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'checksheet_create' %}" class="button"
-                >Add Reading
-              </a>
-
-              <a href="{% url 'checksheet_list' %}" class="button">
-                view Startup checklist</a
+                >Add Reading</a
+              >
+              <a href="{% url 'checksheet_list' %}" class="button"
+                >View Startup Checklist</a
               >
             </div>
           </div>
 
           <div class="card">
-            <h2>Operators list</h2>
-            <div class="button-container">
-              <a href="{% url 'profile_list' %}" class="button">view </a>
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Operators List</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'profile_list' %}" class="button">View</a>
+            </div>
+          </div>
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>P Chart Details</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'pchart_create' %}" class="button"
+                >Add Reading</a
+              >
+              <a href="{% url 'pchart_list' %}" class="button"
+                >View Readings</a
+              >
+              <a href="{% url 'pchart_chart' %}" class="button"
+                >View Chart</a
+              >
             </div>
           </div>
 
           {% else %}
           <!-- Operator Dashboard -->
           <div class="card">
-            <h2>Fixture Cleaning</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Fixture Cleaning</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_fixture_cleaning_record' %}" class="button"
                 >Add Record</a
               >
@@ -273,8 +478,11 @@
           </div>
 
           <div class="card">
-            <h2>Rejection Sheets</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Rejection Sheets</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_rejection_sheet' %}" class="button"
                 >Add Sheet</a
               >
@@ -282,8 +490,11 @@
           </div>
 
           <div class="card">
-            <h2>Soldering Bit Records</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Soldering Bit Records</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_soldering_bit_record' %}" class="button"
                 >Add Record</a
               >
@@ -291,114 +502,254 @@
           </div>
 
           <div class="card">
-            <h2>Maintenance Checklists</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Maintenance Checklists</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'add_daily' %}" class="button">Add Daily</a>
               <a href="{% url 'add_weekly' %}" class="button">Add Weekly</a>
               <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
             </div>
           </div>
+
           <div class="card">
-            <h2>Reading List</h2>
-            <div class="button-container">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Reading List</h2>
+            </div>
+            <div class="card-content">
               <a href="{% url 'reading_create' %}" class="button"
                 >Add Reading</a
               >
             </div>
           </div>
           <div class="card">
-            <h2>Startup checklist</h2>
-            <div class="button-container">
-              <a href="{% url 'checksheet_create' %}" class="button"
-                >Add Reading
-              </a>
-
-              <a href="{% url 'checksheet_list' %}" class="button">
-                view Startup checklist</a
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>P-chart </h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'pchart_create' %}" class="button"
+                >Add Reading</a
               >
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Startup Checklist</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'checksheet_create' %}" class="button"
+                >Add Reading</a
+              >
+              {% comment %}
+              <a href="{% url 'checksheet_list' %}" class="button"
+                >View Startup Checklist</a
+              >
+              {% endcomment %}
             </div>
           </div>
           {% endif %}
         </div>
       </div>
 
-      <!-- Notification Bar -->
       {% if user.is_staff %}
       <div class="notification-bar">
-        <h2>Notifications</h2>
+        <h2 class="title" style="color: #FF6633;">Notifications</h2>
         <ul id="messagesList">
           <!-- Notifications will be inserted here by JavaScript -->
         </ul>
       </div>
       {% endif %}
     </div>
-  </body>
-  <script>
-    // Function to store a notification in local storage
-    function storeNotification(notification) {
-      const notifications = JSON.parse(
-        localStorage.getItem("notifications") || "[]"
-      );
-      notifications.push({
-        message: notification,
-        timestamp: new Date().getTime(),
+
+    <script>
+      // Theme system
+      const themes = {
+        royalBlueOrange: {
+          primaryColor: "#1E40AF",
+          secondaryColor: "#F97316",
+          backgroundColor: "#F8FAFC",
+          cardBg: "#FFFFFF",
+          textColor: "#1E293B",
+          notificationBg: "#2D3748",
+        },
+        interfaceTheme: {
+          primaryColor: "#0033CC",
+          secondaryColor: "#FF6633",
+          backgroundColor: "#F8FAFC",
+          cardBg: "#FFFFFF",
+          textColor: "#1E293B",
+          notificationBg: "#34445e",
+        },
+        emeraldPurple: {
+          primaryColor: "#047857",
+          secondaryColor: "#7C3AED",
+          backgroundColor: "#F8FAFC",
+          cardBg: "#FFFFFF",
+          textColor: "#1E293B",
+          notificationBg: "#2D3748",
+        },
+        crimsonTeal: {
+          primaryColor: "#BE123C",
+          secondaryColor: "#0D9488",
+          backgroundColor: "#F8FAFC",
+          cardBg: "#FFFFFF",
+          textColor: "#1E293B",
+          notificationBg: "#2D3748",
+        },
+      };
+
+      function applyTheme(themeName) {
+        const theme = themes[themeName];
+        document.documentElement.style.setProperty(
+          "--primary-color",
+          theme.primaryColor
+        );
+        document.documentElement.style.setProperty(
+          "--secondary-color",
+          theme.secondaryColor
+        );
+        document.documentElement.style.setProperty(
+          "--background-color",
+          theme.backgroundColor
+        );
+        document.documentElement.style.setProperty("--card-bg", theme.cardBg);
+        document.documentElement.style.setProperty(
+          "--text-color",
+          theme.textColor
+        );
+        document.documentElement.style.setProperty(
+          "--notification-bg",
+          theme.notificationBg
+        );
+      }
+
+      // Theme selector functionality
+      const themeSelector = document.getElementById("themeSelector");
+
+      // Initialize with saved theme or default
+      if (localStorage.getItem("preferredTheme")) {
+        const savedTheme = localStorage.getItem("preferredTheme");
+        themeSelector.value = savedTheme;
+        applyTheme(savedTheme);
+      } else {
+        applyTheme("royalBlueOrange");
+      }
+
+      // Theme change handler
+      themeSelector.addEventListener("change", (e) => {
+        const selectedTheme = e.target.value;
+        localStorage.setItem("preferredTheme", selectedTheme);
+        applyTheme(selectedTheme);
       });
-      localStorage.setItem("notifications", JSON.stringify(notifications));
-    }
 
-    // Function to retrieve and display stored notifications
-    function displayStoredNotifications() {
-      const notifications = JSON.parse(
-        localStorage.getItem("notifications") || "[]"
-      );
-      const currentTime = new Date().getTime();
-      const messagesList = document.querySelector("#messagesList");
+      // Notification system
+      function storeNotification(notification) {
+        const notifications = JSON.parse(
+          localStorage.getItem("notifications") || "[]"
+        );
+        notifications.push({
+          message: notification,
+          timestamp: new Date().getTime(),
+        });
+        localStorage.setItem("notifications", JSON.stringify(notifications));
+      }
 
-      notifications.forEach((notification, index) => {
-        // Check if the notification is less than 7 hours old
-        if (currentTime - notification.timestamp < 7 * 60 * 60 * 1000) {
+      function displayStoredNotifications() {
+        const notifications = JSON.parse(
+          localStorage.getItem("notifications") || "[]"
+        );
+        const currentTime = new Date().getTime();
+        const messagesList = document.querySelector("#messagesList");
+
+        if (!messagesList) return; // Exit if not on supervisor view
+
+        // Filter notifications older than 7 hours
+        const validNotifications = notifications.filter(
+          (notification) =>
+            currentTime - notification.timestamp < 7 * 60 * 60 * 1000
+        );
+
+        // Update storage with only valid notifications
+        localStorage.setItem(
+          "notifications",
+          JSON.stringify(validNotifications)
+        );
+
+        // Display valid notifications
+        validNotifications.forEach((notification) => {
           const listItem = document.createElement("li");
           listItem.className = "notification";
           listItem.innerHTML = `
-                    <p class="notification-title">Stored Notification</p>
+                    <p class="notification-title">Notification</p>
                     <p class="notification-message">${notification.message}</p>
                 `;
           messagesList.prepend(listItem);
-        } else {
-          // Remove old notifications
-          notifications.splice(index, 1);
-        }
-      });
+        });
+      }
 
-      // Update local storage with cleaned notifications
-      localStorage.setItem("notifications", JSON.stringify(notifications));
-    }
+      // WebSocket Connection
+      const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
+      const chatSocket = new WebSocket(
+        `${wsScheme}://${window.location.host}/ws/socket-server/`
+      );
 
-    const chatSocket = new WebSocket(
-      "ws://" + window.location.host + "/ws/socket-server/"
-    );
+      chatSocket.onmessage = function (e) {
+        const data = JSON.parse(e.data);
+        const messagesList = document.querySelector("#messagesList");
 
-    chatSocket.onmessage = function (e) {
-      const data = JSON.parse(e.data);
-      const messagesList = document.querySelector("#messagesList");
-      const listItem = document.createElement("li");
-      listItem.className = "notification";
-      listItem.innerHTML = `
-            <p class="notification-title">New Notification</p>
-            <p class="notification-message">${data.message}</p>
-        `;
-      messagesList.prepend(listItem);
+        if (!messagesList) return; // Exit if not on supervisor view
 
-      // Store the new notification
-      storeNotification(data.message);
-    };
+        const listItem = document.createElement("li");
+        listItem.className = "notification";
+        listItem.innerHTML = `
+                <p class="notification-title">New Notification</p>
+                <p class="notification-message">${data.message}</p>
+            `;
+        messagesList.prepend(listItem);
 
-    chatSocket.onclose = function (e) {
-      console.error("Chat socket closed unexpectedly");
-    };
+        // Store the new notification
+        storeNotification(data.message);
+      };
 
-    // Display stored notifications when the page loads
-    window.addEventListener("load", displayStoredNotifications);
-  </script>
+      chatSocket.onclose = function (e) {
+        console.error("Chat socket closed unexpectedly");
+
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => {
+          console.log("Attempting to reconnect...");
+          window.location.reload();
+        }, 50000);
+      };
+
+      // Initialize notifications on page load
+      window.addEventListener("load", displayStoredNotifications);
+
+      // Add error handling for WebSocket connection
+      chatSocket.onerror = function (error) {
+        console.error("WebSocket Error:", error);
+      };
+
+      // Cleanup old notifications periodically
+      setInterval(() => {
+        const notifications = JSON.parse(
+          localStorage.getItem("notifications") || "[]"
+        );
+        const currentTime = new Date().getTime();
+        const validNotifications = notifications.filter(
+          (notification) =>
+            currentTime - notification.timestamp < 7 * 60 * 60 * 1000
+        );
+        localStorage.setItem(
+          "notifications",
+          JSON.stringify(validNotifications)
+        );
+      }, 30 * 60 * 1000); // Run every 30 minutes
+    </script>
+  </body>
 </html>
 {% endblock %}
