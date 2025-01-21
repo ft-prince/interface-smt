@@ -211,41 +211,39 @@ class FixtureCleaningRecord(models.Model):
         # Call the parent save method
         super().save(*args, **kwargs)
 
-        # Send notifications if any field is 'Not Available'
-        channel_layer = get_channel_layer()
+        # Create a list to store any issues
+        issues = []
+        
+        # Check all relevant fields and build a structured message
         if self.verification_tag_available == 'Not Available':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Fixture Cleaning Record {self.pk}: Verification Tag Available is Not Available'
-                }
-            )
+            issues.append('Verification Tag not available')
         if self.verification_tag_condition == 'Not Available':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Fixture Cleaning Record {self.pk}: Verification Tag Condition is Not Available'
-                }
-            )
+            issues.append('Verification Tag in poor condition')
         if self.no_dust_on_fixture == 'Not Available':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Fixture Cleaning Record {self.pk}: No Dust on Fixture is Not Available'
-                }
-            )
+            issues.append('Dust detected on fixture')
         if self.no_epoxy_coating_on_fixture == 'Not Available':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Fixture Cleaning Record {self.pk}: No Epoxy Coating on Fixture is Not Available'
-                }
-            )
+            issues.append('Epoxy coating detected on fixture')
 
+        # Only send notification if there are issues
+        if issues:
+            channel_layer = get_channel_layer()
+            
+            # Create a more structured and informative message
+            message = {
+                'type': 'chat_message',
+                'message': {
+                    'record_id': self.pk,
+                    'fixture_number': self.fixture_control_no,
+                    'location': self.fixture_location,
+                    'date': self.date.strftime('%Y-%m-%d'),
+                    'shift': self.shift,
+                    'issues': issues,
+                    'alert_type': 'fixture_cleaning_alert'
+                }
+            }
+            
+            async_to_sync(channel_layer.group_send)('test', message)
+            
     def __str__(self):
         return f"Cleaning Record {self.fixture_control_no} - {self.date}"
 
@@ -253,6 +251,14 @@ class FixtureCleaningRecord(models.Model):
 # Rejection sheet
 
 from django.core.validators import MinValueValidator
+from django.core.exceptions import ValidationError
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from decimal import Decimal
+
+
+
+
 class RejectionSheet(models.Model):
     STAGE_CHOICES = [
         ('A', 'A'),
@@ -303,12 +309,81 @@ class RejectionSheet(models.Model):
     def calculate_total_pass_qty(self):
         return self.opening_balance + self.receive_from_rework
 
+    def calculate_rejection_rate(self):
+        """Calculate rejection rate as a percentage"""
+        total_processed = self.total_pass_qty + self.total_rejection_qty
+        if total_processed == 0:
+            return Decimal('0.00')
+        return Decimal(self.total_rejection_qty / total_processed * 100).quantize(Decimal('0.01'))
+
+    def calculate_closing_balance(self):
+        """Calculate expected closing balance"""
+        total_input = self.opening_balance + self.receive_from_rework
+        return total_input - (self.total_pass_qty + self.total_rejection_qty)
+
+    def clean(self):
+        """Validate the model data"""
+        super().clean()
+        
+        # Validate basic quantities
+        if self.opening_balance < 0:
+            raise ValidationError({"opening_balance": "Opening balance cannot be negative"})
+        
+        if self.receive_from_rework < 0:
+            raise ValidationError({"receive_from_rework": "Rework quantity cannot be negative"})
+            
+        if self.total_rejection_qty < 0:
+            raise ValidationError({"total_rejection_qty": "Rejection quantity cannot be negative"})
+
+        # Calculate and validate totals
+        total_input = self.opening_balance + self.receive_from_rework
+        if self.total_pass_qty > total_input:
+            raise ValidationError({
+                "total_pass_qty": f"Total pass quantity ({self.total_pass_qty}) cannot exceed total input ({total_input})"
+            })
+
+        # Validate closing balance
+        expected_closing = self.calculate_closing_balance()
+        if self.closing_balance != expected_closing:
+            raise ValidationError({
+                "closing_balance": f"Closing balance should be {expected_closing} (Opening + Rework - Pass - Rejection)"
+            })
+
+    def get_notification_message(self):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'rejection_sheet_alert',
+                'station': self.station,
+                'stage': self.stage,
+                'part_description': self.part_description,
+                'date': self.month.strftime('%Y-%m-%d'),
+                'metrics': {
+                    'opening_balance': self.opening_balance,
+                    'receive_from_rework': self.receive_from_rework,
+                    'total_pass_qty': self.total_pass_qty,
+                    'total_rejection_qty': self.total_rejection_qty,
+                    'closing_balance': self.closing_balance,
+                    'rejection_rate': round((self.total_rejection_qty / (self.total_pass_qty + self.total_rejection_qty)) * 100, 2) if (self.total_pass_qty + self.total_rejection_qty) > 0 else 0
+                },
+                'needs_attention': self.total_rejection_qty > 0,
+                'severity': 'high' if self.total_rejection_qty > (self.total_pass_qty * 0.1) else 'medium',
+            }
+        }
+
     def save(self, *args, **kwargs):
-        # Automatically calculate total_pass_qty
-        if not self.operator_name and hasattr(self, 'request'):
-            self.operator_name = self.request.user        
-        self.total_pass_qty = self.calculate_total_pass_qty()
+        # Run validation
+        self.full_clean()
+        
         super().save(*args, **kwargs)
+
+        # Send notification if there are rejections
+        if self.total_rejection_qty > 0:
+            channel_layer = get_channel_layer()
+            notification = self.get_notification_message()
+            async_to_sync(channel_layer.group_send)('test', notification)
 
 # ----------------------------------------------------------------
 # SolderingBitRecord
@@ -357,6 +432,11 @@ class SolderingBitRecord(models.Model):
         ('20d', '20D'),
         ('30d', '30D'),
     ]
+    # Configuration constants
+    BIT_LIFE_CONFIG = {
+        '20d': {'points_per_part': 10, 'initial_life': 12000, 'warning_threshold': 2000},
+        '30d': {'points_per_part': 4, 'initial_life': 6000, 'warning_threshold': 1000}
+    }
 
     station = models.CharField(max_length=100, default='DSL01_S01')
     doc_number = models.CharField(max_length=50, verbose_name="Doc. No.", default='Doc-QSF-12-15', blank=True)
@@ -382,42 +462,75 @@ class SolderingBitRecord(models.Model):
     class Meta:
         verbose_name = "Robotic Soldering Bit Replacement Record"
         verbose_name_plural = "Robotic Soldering Bit Replacement Records"
-
+        
     def __str__(self):
         return f"Record {self.doc_number} - {self.date}"
 
-    def send_notification(self, message):
-        # Sending notification via WebSocket
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "test",  # the name of the group to send the message to
-            {
-                'type': 'chat_message',
-                'message': message
-            }
-        )
-
-    def save(self, *args, **kwargs):
-        # Determine soldering points per part and bit life remaining based on bit size
-        if self.bit_size == '20d':
-            self.soldering_points_per_part = 10
-            bit_life_initial = 12000
-        elif self.bit_size == '30d':
-            self.soldering_points_per_part = 4  # Assuming this is the per part value
-            bit_life_initial = 6000
-        else:
-            self.soldering_points_per_part = 0
-            bit_life_initial = 0
+    def clean(self):
+        """Validate the model data"""
+        super().clean()
         
-        # Calculate total quantity and total soldering points
+        if self.produce_quantity_shift_a < 0 or self.produce_quantity_shift_b < 0:
+            raise ValidationError("Production quantities cannot be negative")
+            
+        if self.bit_change_date and self.bit_change_date > timezone.now().date():
+            raise ValidationError("Bit change date cannot be in the future")
+
+    def calculate_bit_life(self):
+        """Calculate bit life related metrics"""
+        config = self.BIT_LIFE_CONFIG[self.bit_size]
+        
+        self.soldering_points_per_part = config['points_per_part']
         self.total_quantity = self.produce_quantity_shift_a + self.produce_quantity_shift_b
         self.total_soldering_points = self.total_quantity * self.soldering_points_per_part
+        self.bit_life_remaining = config['initial_life'] - self.total_soldering_points
         
-        # Calculate bit life remaining
-        self.bit_life_remaining = bit_life_initial - self.total_soldering_points
+        return config['warning_threshold']
 
+    def get_notification_message(self, warning_threshold):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'soldering_bit_alert',
+                'station': self.station,
+                'machine': self.machine_no.name,
+                'location': self.machine_location,
+                'bit_size': self.bit_size,
+                'current_date': timezone.now().strftime('%Y-%m-%d'),
+                'bit_change_date': self.bit_change_date.strftime('%Y-%m-%d'),
+                'bit_life_remaining': self.bit_life_remaining,
+                'warning_threshold': warning_threshold,
+                'total_soldering_points': self.total_soldering_points,
+                'status': 'critical' if self.bit_life_remaining <= 0 else 'warning',
+                'metrics': {
+                    'total_quantity': self.total_quantity,
+                    'points_per_part': self.soldering_points_per_part,
+                    'shift_a_quantity': self.produce_quantity_shift_a,
+                    'shift_b_quantity': self.produce_quantity_shift_b
+                }
+            }
+        }
+
+    def save(self, *args, **kwargs):
+        if not self.operator_name and hasattr(self, 'request'):
+            self.operator_name = self.request.user
+            
+        # Run validation
+        self.full_clean()
+        
+        # Calculate bit life and get warning threshold
+        warning_threshold = self.calculate_bit_life()
+        
+        # Save the record
         super().save(*args, **kwargs)
-
+        
+        # Send notifications if needed
+        if self.bit_life_remaining <= warning_threshold:
+            channel_layer = get_channel_layer()
+            notification = self.get_notification_message(warning_threshold)
+            async_to_sync(channel_layer.group_send)('test', notification)
 
 # ----------------------------------------------------------------
 
@@ -450,6 +563,7 @@ class DailyChecklistItem(models.Model):
         ('Check all Tubbing & Feeder pipe', 'Check all Tubbing & Feeder pipe'),
         ('Check Maintenance & Calibration Tag', 'Check Maintenance & Calibration Tag'),
     )
+    
     check_point_1 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Clean Machine Surface',blank=True)
     check_point_2 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check ON/OFF Switch',blank=True)
     check_point_3 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Emergency Switch',blank=True)
@@ -506,74 +620,49 @@ class DailyChecklistItem(models.Model):
     history = HistoricalRecords()
     
     class Meta:
-        verbose_name = "Maintenance Checklist For Daily "
+        verbose_name = "Maintenance Checklist For Daily"
         verbose_name_plural = "Maintenance Checklists For Daily"
 
     def __str__(self):
         return f"Daily Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
 
+    def get_notification_message(self, checkpoint_number, status):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'daily_checklist_alert',
+                'machine_name': self.machine_name,
+                'machine_location': str(self.machine_location),
+                'station': self.station,
+                'control_number': self.control_number,
+                'date': self.date.strftime('%Y-%m-%d'),
+                'checkpoint': {
+                    'number': checkpoint_number,
+                    'name': getattr(self, f'check_point_{checkpoint_number}'),
+                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
+                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
+                    'status': status
+                },
+                'needs_attention': True,
+                'severity': 'high' if status == '✘' else 'normal'
+            }
+        }
     def save(self, *args, **kwargs):
-        # Call the parent save method
+        if not self.manager and hasattr(self, 'request'):
+            self.manager = self.request.user
+
         super().save(*args, **kwargs)
 
-        # Check for 'Not OK' remarks and send notifications
+        # Check for 'Not OK' remarks and send structured notifications
         channel_layer = get_channel_layer()
-        if self.Remark_1 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 1 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_2 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 2 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_3 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 3 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_4 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 4 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_5 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 5 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_6 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 6 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_7 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Daily Checklist Item {self.pk}: Remark 7 is Not OK {self.machine_location}'
-                }
-            )
+        
+        for i in range(1, 8):
+            remark = getattr(self, f'Remark_{i}')
+            if remark == '✘':
+                notification = self.get_notification_message(i, remark)
+                async_to_sync(channel_layer.group_send)('test', notification)
 
 
 class WeeklyChecklistItem(models.Model):
@@ -647,44 +736,58 @@ class WeeklyChecklistItem(models.Model):
 
     
     
+    CHECKPOINTS = {
+        8: {'name': 'Check Conveyor Belts', 'requirement': 'No Damage', 'method': 'By Hand'},
+        9: {'name': 'Check Solder bit Assembly. For any Bolts & Screw Loose', 'requirement': 'Proper Tight', 'method': 'By Hand'},
+        10: {'name': 'Check Wire & Cable', 'requirement': 'No Damage No Broken', 'method': 'By Hand'},
+        11: {'name': 'Electrical Insulation', 'requirement': 'No Cut & No Damage Wire', 'method': 'By Hand'}
+    }
+
+    class Meta:
+        verbose_name = "Maintenance Checklist For Weekly"
+        verbose_name_plural = "Maintenance Checklists For Weekly"
+
+    def __str__(self):
+        return f"Weekly Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
+
+    def get_notification_message(self, checkpoint_number, status):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'weekly_checklist_alert',
+                'machine_name': self.machine_name,
+                'machine_location': str(self.machine_location),
+                'station': self.station,
+                'control_number': self.control_number,
+                'date': self.date.strftime('%Y-%m-%d'),
+                'checkpoint': {
+                    'number': checkpoint_number,
+                    'name': getattr(self, f'check_point_{checkpoint_number}'),
+                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
+                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
+                    'status': status
+                },
+                'needs_attention': True,
+                'severity': 'high' if status == '✘' else 'normal',
+                'check_frequency': 'weekly'
+            }
+        }
     def save(self, *args, **kwargs):
-        # Call the parent save method
+        if not self.manager and hasattr(self, 'request'):
+            self.manager = self.request.user
+
         super().save(*args, **kwargs)
 
-        # Check for 'Not OK' remarks and send notifications
+        # Check for 'Not OK' remarks and send structured notifications
         channel_layer = get_channel_layer()
-        if self.Remark_8 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 8 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_9 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 9 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_10 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 10 is Not OK {self.machine_location}'
-                }
-            )
-        if self.Remark_11 == '✘':
-            async_to_sync(channel_layer.group_send)(
-                'test',
-                {
-                    'type': 'chat_message',
-                    'message': f'Weekly Checklist Item {self.pk}: Remark 11 is Not OK {self.machine_location}'
-                }
-            )
+        
+        for i in range(8, 12):  # Weekly checklist uses checkpoints 8-11
+            remark = getattr(self, f'Remark_{i}')
+            if remark == '✘':
+                notification = self.get_notification_message(i, remark)
+                async_to_sync(channel_layer.group_send)('test', notification)
 
     
 class MonthlyChecklistItem(models.Model):
@@ -747,26 +850,51 @@ class MonthlyChecklistItem(models.Model):
     history = HistoricalRecords()
     
     
+    class Meta:
+        verbose_name = "Maintenance Checklist For Monthly"
+        verbose_name_plural = "Maintenance Checklists For Monthly"
+
     def __str__(self):
-        return f"MonthlyChecklistItem: {self.pk}"
+        return f"Monthly Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
+
+    def get_notification_message(self, checkpoint_number, status):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'monthly_checklist_alert',
+                'machine_name': self.machine_name,
+                'machine_location': str(self.machine_location),
+                'station': self.station,
+                'control_number': self.control_number,
+                'date': self.date.strftime('%Y-%m-%d'),
+                'checkpoint': {
+                    'number': checkpoint_number,
+                    'name': getattr(self, f'check_point_{checkpoint_number}'),
+                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
+                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
+                    'status': status
+                },
+                'needs_attention': True,
+                'severity': 'high' if status == '✘' else 'normal',
+                'check_frequency': 'monthly',
+                'manager': str(self.manager) if self.manager else None
+            }
+        }
 
     def save(self, *args, **kwargs):
-        # Check if Remark_12 is set to "Not OK"
-        if self.Remark_12 == '✘':
-            # Trigger WebSocket notification
-            from channels.layers import get_channel_layer
-            from asgiref.sync import async_to_sync
+        if not self.manager and hasattr(self, 'request'):
+            self.manager = self.request.user
 
-            channel_layer = get_channel_layer()
-            async_to_sync(channel_layer.group_send)(
-                'test',  # Use the same group name as in the WebSocket consumer
-                {
-                    'type': 'chat_message',
-                    'message': f'Notification: {self.machine_location} Not OK for MonthlyChecklistItem by  {self.manager} '
-                }
-            )
-        
         super().save(*args, **kwargs)
+
+        # Check for 'Not OK' remarks and send structured notifications
+        channel_layer = get_channel_layer()
+        
+        if self.Remark_12 == '✘':
+            notification = self.get_notification_message(12, self.Remark_12)
+            async_to_sync(channel_layer.group_send)('test', notification)
 
 
 
@@ -793,17 +921,76 @@ class ControlChartReading(models.Model):
     lsl = models.FloatField(default=355, validators=[MinValueValidator(0)])
     history = HistoricalRecords()
 
-    def save(self, *args, **kwargs):
-        try:
-            self.clean()
-            super().save(*args, **kwargs)
-            self._create_or_update_statistics()
-        except Exception as e:
-            print(f"Error saving reading or statistics: {e}")
-            raise
+
+    def get_readings(self):
+        """Get all readings as a list"""
+        return [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
+    def check_violations(self, x_bar, r):
+        """Check for control chart violations"""
+        violations = []
+        readings = self.get_readings()
+        
+        # Check specification limits
+        for i, reading in enumerate(readings, 1):
+            if reading > self.usl:
+                violations.append(f"Reading {i} ({reading:.2f}) exceeds USL ({self.usl})")
+            if reading < self.lsl:
+                violations.append(f"Reading {i} ({reading:.2f}) below LSL ({self.lsl})")
+
+        # Get control limits from statistics
+        control_limits = ControlChartStatistics.calculate_control_limits()
+        
+        # Check X-bar limits
+        if x_bar > control_limits['ucl_x_bar']:
+            violations.append(f"X-bar ({x_bar:.2f}) exceeds UCL ({control_limits['ucl_x_bar']:.2f})")
+        if x_bar < control_limits['lcl_x_bar']:
+            violations.append(f"X-bar ({x_bar:.2f}) below LCL ({control_limits['lcl_x_bar']:.2f})")
+            
+        # Check Range limits
+        if r > control_limits['ucl_r']:
+            violations.append(f"Range ({r:.2f}) exceeds UCL-R ({control_limits['ucl_r']:.2f})")
+            
+        return violations
+
+    def get_notification_message(self, x_bar, r, violations):
+        """Generate structured notification message"""
+        capability = ControlChartStatistics.calculate_capability_indices()
+        control_limits = ControlChartStatistics.calculate_control_limits()
+        
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'control_chart_alert',
+                'date': self.date.strftime('%Y-%m-%d'),
+                'readings': {
+                    'values': self.get_readings(),
+                    'x_bar': round(x_bar, 3),
+                    'range': round(r, 3)
+                },
+                'specification_limits': {
+                    'usl': self.usl,
+                    'lsl': self.lsl
+                },
+                'control_limits': {
+                    'x_bar_ucl': round(control_limits['ucl_x_bar'], 3),
+                    'x_bar_lcl': round(control_limits['lcl_x_bar'], 3),
+                    'r_ucl': round(control_limits['ucl_r'], 3),
+                    'r_lcl': round(control_limits['lcl_r'], 3)
+                },
+                'capability': {
+                    'cp': round(capability['cp'], 3),
+                    'cpk': round(capability['cpk'], 3),
+                    'std_dev': round(capability['std_dev'], 3)
+                },
+                'violations': violations,
+                'needs_attention': bool(violations),
+                'severity': 'high' if len(violations) > 1 else 'medium' if violations else 'low'
+            }
+        }
 
     def clean(self):
-        readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
+        readings = self.get_readings()
         if any(reading < 0 for reading in readings):
             raise ValidationError("Readings cannot be negative.")
         if self.usl <= self.lsl:
@@ -832,6 +1019,14 @@ class ControlChartReading(models.Model):
                 )
         except Exception as e:
             print(f"Error creating/updating statistics: {e}")
+            raise
+    def save(self, *args, **kwargs):
+        try:
+            self.clean()
+            super().save(*args, **kwargs)
+            self._create_or_update_statistics()
+        except Exception as e:
+            print(f"Error saving reading or statistics: {e}")
             raise
 
         
@@ -992,6 +1187,9 @@ class ControlChartStatistics(models.Model):
         return render(request, 'control_chart.html', context)
 
 
+
+# ----------------------------------------------------------------+
+
 class StartUpCheckSheet(models.Model):
     # General Information
     revision_no = models.IntegerField(verbose_name="Rev. No.")
@@ -1039,13 +1237,36 @@ class StartUpCheckSheet(models.Model):
         verbose_name = "Start Up Check Sheet"
         verbose_name_plural = "Start Up Check Sheets"
 
+def get_notification_message(self, checkpoint_number, status):
+    """Generate structured notification message"""
+    return {
+        'type': 'chat_message',
+        'message': {
+            'record_id': self.pk,
+            'alert_type': 'startup_checksheet_alert',
+            'revision_no': self.revision_no,
+            'process_operation': str(self.process_operation),
+            'effective_date': self.effective_date.strftime('%Y-%m-%d'),
+            'checkpoint': {
+                'number': checkpoint_number,
+                'status': status,
+            },
+            'needs_attention': True,
+            'severity': 'high' if status == '✘' else 'normal',
+            'manager': str(self.manager) if self.manager else None,
+            'month': self.month.strftime('%B %Y')
+        }
+    }
+
     def save(self, *args, **kwargs):
-        # Call the parent save method
+        if not self.manager and hasattr(self, 'request'):
+            self.manager = self.request.user
+
         super().save(*args, **kwargs)
 
-        # Send notifications if any checkpoint is 'Not OK'
+        # Check for 'Not OK' checkpoints and send structured notifications
         channel_layer = get_channel_layer()
-
+        
         checkpoints = [
             self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
             self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
@@ -1055,16 +1276,11 @@ class StartUpCheckSheet(models.Model):
             self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
             self.checkpoint_25
         ]
-        for i, checkpoint in enumerate(checkpoints, start=1):
-            if checkpoint == '✘':  # 'Not OK'
-                async_to_sync(channel_layer.group_send)(
-                    'test',
-                    {
-                        'type': 'chat_message',
-                        'message': f'StartUp Check Sheet Record {self.pk}: Check Point {i} is Not OK {self.process_operation}'
-                    }
-                )
 
+        for i, checkpoint in enumerate(checkpoints, start=1):
+            if checkpoint == '✘':
+                notification = self.get_notification_message(i, checkpoint)
+                async_to_sync(channel_layer.group_send)('test', notification)
     def __str__(self):
         return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
 
@@ -1141,7 +1357,82 @@ class PChartData(models.Model):
         except (ZeroDivisionError, ValueError) as e:
             print(f"Error calculating control limits: {e}")
 
+    def check_control_limits(self):
+        """Check for out-of-control conditions"""
+        violations = []
+        
+        if self.proportion is not None:
+            # P-Chart violations
+            if self.ucl_p is not None and self.proportion > self.ucl_p:
+                violations.append(f"P-Chart: Proportion ({self.proportion:.4f}) exceeds UCL ({self.ucl_p:.4f})")
+            if self.lcl_p is not None and self.proportion < self.lcl_p:
+                violations.append(f"P-Chart: Proportion ({self.proportion:.4f}) below LCL ({self.lcl_p:.4f})")
+
+            # NP-Chart violations
+            np_value = self.average_sample_size * self.proportion
+            if self.ucl_np is not None and np_value > self.ucl_np:
+                violations.append(f"NP-Chart: Value ({np_value:.4f}) exceeds UCL ({self.ucl_np:.4f})")
+            if self.lcl_np is not None and np_value < self.lcl_np:
+                violations.append(f"NP-Chart: Value ({np_value:.4f}) below LCL ({self.lcl_np:.4f})")
+
+        # U-Chart violations
+        if self.average_sample_size > 0:
+            u_value = self.nonconforming_units / self.average_sample_size
+            if self.ucl_u is not None and u_value > self.ucl_u:
+                violations.append(f"U-Chart: Rate ({u_value:.4f}) exceeds UCL ({self.ucl_u:.4f})")
+            if self.lcl_u is not None and u_value < self.lcl_u:
+                violations.append(f"U-Chart: Rate ({u_value:.4f}) below LCL ({self.lcl_u:.4f})")
+
+        return violations
+
+    def get_notification_message(self, violations):
+        """Generate structured notification message"""
+        return {
+            'type': 'chat_message',
+            'message': {
+                'record_id': self.pk,
+                'alert_type': 'p_chart_alert',
+                'location': self.location,
+                'part_info': self.part_number_and_name,
+                'operation': self.operation_number_and_stage_name,
+                'department': self.department,
+                'date': self.month.strftime('%Y-%m-%d'),
+                'metrics': {
+                    'sample_size': self.sample_size,
+                    'nonconforming': self.nonconforming_units,
+                    'proportion': round(self.proportion, 4) if self.proportion else None,
+                    'average_sample_size': self.average_sample_size
+                },
+                'control_limits': {
+                    'p_chart': {
+                        'ucl': round(self.ucl_p, 4) if self.ucl_p else None,
+                        'lcl': round(self.lcl_p, 4) if self.lcl_p else None
+                    },
+                    'np_chart': {
+                        'ucl': round(self.ucl_np, 4) if self.ucl_np else None,
+                        'lcl': round(self.lcl_np, 4) if self.lcl_np else None
+                    },
+                    'u_chart': {
+                        'ucl': round(self.ucl_u, 4) if self.ucl_u else None,
+                        'lcl': round(self.lcl_u, 4) if self.lcl_u else None
+                    }
+                },
+                'violations': violations,
+                'needs_attention': bool(violations),
+                'severity': 'high' if len(violations) > 1 else 'medium' if violations else 'low'
+            }
+        }
+
     def save(self, *args, **kwargs):
+        # Calculate control limits (your existing method)
         self.calculate_control_limits()
+        
+        # Save the record
         super().save(*args, **kwargs)
         
+        # Check for violations and send notification
+        violations = self.check_control_limits()
+        if violations:
+            channel_layer = get_channel_layer()
+            notification = self.get_notification_message(violations)
+            async_to_sync(channel_layer.group_send)('test', notification)

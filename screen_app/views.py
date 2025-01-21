@@ -3004,7 +3004,9 @@ class PChartView(TemplateView):
 # views.py
 from django.views.generic import ListView
 from django.apps import apps
-from simple_history.models import HistoricalRecords
+from django.utils import timezone
+from datetime import timedelta
+from .settings import AUDIT_HISTORY_RETENTION_CHOICES, DEFAULT_AUDIT_RETENTION
 
 class AuditHistoryView(ListView):
     template_name = 'audit_history.html'
@@ -3031,6 +3033,14 @@ class AuditHistoryView(ListView):
                 return []
         return []
 
+    def get_retention_date(self):
+        retention_period = self.request.GET.get('retention', DEFAULT_AUDIT_RETENTION)
+        if retention_period == 'all':
+            return None
+            
+        retention_days = AUDIT_HISTORY_RETENTION_CHOICES[retention_period]['days']
+        return timezone.now() - timedelta(days=retention_days)
+
     def get_queryset(self):
         history_models = []
         for model in apps.get_models():
@@ -3038,11 +3048,16 @@ class AuditHistoryView(ListView):
                 history_models.append(model)
 
         combined_history = []
+        retention_date = self.get_retention_date()
+        
         for model in history_models:
             records = model.history.all()
+            if retention_date:
+                records = records.filter(history_date__gte=retention_date)
+                
             for record in records:
                 record.change_list = self.get_changes(record)
-                record.model_name = record._meta.verbose_name.title()  # Add model name here
+                record.model_name = record._meta.verbose_name.title()
             combined_history.extend(records)
 
         return sorted(combined_history, 
@@ -3052,4 +3067,6 @@ class AuditHistoryView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = 'Audit History'
+        context['retention_choices'] = AUDIT_HISTORY_RETENTION_CHOICES
+        context['current_retention'] = self.request.GET.get('retention', DEFAULT_AUDIT_RETENTION)
         return context

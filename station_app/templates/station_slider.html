@@ -181,7 +181,7 @@
                     Skill Level
                     <span class="skill-badge">{{ request.user.profile.my_skill }}</span>
                 </h3>
-                <p class="user-id">ID: {{ request.user.profile.user_Id }}</p>
+                <p class="user-id">ID: {{ request.user.profile.matrix }}</p>
             </div>
             <a 
                 class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 

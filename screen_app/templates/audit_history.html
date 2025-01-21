@@ -5,10 +5,19 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">System Audit Log</h2>
-        <button id="refreshButton" class="btn btn-primary d-flex align-items-center gap-2">
-            <i class="fas fa-sync-alt"></i>
-            Refresh
-        </button>
+        <div class="d-flex gap-3">
+            <select id="retentionSelect" class="form-select" style="width: auto;">
+                {% for value, info in retention_choices.items %}
+                    <option value="{{ value }}" {% if value == current_retention %}selected{% endif %}>
+                        {{ info.label }}
+                    </option>
+                {% endfor %}
+            </select>
+            <button id="refreshButton" class="btn btn-primary d-flex align-items-center gap-2">
+                <i class="fas fa-sync-alt"></i>
+                Refresh
+            </button>
+        </div>
     </div>
     
     <div class="card shadow">
@@ -90,19 +99,23 @@
 <!-- Add this before closing body tag -->
 {% block extra_js %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const refreshButton = document.getElementById('refreshButton');
-    
-    refreshButton.addEventListener('click', function() {
-        // Add spinning animation
-        const icon = refreshButton.querySelector('i');
-        icon.classList.add('fa-spin');
-        refreshButton.disabled = true;
+    document.addEventListener('DOMContentLoaded', function() {
+        const refreshButton = document.getElementById('refreshButton');
+        const retentionSelect = document.getElementById('retentionSelect');
         
-        // Reload the page
-        window.location.reload();
+        retentionSelect.addEventListener('change', function() {
+            const url = new URL(window.location);
+            url.searchParams.set('retention', this.value);
+            window.location = url;
+        });
+        
+        refreshButton.addEventListener('click', function() {
+            const icon = refreshButton.querySelector('i');
+            icon.classList.add('fa-spin');
+            refreshButton.disabled = true;
+            window.location.reload();
+        });
     });
-});
-</script>
+    </script>
 {% endblock %}
 {% endblock %}
