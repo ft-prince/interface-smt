@@ -20,6 +20,14 @@ class ProductMediaInline(admin.TabularInline):
             else:
                 return format_html('<a href="{}">View File</a>', file_url)
         return "No file"
+    file_preview.short_description = 'File Preview'
+    
+    def formfield_for_dbfield(self, db_field, **kwargs):
+        field = super().formfield_for_dbfield(db_field, **kwargs)
+        if db_field.name == 'duration':
+            field.label = 'Duration (in seconds)'
+        return field
+    
 
 class ProductAdminForm(forms.ModelForm):
     class Meta:
@@ -55,6 +63,9 @@ class ProductMediaAdmin(admin.ModelAdmin):
                 return format_html('<a href="{}">View File</a>', file_url)
         return "No file"
     file_preview.short_description = 'File Preview'
+    def duration_with_unit(self, obj):
+        return f"{obj.duration} (seconds)" if obj.duration is not None else "-"
+    duration_with_unit.short_description = 'Duration'
 
 class StationAdminForm(forms.ModelForm):
     class Meta:

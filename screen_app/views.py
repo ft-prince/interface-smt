@@ -2317,6 +2317,11 @@ from django.utils import timezone
 import calendar
 
 def control_chart(request):
+    """
+    View function for displaying the control chart dashboard with statistical analysis
+    and special cause violations detection.
+    """
+    # Handle month selection with fallback to current month
     selected_month = request.GET.get('month', timezone.now().strftime('%Y-%m'))
     
     try:
@@ -2325,22 +2330,42 @@ def control_chart(request):
         current_date = timezone.now()
         year, month = current_date.year, current_date.month
 
-    # Get total calendar days in month
+    # Calculate total days in selected month
     _, total_days = calendar.monthrange(year, month)
 
+    # Retrieve monthly statistics
     monthly_stats = ControlChartStatistics.objects.filter(
         date__year=year,
         date__month=month
     ).order_by('date')
 
+    # Calculate monthly summary statistics
     days_with_data = monthly_stats.count()
     completion_percentage = (days_with_data / total_days * 100) if total_days else 0
 
-    # Get the latest specification limits for the month
+    # Get the latest specification limits
     latest_stats = monthly_stats.last()
-    current_usl = latest_stats.usl if latest_stats else 375
-    current_lsl = latest_stats.lsl if latest_stats else 355
+    current_usl = latest_stats.usl if latest_stats else 375  # Default USL
+    current_lsl = latest_stats.lsl if latest_stats else 355  # Default LSL
 
+    # Get data points for special cause analysis
+    data_points = list(monthly_stats.values('date', 'x_bar', 'r'))
+    
+    if data_points:
+        # Calculate mean and standard deviation for violation detection
+        x_bars = [point['x_bar'] for point in data_points]
+        mean = sum(x_bars) / len(x_bars)
+        std_dev = (
+            sum((x - mean) ** 2 for x in x_bars) / len(x_bars)
+        ) ** 0.5
+        
+        # Get violations and process them for display
+        violations = ControlChartStatistics.check_special_causes(data_points, mean, std_dev)
+        processed_violations = process_violations(violations)
+    else:
+        processed_violations = []
+
+    # Prepare monthly summary if data exists
     monthly_summary = None
     if monthly_stats.exists():
         monthly_summary = {
@@ -2357,16 +2382,21 @@ def control_chart(request):
             'current_lsl': current_lsl
         }
 
+    # Get available months for the dropdown
     available_months = ControlChartStatistics.objects.annotate(
         month=TruncMonth('date')
     ).values('month').annotate(
         days_count=Count('id')
     ).order_by('-month')
 
-    # Calculate control limits and capability indices using current USL/LSL
+    # Calculate control limits and capability indices
     control_limits = ControlChartStatistics.calculate_control_limits()
     capability_indices = ControlChartStatistics.calculate_capability_indices()
 
+    # Determine overall violation severity
+    violation_severity = determine_violation_severity(processed_violations)
+
+    # Prepare context for template
     context = {
         'statistics': monthly_stats,
         'monthly_summary': monthly_summary,
@@ -2377,10 +2407,54 @@ def control_chart(request):
         'specification_limits': {
             'usl': current_usl,
             'lsl': current_lsl
-        }
+        },
+        'violations': processed_violations,
+        'has_violations': bool(processed_violations),
+        'violation_count': len(processed_violations),
+        'violation_severity': violation_severity
     }
     
     return render(request, 'control_chart.html', context)
+
+def process_violations(violations):
+    """
+    Process raw violations data into a format suitable for display.
+    """
+    processed_violations = []
+    for violation in violations:
+        if 'date_range' in violation:
+            date_display = (
+                f"{violation['date_range'][0].strftime('%Y-%m-%d')} to "
+                f"{violation['date_range'][1].strftime('%Y-%m-%d')}"
+            )
+        else:
+            date_display = violation['date'].strftime('%Y-%m-%d')
+            
+        processed_violations.append({
+            'rule': violation['rule'],
+            'message': violation['message'],
+            'date_display': date_display,
+            'severity': violation['severity'],
+            'points': violation.get('points', []),
+            'value': violation.get('value'),
+            'trend': violation.get('trend')
+        })
+    
+    return processed_violations
+
+def determine_violation_severity(violations):
+    """
+    Determine the overall severity level based on violation types.
+    """
+    if not violations:
+        return 'low'
+    
+    high_severity_rules = {'A', 'B', 'E', 'H'}
+    has_high_severity = any(
+        v['rule'] in high_severity_rules for v in violations
+    )
+    
+    return 'high' if has_high_severity else 'medium'
 
 
 from django.shortcuts import render

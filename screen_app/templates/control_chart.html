@@ -77,35 +77,234 @@
     </div>
 
     <!-- Charts Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-bs-toggle="tab" href="#xbar-chart">X-Bar Chart</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#r-chart">R Chart</a>
-                        </li>
-                    </ul>
-                </div>
-                <div class="card-body">
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="xbar-chart">
-                            <canvas id="xBarChart"></canvas>
-                        </div>
-                        <div class="tab-pane fade" id="r-chart">
-                            <canvas id="rChart"></canvas>
-                        </div>
+<!-- Update the Charts Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-bs-toggle="tab" href="#xbar-chart">X-Bar Chart</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="tab" href="#r-chart">R Chart</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="xbar-chart" style="height: 500px;">
+                        <canvas id="xBarChart"></canvas>
+                    </div>
+                    <div class="tab-pane fade" id="r-chart" style="height: 400px;">
+                        <canvas id="rChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+
+
+<!-- Special Causes Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Special Cause Violations
+                    </h5>
+                    <div class="d-flex gap-2 align-items-center">
+                        {% if has_violations %}
+                            <span class="badge bg-light text-primary fs-6">
+                                {{ violation_count }} Active
+                            </span>
+                        {% endif %}
+                        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#rulesExplanation">
+                            <i class="bi bi-info-circle me-1"></i>View Rules
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="collapse" id="rulesExplanation">
+                <div class="card-body bg-light border-bottom">
+                    <h6 class="mb-3 text-primary">
+                        <i class="bi bi-book me-2"></i>Control Chart Rules Reference
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">Rule</th>
+                                    <th>Description</th>
+                                    <th style="width: 120px;">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-danger">A</span>
+                                    </td>
+                                    <td>1 point more than 3 standard deviations from centerline</td>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-danger">B</span>
+                                    </td>
+                                    <td>7 points in a row on same side of centerline</td>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-warning">C</span>
+                                    </td>
+                                    <td>6 points in a row, all increasing or decreasing</td>
+                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-warning">D</span>
+                                    </td>
+                                    <td>14 points in a row, alternating up and down</td>
+                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-danger">E</span>
+                                    </td>
+                                    <td>2 out of 3 points > 2 standard deviations from centerline (same side)</td>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-warning">F</span>
+                                    </td>
+                                    <td>4 out of 5 points > 1 standard deviation from centerline (same side)</td>
+                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-warning">G</span>
+                                    </td>
+                                    <td>15 points in a row within 1 standard deviation of centerline (either side)</td>
+                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge rounded-pill bg-danger">H</span>
+                                    </td>
+                                    <td>8 points in a row > 1 standard deviation from centerline (either side)</td>
+                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Violations -->
+            <div class="card-body p-0">
+                {% if has_violations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-3">Rule</th>
+                                    <th>Description</th>
+                                    <th>Date Range</th>
+                                    <th>Status</th>
+                                    <th class="pe-3">Analysis</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for violation in violations %}
+                                    <tr>
+                                        <td class="ps-3">
+                                            <span class="badge rounded-pill fs-6 {% if violation.severity == 'high' %}bg-danger{% elif violation.severity == 'medium' %}bg-warning{% endif %}">
+                                                {{ violation.rule }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="text-body-secondary">{{ violation.message }}</span>
+                                        </td>
+                                        <td>
+                                            <i class="bi bi-calendar3 me-1 text-muted"></i>
+                                            <small>{{ violation.date_display }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="d-inline-block px-3 py-1 rounded-pill {% if violation.severity == 'high' %}bg-danger-subtle text-danger{% elif violation.severity == 'medium' %}bg-warning-subtle text-warning{% endif %}">
+                                                <i class="bi bi-exclamation-circle me-1"></i>
+                                                {{ violation.severity|title }}
+                                            </div>
+                                        </td>
+                                        <td class="pe-3">
+                                            <div class="d-flex gap-2">
+                                                {% if violation.trend %}
+                                                    <span class="badge bg-secondary-subtle text-secondary">
+                                                        <i class="bi bi-graph-up me-1"></i>
+                                                        {{ violation.trend|title }}
+                                                    </span>
+                                                {% endif %}
+                                                {% if violation.value %}
+                                                    <span class="badge bg-info-subtle text-info">
+                                                        <i class="bi bi-hash me-1"></i>
+                                                        {{ violation.value|floatformat:2 }}
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-success m-3 mb-0 d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                        <span>No special cause violations detected for this period.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Line Marking Legend -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Standard Deviation Indicators</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 30px; height: 2px; background-color: blue; display: inline-block;"></span>
+                        <span>±1σ (Standard Deviation)</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 30px; height: 2px; background-color: green; display: inline-block;"></span>
+                        <span>±2σ (Standard Deviation)</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="me-2" style="width: 30px; height: 2px; background-color: red; display: inline-block;"></span>
+                        <span>±3σ (Standard Deviation)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
     <!-- Statistics Section -->
-    <div class="row">
+    {% comment %} <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
@@ -145,33 +344,38 @@
                 </div>
             </div>
         </div>
+ {% endcomment %}
 
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">Process Capability</h5>
-                </div>
-                <div class="card-body">
-                    {% if capability_indices %}
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <tbody>
-                                <tr>
-                                    <th>Cp:</th>
-                                    <td class="text-end">{{ capability_indices.cp|floatformat:2 }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Cpk:</th>
-                                    <td class="text-end">{{ capability_indices.cpk|floatformat:2 }}</td>
-                                </tr>
-                                <tr>
-                                    <th>Standard Deviation:</th>
-                                    <td class="text-end">{{ capability_indices.std_dev|floatformat:2 }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <!-- Add this after the Process Capability card -->
+
+<!-- Process Capability Section - Temporarily Disabled
+<div class="col-md-6">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Process Capability</h5>
+        </div>
+        <div class="card-body">
+            {% if capability_indices %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>Cp:</th>
+                            <td class="text-end">{{ capability_indices.cp|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cpk:</th>
+                            <td class="text-end">{{ capability_indices.cpk|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Standard Deviation:</th>
+                            <td class="text-end">{{ capability_indices.std_dev|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            -->
+
+<!-- Specification Limits Section - Temporarily Disabled            
 <div class="col-md-6 mt-4">
     <div class="card">
         <div class="card-header">
@@ -195,78 +399,223 @@
         </div>
     </div>
 </div>
-                    {% else %}
-                    <p class="text-muted">No capability indices available</p>
-                    {% endif %}
-                </div>
+            {% else %}
+            <p class="text-muted">No capability indices available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+-->
+
+<div class="col-md-6 mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Specification Limits</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <tbody>
+                        <tr>
+                            <th>Upper Specification Limit (USL):</th>
+                            <td class="text-end">{{ specification_limits.usl|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Lower Specification Limit (LSL):</th>
+                            <td class="text-end">{{ specification_limits.lsl|floatformat:2 }}</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+          
+        </div>
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Calculate standard deviation lines
+        const xBarAvg = {{ monthly_summary.x_bar_avg|default:0 }};
+        const stdDev = {{ monthly_summary.std_dev|default:0 }};
+        
+        // Calculate sigma levels
+        const calculateSigmaLevels = () => {
+            return {
+                plusThreeSigma: xBarAvg + (3 * stdDev),
+                plusTwoSigma: xBarAvg + (2 * stdDev),
+                plusOneSigma: xBarAvg + stdDev,
+                minusOneSigma: xBarAvg - stdDev,
+                minusTwoSigma: xBarAvg - (2 * stdDev),
+                minusThreeSigma: xBarAvg - (3 * stdDev)
+            };
+        };
+    
+        const sigmaLevels = calculateSigmaLevels();
+    
+        // Common chart options
         const chartOptions = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.dataset.label || '';
+                            const value = context.parsed.y.toFixed(2);
+                            return `${label}: ${value}`;
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
-                    beginAtZero: false
+                    beginAtZero: false,
+                    grid: {
+                        drawBorder: false
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
                 }
+            },
+            animation: {
+                duration: 750,
+                easing: 'easeInOutQuart'
             }
         };
-
-        // X-Bar Chart
+    
+        // Function to create gradient backgrounds
+        function createGradient(ctx, color, opacity = 0.1) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.height);
+            gradient.addColorStop(0, `rgba(${color}, ${opacity})`);
+            gradient.addColorStop(1, `rgba(${color}, 0)`);
+            return gradient;
+        }
+    
+        // X-Bar Chart Configuration
         const xBarCtx = document.getElementById('xBarChart').getContext('2d');
+        const dataLength = {{ statistics|length }};
+        
         new Chart(xBarCtx, {
             type: 'line',
             data: {
                 labels: [{% for stat in statistics %}'{{ stat.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
-                datasets: [{
-                    label: 'X-Bar',
-                    data: [{% for stat in statistics %}{{ stat.x_bar }}{% if not forloop.last %}, {% endif %}{% endfor %}],
-                    borderColor: '#0d6efd',
-                    tension: 0.1
-                }, {
-                    label: 'UCL',
-                    data: Array({{ statistics|length }}).fill({{ control_limits.ucl_x_bar|default:0 }}),
-                    borderColor: '#dc3545',
-                    borderDash: [5, 5]
-                }, {
-                    label: 'LCL',
-                    data: Array({{ statistics|length }}).fill({{ control_limits.lcl_x_bar|default:0 }}),
-                    borderColor: '#dc3545',
-                    borderDash: [5, 5]
-                }, {
-                    label: 'Mean',
-                    data: Array({{ statistics|length }}).fill({{ control_limits.x_bar_avg|default:0 }}),
-                    borderColor: '#198754',
-                    borderDash: [2, 2]
-                },
-                // In the X-Bar Chart datasets, add these two new datasets
-{
-    label: 'USL',
-    data: Array({{ statistics|length }}).fill({{ specification_limits.usl }}),
-    borderColor: '#ffc107',
-    borderDash: [5, 5]
-}, {
-    label: 'LSL',
-    data: Array({{ statistics|length }}).fill({{ specification_limits.lsl }}),
-    borderColor: '#ffc107',
-    borderDash: [5, 5]
-}]
+                datasets: [
+                    {
+                        label: '+3σ',
+                        data: Array(dataLength).fill(sigmaLevels.plusThreeSigma),
+                        borderColor: 'rgba(255, 0, 0, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: '+2σ',
+                        data: Array(dataLength).fill(sigmaLevels.plusTwoSigma),
+                        borderColor: 'rgba(0, 128, 0, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: '+1σ',
+                        data: Array(dataLength).fill(sigmaLevels.plusOneSigma),
+                        borderColor: 'rgba(0, 0, 255, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: 'X-Bar',
+                        data: [{% for stat in statistics %}{{ stat.x_bar }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                        borderColor: '#0d6efd',
+                        backgroundColor: createGradient(xBarCtx, '13, 110, 253'),
+                        borderWidth: 2,
+                        tension: 0.1,
+                        fill: true,
+                        order: 1
+                    },
+                    {
+                        label: '-1σ',
+                        data: Array(dataLength).fill(sigmaLevels.minusOneSigma),
+                        borderColor: 'rgba(0, 0, 255, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: '-2σ',
+                        data: Array(dataLength).fill(sigmaLevels.minusTwoSigma),
+                        borderColor: 'rgba(0, 128, 0, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: '-3σ',
+                        data: Array(dataLength).fill(sigmaLevels.minusThreeSigma),
+                        borderColor: 'rgba(255, 0, 0, 0.8)',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        pointRadius: 0,
+                        order: 2
+                    },
+                    {
+                        label: 'Mean',
+                        data: Array(dataLength).fill(xBarAvg),
+                        borderColor: '#198754',
+                        borderDash: [2, 2],
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        order: 3
+                    }
+                ]
             },
-            options: chartOptions
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    annotation: {
+                        annotations: {
+                            {% for violation in violations %}
+                            {% if violation.date %}
+                            violation{{ forloop.counter }}: {
+                                type: 'point',
+                                xValue: '{{ violation.date|date:"M d" }}',
+                                yValue: {{ violation.value }},
+                                backgroundColor: '{{ violation.severity|yesno:"rgba(220,53,69,0.8),rgba(255,193,7,0.8)" }}',
+                                radius: 6
+                            },
+                            {% endif %}
+                            {% endfor %}
+                        }
+                    }
+                }
+            }
         });
-
-        // R Chart
+    
+        // R Chart Configuration
         const rCtx = document.getElementById('rChart').getContext('2d');
         new Chart(rCtx, {
             type: 'line',
@@ -276,21 +625,38 @@
                     label: 'Range',
                     data: [{% for stat in statistics %}{{ stat.r }}{% if not forloop.last %}, {% endif %}{% endfor %}],
                     borderColor: '#0d6efd',
-                    tension: 0.1
+                    backgroundColor: createGradient(rCtx, '13, 110, 253'),
+                    borderWidth: 2,
+                    tension: 0.1,
+                    fill: true
                 }, {
-                    label: 'UCL',
-                    data: Array({{ statistics|length }}).fill({{ control_limits.ucl_r|default:0 }}),
+                    label: 'UCL R',
+                    data: Array(dataLength).fill({{ control_limits.ucl_r|default:0 }}),
                     borderColor: '#dc3545',
-                    borderDash: [5, 5]
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0
                 }, {
-                    label: 'LCL',
-                    data: Array({{ statistics|length }}).fill({{ control_limits.lcl_r|default:0 }}),
+                    label: 'LCL R',
+                    data: Array(dataLength).fill({{ control_limits.lcl_r|default:0 }}),
                     borderColor: '#dc3545',
-                    borderDash: [5, 5]
+                    borderDash: [5, 5],
+                    borderWidth: 1,
+                    pointRadius: 0
                 }]
             },
             options: chartOptions
         });
+    
+        // Handle violation alerts
+        const violationCount = {{ violation_count|default:0 }};
+        if (violationCount > 0) {
+            const violationSeverity = '{{ violation_severity }}';
+            const alertBadge = document.getElementById('violationCount');
+            if (alertBadge) {
+                alertBadge.classList.add(violationSeverity === 'high' ? 'bg-danger' : 'bg-warning');
+            }
+        }
     });
 </script>
 {% endblock %}

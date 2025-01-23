@@ -154,6 +154,8 @@ def get_station_media_updates(request, station_id):
         last_check = time.time()
         while True:
             station = Station.objects.get(pk=station_id)
+            time.sleep(60)  # Blocking sleep call
+
             media = station.selected_media.all()
             
             media_data = [{

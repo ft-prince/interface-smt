@@ -291,23 +291,40 @@
             const mediaElements = [];
             let slideshowTimer;
             let currentMediaData = [];
-    
-            // Initialize streaming connection
+            let retryCount = 0;
+        
             const setupMediaStream = () => {
+                const maxRetries = 5;
                 const eventSource = new EventSource(`/station/${stationId}/updates/`);
                 
                 eventSource.onmessage = (event) => {
-                    const newMediaData = JSON.parse(event.data);
-                    updateMediaElements(newMediaData);
+                    retryCount = 0; // Reset retry count on successful message
+                    try {
+                        const newMediaData = JSON.parse(event.data);
+                        updateMediaElements(newMediaData);
+                    } catch (error) {
+                        console.warn('Data processing error:', error);
+                    }
                 };
-    
+            
                 eventSource.onerror = (error) => {
-                    console.error('EventSource failed:', error);
-                    eventSource.close();
-                    setTimeout(setupMediaStream, 5000);
+                    if (retryCount >= maxRetries) {
+                        console.warn('Maximum retry attempts reached, stopping reconnection');
+                        eventSource.close();
+                        return;
+                    }
+            
+                    const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 10000);
+                    setTimeout(() => {
+                        retryCount++;
+                        if (eventSource.readyState === EventSource.CLOSED) {
+                            setupMediaStream();
+                        }
+                    }, backoffDelay);
                 };
             };
-    
+            
+        
             const updateMediaElements = (mediaData) => {
                 const sliderContainer = document.getElementById('slider-container');
                 const currentMedia = mediaElements[currentIndex];
@@ -327,11 +344,10 @@
                 }
                 currentMediaData = mediaData;
             };
-    
+        
             const createMediaElement = (media, index, container) => {
                 let mediaElement;
                 
-                // Extract the relative path from the full URL
                 const getRelativePath = (url) => {
                     const urlObj = new URL(url, window.location.origin);
                     return urlObj.pathname.replace('/media/', '');
@@ -357,7 +373,7 @@
                 container.appendChild(mediaElement);
                 mediaElements.push(mediaElement);
             };
-    
+        
             const playCurrentMedia = () => {
                 const currentMedia = mediaElements[currentIndex];
                 
@@ -368,7 +384,7 @@
                     slideshowTimer = setTimeout(switchMedia, duration);
                 }
             };
-    
+        
             const stopCurrentMedia = () => {
                 const currentMedia = mediaElements[currentIndex];
                 if (currentMedia.tagName === 'VIDEO') {
@@ -378,7 +394,7 @@
                     clearTimeout(slideshowTimer);
                 }
             };
-    
+        
             const switchMedia = () => {
                 stopCurrentMedia();
                 mediaElements[currentIndex].classList.remove('active');
@@ -386,10 +402,9 @@
                 mediaElements[currentIndex].classList.add('active');
                 playCurrentMedia();
             };
-    
-            // Initialize the media stream and start the application
+        
             setupMediaStream();
         });
-    </script>
+        </script>
 </body>
 </html>

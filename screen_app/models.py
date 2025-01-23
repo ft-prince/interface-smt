@@ -180,21 +180,26 @@ class FixtureCleaningRecord(models.Model):
         ('Available', 'Available'),
         ('Not Available', 'Not Available'),
     ]
+    modified_TAG_CHOICES =[
+        ('No Peel off','NO PEEL OFF'),
+        ('No Damage','NO DAMAGE'),
+        ('Not Available', 'Not Available')
+    ]
 
     # Fields from FixtureCleaningRecord
     station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
     doc_number = models.CharField(max_length=20, default="QSF-12-15",blank=True)
-    month_year = models.DateField()
+    month_year = models.DateField(default=timezone.now, blank=True)
     shift = models.CharField(max_length=1, choices=SHIFT_CHOICES)
     fixture_location = models.CharField(max_length=200, choices=FIXTURE_LOCATION)
     fixture_control_no = models.CharField(max_length=200, choices=CONTROL_NUMBER_CHOICES)
-    fixture_installation_date = models.DateField()
+    fixture_installation_date = models.DateField(default=timezone.now, blank=True)
     # Fields from DailyRecord
     date = models.DateField(default=timezone.now,blank=True)
     time = models.TimeField(default=timezone.now,blank=True)
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     verification_tag_available = models.CharField(max_length=25, choices=TAG_CHOICES)
-    verification_tag_condition = models.CharField(max_length=25, choices=TAG_CHOICES)
+    verification_tag_condition = models.CharField(max_length=250, choices=modified_TAG_CHOICES)
     no_dust_on_fixture = models.CharField(max_length=25, choices=TAG_CHOICES)
     no_epoxy_coating_on_fixture = models.CharField(max_length=25, choices=TAG_CHOICES)
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
@@ -208,43 +213,55 @@ class FixtureCleaningRecord(models.Model):
         verbose_name_plural = "Fixture Cleaning Records"
 
     def save(self, *args, **kwargs):
-        # Call the parent save method
+        """
+        Override save method to generate notifications for cleaning issues.
+        Checks multiple conditions and sends structured notifications.
+        """
         super().save(*args, **kwargs)
-
-        # Create a list to store any issues
-        issues = []
         
-        # Check all relevant fields and build a structured message
-        if self.verification_tag_available == 'Not Available':
-            issues.append('Verification Tag not available')
-        if self.verification_tag_condition == 'Not Available':
-            issues.append('Verification Tag in poor condition')
-        if self.no_dust_on_fixture == 'Not Available':
-            issues.append('Dust detected on fixture')
-        if self.no_epoxy_coating_on_fixture == 'Not Available':
-            issues.append('Epoxy coating detected on fixture')
-
-        # Only send notification if there are issues
+        # Define inspection points and their corresponding issue messages
+        inspection_points = {
+            'verification_tag_available': 'Verification Tag not available',
+            'verification_tag_condition': 'Verification Tag in poor condition',
+            'no_dust_on_fixture': 'Dust detected on fixture',
+            'no_epoxy_coating_on_fixture': 'Epoxy coating detected on fixture'
+        }
+        
+        # Collect all issues found during inspection
+        issues = [
+            message for field, message in inspection_points.items()
+            if getattr(self, field) == 'Not Available'
+        ]
+        
         if issues:
-            channel_layer = get_channel_layer()
-            
-            # Create a more structured and informative message
-            message = {
-                'type': 'chat_message',
-                'message': {
-                    'record_id': self.pk,
-                    'fixture_number': self.fixture_control_no,
-                    'location': self.fixture_location,
-                    'date': self.date.strftime('%Y-%m-%d'),
-                    'shift': self.shift,
-                    'issues': issues,
-                    'alert_type': 'fixture_cleaning_alert'
-                }
+            self._send_notification(issues)
+
+    def _send_notification(self, issues):
+        """
+        Send structured notification about cleaning issues.
+        Includes all relevant record details and severity level.
+        """
+        severity = 'high' if len(issues) > 2 else 'medium'
+        
+        notification = {
+            'type': 'chat_message',
+            'message': {
+                'alert_type': 'fixture_cleaning_alert',
+                'record_id': self.pk,
+                'fixture_number': self.fixture_control_no,
+                'location': self.fixture_location,
+                'date': self.date.strftime('%Y-%m-%d'),
+                'shift': self.shift,
+                'issues': issues,
+                'severity': severity
             }
-            
-            async_to_sync(channel_layer.group_send)('test', message)
-            
+        }
+        
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)('test', notification)
+
     def __str__(self):
+        """String representation of the cleaning record."""
         return f"Cleaning Record {self.fixture_control_no} - {self.date}"
 
 # ----------------------------------------------------------------
@@ -303,29 +320,27 @@ class RejectionSheet(models.Model):
         verbose_name_plural = "Rejection Sheets"
         unique_together = ['month', 'stage', 'part_description']
 
-    def __str__(self):
-        return f"Rejection Sheet for {self.part_description} - {self.month.strftime('%B %Y')} ({self.stage})"
-        
-    def calculate_total_pass_qty(self):
-        return self.opening_balance + self.receive_from_rework
-
-    def calculate_rejection_rate(self):
-        """Calculate rejection rate as a percentage"""
-        total_processed = self.total_pass_qty + self.total_rejection_qty
-        if total_processed == 0:
-            return Decimal('0.00')
-        return Decimal(self.total_rejection_qty / total_processed * 100).quantize(Decimal('0.01'))
-
-    def calculate_closing_balance(self):
-        """Calculate expected closing balance"""
+    def calculate_metrics(self):
+        """
+        Calculate all relevant metrics for the rejection sheet.
+        Returns a dictionary containing calculated values.
+        """
         total_input = self.opening_balance + self.receive_from_rework
-        return total_input - (self.total_pass_qty + self.total_rejection_qty)
-
-    def clean(self):
-        """Validate the model data"""
-        super().clean()
+        total_processed = self.total_pass_qty + self.total_rejection_qty
+        rejection_rate = (self.total_rejection_qty / total_processed * 100) if total_processed > 0 else Decimal('0.00')
         
-        # Validate basic quantities
+        return {
+            'total_input': total_input,
+            'total_processed': total_processed,
+            'rejection_rate': Decimal(rejection_rate).quantize(Decimal('0.01')),
+            'closing_balance': total_input - total_processed
+        }
+
+    def validate_quantities(self):
+        """
+        Validate all quantity-related fields.
+        Raises ValidationError for any invalid values.
+        """
         if self.opening_balance < 0:
             raise ValidationError({"opening_balance": "Opening balance cannot be negative"})
         
@@ -335,27 +350,55 @@ class RejectionSheet(models.Model):
         if self.total_rejection_qty < 0:
             raise ValidationError({"total_rejection_qty": "Rejection quantity cannot be negative"})
 
-        # Calculate and validate totals
-        total_input = self.opening_balance + self.receive_from_rework
-        if self.total_pass_qty > total_input:
+        metrics = self.calculate_metrics()
+        
+        if self.total_pass_qty > metrics['total_input']:
             raise ValidationError({
-                "total_pass_qty": f"Total pass quantity ({self.total_pass_qty}) cannot exceed total input ({total_input})"
+                "total_pass_qty": (
+                    f"Total pass quantity ({self.total_pass_qty}) cannot exceed "
+                    f"total input ({metrics['total_input']})"
+                )
             })
 
-        # Validate closing balance
-        expected_closing = self.calculate_closing_balance()
-        if self.closing_balance != expected_closing:
+        if self.closing_balance != metrics['closing_balance']:
             raise ValidationError({
-                "closing_balance": f"Closing balance should be {expected_closing} (Opening + Rework - Pass - Rejection)"
+                "closing_balance": (
+                    f"Closing balance should be {metrics['closing_balance']} "
+                    "(Opening + Rework - Pass - Rejection)"
+                )
             })
 
-    def get_notification_message(self):
-        """Generate structured notification message"""
+    def determine_severity(self):
+        """
+        Determine the severity level of rejections based on business rules.
+        Returns 'high' or 'medium' based on rejection thresholds.
+        """
+        metrics = self.calculate_metrics()
+        
+        # High severity if rejection rate exceeds 10%
+        if metrics['rejection_rate'] > 10:
+            return 'high'
+        # High severity if total rejections exceed 100 units
+        elif self.total_rejection_qty > 100:
+            return 'high'
+        # Medium severity for any other rejections
+        elif self.total_rejection_qty > 0:
+            return 'medium'
+        # Normal severity if no rejections
+        return 'normal'
+
+    def prepare_notification(self):
+        """
+        Prepare structured notification data for WebSocket transmission.
+        Returns a complete notification message structure.
+        """
+        metrics = self.calculate_metrics()
+        
         return {
             'type': 'chat_message',
             'message': {
-                'record_id': self.pk,
                 'alert_type': 'rejection_sheet_alert',
+                'record_id': self.pk,
                 'station': self.station,
                 'stage': self.stage,
                 'part_description': self.part_description,
@@ -366,24 +409,37 @@ class RejectionSheet(models.Model):
                     'total_pass_qty': self.total_pass_qty,
                     'total_rejection_qty': self.total_rejection_qty,
                     'closing_balance': self.closing_balance,
-                    'rejection_rate': round((self.total_rejection_qty / (self.total_pass_qty + self.total_rejection_qty)) * 100, 2) if (self.total_pass_qty + self.total_rejection_qty) > 0 else 0
+                    'rejection_rate': float(metrics['rejection_rate'])
                 },
                 'needs_attention': self.total_rejection_qty > 0,
-                'severity': 'high' if self.total_rejection_qty > (self.total_pass_qty * 0.1) else 'medium',
+                'severity': self.determine_severity()
             }
         }
 
-    def save(self, *args, **kwargs):
-        # Run validation
-        self.full_clean()
-        
-        super().save(*args, **kwargs)
-
-        # Send notification if there are rejections
+    def send_notification(self):
+        """
+        Send notification through WebSocket if conditions are met.
+        Only sends notifications for records with rejections.
+        """
         if self.total_rejection_qty > 0:
             channel_layer = get_channel_layer()
-            notification = self.get_notification_message()
+            notification = self.prepare_notification()
             async_to_sync(channel_layer.group_send)('test', notification)
+
+    def clean(self):
+        """Perform model validation before saving."""
+        super().clean()
+        self.validate_quantities()
+
+    def save(self, *args, **kwargs):
+        """Override save to include validation and notification."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+        self.send_notification()
+
+    def __str__(self):
+        """String representation of the rejection sheet."""
+        return f"Rejection Sheet for {self.part_description} - {self.month.strftime('%B %Y')} ({self.stage})"
 
 # ----------------------------------------------------------------
 # SolderingBitRecord
@@ -470,12 +526,28 @@ class SolderingBitRecord(models.Model):
         """Validate the model data"""
         super().clean()
         
-        if self.produce_quantity_shift_a < 0 or self.produce_quantity_shift_b < 0:
-            raise ValidationError("Production quantities cannot be negative")
+        # Add proper null checks before validation
+        if self.produce_quantity_shift_a is None:
+            raise ValidationError({
+                'produce_quantity_shift_a': "Shift A quantity is required"
+            })
             
-        if self.bit_change_date and self.bit_change_date > timezone.now().date():
-            raise ValidationError("Bit change date cannot be in the future")
-
+        if self.produce_quantity_shift_b is None:
+            raise ValidationError({
+                'produce_quantity_shift_b': "Shift B quantity is required"
+            })
+        
+        # Validate non-negative values
+        if self.produce_quantity_shift_a < 0:
+            raise ValidationError({
+                'produce_quantity_shift_a': "Shift A quantity cannot be negative"
+            })
+            
+        if self.produce_quantity_shift_b < 0:
+            raise ValidationError({
+                'produce_quantity_shift_b': "Shift B quantity cannot be negative"
+            })
+            
     def calculate_bit_life(self):
         """Calculate bit life related metrics"""
         config = self.BIT_LIFE_CONFIG[self.bit_size]
@@ -492,10 +564,10 @@ class SolderingBitRecord(models.Model):
         return {
             'type': 'chat_message',
             'message': {
-                'record_id': self.pk,
+                'record_id': str(self.pk),
                 'alert_type': 'soldering_bit_alert',
                 'station': self.station,
-                'machine': self.machine_no.name,
+                'machine': str(self.machine_no.id),
                 'location': self.machine_location,
                 'bit_size': self.bit_size,
                 'current_date': timezone.now().strftime('%Y-%m-%d'),
@@ -627,43 +699,56 @@ class DailyChecklistItem(models.Model):
         return f"Daily Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
 
     def get_notification_message(self, checkpoint_number, status):
-        """Generate structured notification message"""
+        """
+        Generate a notification message that matches the frontend formatting.
+        Ensures consistent data structure for proper display.
+        """
         return {
             'type': 'chat_message',
             'message': {
                 'record_id': self.pk,
                 'alert_type': 'daily_checklist_alert',
-                'machine_name': self.machine_name,
-                'machine_location': str(self.machine_location),
-                'station': self.station,
-                'control_number': self.control_number,
+                # Core machine information
+                'machine_name': self.machine_name or 'N/A',
+                'machine_location': str(self.machine_location) or 'N/A',
+                'station': self.station or 'N/A',
+                'control_number': self.control_number or None,
                 'date': self.date.strftime('%Y-%m-%d'),
+
+                # Checkpoint details structured to match frontend expectations
                 'checkpoint': {
                     'number': checkpoint_number,
-                    'name': getattr(self, f'check_point_{checkpoint_number}'),
-                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
-                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
-                    'status': status
+                    'name': getattr(self, f'check_point_{checkpoint_number}') or 'N/A',
+                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}') or 'N/A',
+                    'method': getattr(self, f'method_of_checking_{checkpoint_number}') or 'N/A',
+                    'status': '✘'  # Status symbol for failed checkpoint
                 },
+                
+                # Additional metadata for alert handling
                 'needs_attention': True,
-                'severity': 'high' if status == '✘' else 'normal'
+                'severity': 'high' if status == '✘' else 'normal',
+                'check_frequency': 'daily'  # Added to match frontend formatting
             }
         }
+
     def save(self, *args, **kwargs):
+        """
+        Save the checklist and generate notifications for failed checkpoints.
+        """
+        # Handle manager assignment if available
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
         super().save(*args, **kwargs)
 
-        # Check for 'Not OK' remarks and send structured notifications
+        # Send notifications for failed checkpoints
         channel_layer = get_channel_layer()
         
-        for i in range(1, 8):
+        for i in range(1, 8):  # Assuming 7 checkpoints
             remark = getattr(self, f'Remark_{i}')
-            if remark == '✘':
+            if remark == '✘':  # Check for failed status
                 notification = self.get_notification_message(i, remark)
                 async_to_sync(channel_layer.group_send)('test', notification)
-
 
 class WeeklyChecklistItem(models.Model):
 
@@ -750,43 +835,73 @@ class WeeklyChecklistItem(models.Model):
     def __str__(self):
         return f"Weekly Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
 
+    def get_checkpoint_info(self, checkpoint_number):
+        """
+        Retrieve checkpoint information from CHECKPOINTS dictionary.
+        Ensures consistent checkpoint data access.
+        """
+        checkpoint = self.CHECKPOINTS.get(checkpoint_number, {})
+        return {
+            'number': checkpoint_number,
+            'name': checkpoint.get('name', getattr(self, f'check_point_{checkpoint_number}', 'N/A')),
+            'requirement': checkpoint.get('requirement', getattr(self, f'requirement_range_{checkpoint_number}', 'N/A')),
+            'method': checkpoint.get('method', getattr(self, f'method_of_checking_{checkpoint_number}', 'N/A')),
+        }
+
     def get_notification_message(self, checkpoint_number, status):
-        """Generate structured notification message"""
+        """
+        Generate structured notification message for weekly checklist.
+        Matches the frontend formatting requirements.
+        """
+        checkpoint_info = self.get_checkpoint_info(checkpoint_number)
+        
         return {
             'type': 'chat_message',
             'message': {
                 'record_id': self.pk,
                 'alert_type': 'weekly_checklist_alert',
-                'machine_name': self.machine_name,
-                'machine_location': str(self.machine_location),
-                'station': self.station,
-                'control_number': self.control_number,
+                # Machine details
+                'machine_name': self.machine_name or 'N/A',
+                'machine_location': str(self.machine_location) or 'N/A',
+                'station': self.station or 'N/A',
+                'control_number': self.control_number or None,
                 'date': self.date.strftime('%Y-%m-%d'),
+                
+                # Checkpoint details
                 'checkpoint': {
-                    'number': checkpoint_number,
-                    'name': getattr(self, f'check_point_{checkpoint_number}'),
-                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
-                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
-                    'status': status
+                    'number': checkpoint_info['number'],
+                    'name': checkpoint_info['name'],
+                    'requirement': checkpoint_info['requirement'],
+                    'method': checkpoint_info['method'],
+                    'status': '✘'
                 },
+                
+                # Alert metadata
                 'needs_attention': True,
                 'severity': 'high' if status == '✘' else 'normal',
                 'check_frequency': 'weekly'
             }
         }
+
     def save(self, *args, **kwargs):
+        """
+        Save checklist and generate notifications for failed checkpoints.
+        Handles manager assignment and notification dispatch.
+        """
+        # Handle manager assignment
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
         super().save(*args, **kwargs)
 
-        # Check for 'Not OK' remarks and send structured notifications
+        # Send notifications for failed checkpoints
         channel_layer = get_channel_layer()
         
-        for i in range(8, 12):  # Weekly checklist uses checkpoints 8-11
-            remark = getattr(self, f'Remark_{i}')
+        # Weekly checklist uses checkpoints 8-11
+        for checkpoint_number in range(8, 12):
+            remark = getattr(self, f'Remark_{checkpoint_number}')
             if remark == '✘':
-                notification = self.get_notification_message(i, remark)
+                notification = self.get_notification_message(checkpoint_number, remark)
                 async_to_sync(channel_layer.group_send)('test', notification)
 
     
@@ -857,45 +972,85 @@ class MonthlyChecklistItem(models.Model):
     def __str__(self):
         return f"Monthly Checklist for {self.machine_name} - {self.month_year.strftime('%B %Y')}"
 
+    def get_checkpoint_details(self, checkpoint_number):
+        """
+        Retrieve comprehensive checkpoint details.
+        Returns formatted checkpoint information with fallback values.
+        """
+        return {
+            'number': checkpoint_number,
+            'name': getattr(self, f'check_point_{checkpoint_number}', 'N/A'),
+            'requirement': getattr(self, f'requirement_range_{checkpoint_number}', 'N/A'),
+            'method': getattr(self, f'method_of_checking_{checkpoint_number}', 'N/A')
+        }
+
+    def get_machine_details(self):
+        """
+        Retrieve machine-related information.
+        Returns formatted machine details with appropriate fallback values.
+        """
+        return {
+            'machine_name': self.machine_name or 'N/A',
+            'machine_location': str(self.machine_location) or 'N/A',
+            'station': self.station or 'N/A',
+            'control_number': self.control_number or None
+        }
+
     def get_notification_message(self, checkpoint_number, status):
-        """Generate structured notification message"""
+        """
+        Generate structured notification message for monthly checklist.
+        Includes comprehensive machine, checkpoint, and management information.
+        """
+        machine_info = self.get_machine_details()
+        checkpoint_info = self.get_checkpoint_details(checkpoint_number)
+
         return {
             'type': 'chat_message',
             'message': {
                 'record_id': self.pk,
                 'alert_type': 'monthly_checklist_alert',
-                'machine_name': self.machine_name,
-                'machine_location': str(self.machine_location),
-                'station': self.station,
-                'control_number': self.control_number,
+                
+                # Machine information
+                'machine_name': machine_info['machine_name'],
+                'machine_location': machine_info['machine_location'],
+                'station': machine_info['station'],
+                'control_number': machine_info['control_number'],
                 'date': self.date.strftime('%Y-%m-%d'),
+                
+                # Checkpoint details
                 'checkpoint': {
-                    'number': checkpoint_number,
-                    'name': getattr(self, f'check_point_{checkpoint_number}'),
-                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}'),
-                    'method': getattr(self, f'method_of_checking_{checkpoint_number}'),
-                    'status': status
+                    'number': checkpoint_info['number'],
+                    'name': checkpoint_info['name'],
+                    'requirement': checkpoint_info['requirement'],
+                    'method': checkpoint_info['method'],
+                    'status': '✘'
                 },
+                
+                # Alert metadata
                 'needs_attention': True,
                 'severity': 'high' if status == '✘' else 'normal',
                 'check_frequency': 'monthly',
-                'manager': str(self.manager) if self.manager else None
+                'manager': str(self.manager) if self.manager else 'Not Assigned'
             }
         }
 
     def save(self, *args, **kwargs):
+        """
+        Save checklist and generate notifications for failed checkpoints.
+        Handles manager assignment and notification dispatch for checkpoint 12.
+        """
+        # Handle manager assignment if not set
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
         super().save(*args, **kwargs)
 
-        # Check for 'Not OK' remarks and send structured notifications
+        # Check specifically for checkpoint 12 failure
         channel_layer = get_channel_layer()
         
         if self.Remark_12 == '✘':
             notification = self.get_notification_message(12, self.Remark_12)
             async_to_sync(channel_layer.group_send)('test', notification)
-
 
 
 
@@ -1099,7 +1254,7 @@ class ControlChartStatistics(models.Model):
             print(f"Error calculating monthly statistics: {e}")
             return []
     
-
+    
     @classmethod
     def calculate_control_limits(cls):
         data = cls.objects.all()
@@ -1168,23 +1323,174 @@ class ControlChartStatistics(models.Model):
             'usl': usl,
             'lsl': lsl
         }
-
-    def control_chart(request):
-        readings = ControlChartReading.objects.all()
-        statistics = ControlChartStatistics.objects.all()
-        monthly_statistics = ControlChartStatistics.get_monthly_statistics()
+    @classmethod
+    def check_special_causes(cls, data_points, mean, std_dev):
+        """
+        Check for special cause variations in control chart data.
         
-        control_limits = ControlChartStatistics.calculate_control_limits()
-        capability_indices = ControlChartStatistics.calculate_capability_indices(usl=375, lsl=355)
+        Args:
+            data_points (list): List of dictionaries containing date and x_bar values
+            mean (float): Mean value of the x_bar measurements
+            std_dev (float): Standard deviation of the x_bar measurements
+        
+        Returns:
+            list: List of detected violations with details
+        """
+        violations = []
+        
+        def is_outside_std_dev(point, multiplier):
+            """Check if a point is outside specified standard deviation limits"""
+            return abs(point['x_bar'] - mean) > (std_dev * multiplier)
+        
+        def is_same_side(point, reference_point):
+            """Check if two points are on the same side of the mean"""
+            return (point['x_bar'] > mean) == (reference_point['x_bar'] > mean)
+        
+        # Rule A: Points beyond 3 sigma
+        for i, point in enumerate(data_points):
+            if is_outside_std_dev(point, 3):
+                violations.append({
+                    'rule': 'A',
+                    'index': i,
+                    'message': '1 point more than 3 standard deviations from centerline',
+                    'date': point['date'],
+                    'value': point['x_bar'],
+                    'severity': 'high'
+                })
+        
+        # Rule B: 7 points in a row on same side
+        for i in range(len(data_points) - 6):
+            sequence = data_points[i:i+7]
+            if all(p['x_bar'] > mean for p in sequence) or all(p['x_bar'] < mean for p in sequence):
+                violations.append({
+                    'rule': 'B',
+                    'index': i,
+                    'message': '7 points in a row on same side of centerline',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': [p['x_bar'] for p in sequence],
+                    'severity': 'high'
+                })
+        
+        # Rule C: 6 points in a row, increasing or decreasing
+        for i in range(len(data_points) - 5):
+            sequence = data_points[i:i+6]
+            x_bars = [p['x_bar'] for p in sequence]
+            increasing = all(x_bars[j] < x_bars[j+1] for j in range(len(x_bars)-1))
+            decreasing = all(x_bars[j] > x_bars[j+1] for j in range(len(x_bars)-1))
+            
+            if increasing or decreasing:
+                violations.append({
+                    'rule': 'C',
+                    'index': i,
+                    'message': '6 points in a row, all increasing or decreasing',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': x_bars,
+                    'severity': 'medium',
+                    'trend': 'increasing' if increasing else 'decreasing'
+                })
+        
+        # Rule D: 14 points alternating up and down
+        for i in range(len(data_points) - 13):
+            sequence = data_points[i:i+14]
+            x_bars = [p['x_bar'] for p in sequence]
+            alternating = True
+            
+            for j in range(len(x_bars)-1):
+                if j % 2 == 0 and x_bars[j] <= x_bars[j+1]:
+                    alternating = False
+                    break
+                if j % 2 == 1 and x_bars[j] >= x_bars[j+1]:
+                    alternating = False
+                    break
+                    
+            if alternating:
+                violations.append({
+                    'rule': 'D',
+                    'index': i,
+                    'message': '14 points alternating up and down',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': x_bars,
+                    'severity': 'medium'
+                })
+        
+        # Rule E: 2 out of 3 points > 2 standard deviations
+        for i in range(len(data_points) - 2):
+            sequence = data_points[i:i+3]
+            count = sum(1 for p in sequence if is_outside_std_dev(p, 2))
+            if count >= 2 and all(is_same_side(p, sequence[0]) for p in sequence):
+                violations.append({
+                    'rule': 'E',
+                    'index': i,
+                    'message': '2 out of 3 points > 2 standard deviations from centerline',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': [p['x_bar'] for p in sequence],
+                    'severity': 'high'
+                })
+        
+        # Rule F: 4 out of 5 points > 1 standard deviation
+        for i in range(len(data_points) - 4):
+            sequence = data_points[i:i+5]
+            count = sum(1 for p in sequence if is_outside_std_dev(p, 1))
+            if count >= 4 and all(is_same_side(p, sequence[0]) for p in sequence):
+                violations.append({
+                    'rule': 'F',
+                    'index': i,
+                    'message': '4 out of 5 points > 1 standard deviation from centerline',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': [p['x_bar'] for p in sequence],
+                    'severity': 'medium'
+                })
+        
+        # Rule G: 15 points in a row within 1 standard deviation
+        for i in range(len(data_points) - 14):
+            sequence = data_points[i:i+15]
+            if all(not is_outside_std_dev(p, 1) for p in sequence):
+                violations.append({
+                    'rule': 'G',
+                    'index': i,
+                    'message': '15 points in a row within 1 standard deviation of centerline',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': [p['x_bar'] for p in sequence],
+                    'severity': 'medium'
+                })
+        
+        # Rule H: 8 points in a row > 1 standard deviation from centerline
+        for i in range(len(data_points) - 7):
+            sequence = data_points[i:i+8]
+            if all(is_outside_std_dev(p, 1) for p in sequence):
+                violations.append({
+                    'rule': 'H',
+                    'index': i,
+                    'message': '8 points in a row > 1 standard deviation from centerline',
+                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'points': [p['x_bar'] for p in sequence],
+                    'severity': 'high'
+                })
+        
+        return violations
+    
+    @classmethod
+    def get_monthly_statistics_with_violations(cls, year, month):
+        """
+        Get monthly statistics including special cause violations
+        """
+        monthly_stats = cls.objects.filter(
+            date__year=year,
+            date__month=month
+        ).order_by('date').values('date', 'x_bar', 'r')
+        
+        if not monthly_stats:
+            return [], []
+        
+        data_points = list(monthly_stats)
+        x_bars = [point['x_bar'] for point in data_points]
+        mean = sum(x_bars) / len(x_bars)
+        std_dev = math.sqrt(sum((x - mean) ** 2 for x in x_bars) / len(x_bars))
+        
+        violations = cls.check_special_causes(data_points, mean, std_dev)
+        
+        return data_points, violations
 
-        context = {
-            'readings': readings,
-            'statistics': statistics,
-            'monthly_statistics': monthly_statistics or [],
-            'control_limits': control_limits,
-            'capability_indices': capability_indices,
-        }
-        return render(request, 'control_chart.html', context)
 
 
 
@@ -1237,52 +1543,203 @@ class StartUpCheckSheet(models.Model):
         verbose_name = "Start Up Check Sheet"
         verbose_name_plural = "Start Up Check Sheets"
 
-def get_notification_message(self, checkpoint_number, status):
-    """Generate structured notification message"""
-    return {
-        'type': 'chat_message',
-        'message': {
-            'record_id': self.pk,
-            'alert_type': 'startup_checksheet_alert',
-            'revision_no': self.revision_no,
-            'process_operation': str(self.process_operation),
-            'effective_date': self.effective_date.strftime('%Y-%m-%d'),
-            'checkpoint': {
-                'number': checkpoint_number,
-                'status': status,
-            },
-            'needs_attention': True,
-            'severity': 'high' if status == '✘' else 'normal',
-            'manager': str(self.manager) if self.manager else None,
-            'month': self.month.strftime('%B %Y')
+
+    CHECKPOINT_INFO = {
+        1: {
+            'name': 'Equipment Safety Guards',
+            'description': 'Verify all safety guards and emergency stops are functional',
+            'criteria': 'All safety devices must be operational and properly installed'
+        },
+        2: {
+            'name': 'Power Supply System',
+            'description': 'Confirm proper voltage and connections',
+            'criteria': 'Voltage within specified range, all connections secure'
+        },
+        3: {
+            'name': 'Machine Cleanliness',
+            'description': 'Check machine cleanliness and surrounding area',
+            'criteria': 'No debris, proper cleaning completed'
+        },
+        4: {
+            'name': 'Oil Level Check',
+            'description': 'Verify oil levels in all required components',
+            'criteria': 'Oil levels within specified range markers'
+        },
+        5: {
+            'name': 'Air Pressure System',
+            'description': 'Check air pressure systems and connections',
+            'criteria': 'Pressure readings within operational range'
+        },
+        6: {
+            'name': 'Control Panel Function',
+            'description': 'Verify all control panel buttons and displays',
+            'criteria': 'All indicators and controls responding correctly'
+        },
+        7: {
+            'name': 'Sensor Systems',
+            'description': 'Check all sensor operations and calibration',
+            'criteria': 'Sensors providing accurate readings and responses'
+        },
+        8: {
+            'name': 'Cooling System',
+            'description': 'Verify cooling system operation and fluid levels',
+            'criteria': 'Proper coolant levels and circulation'
+        },
+        9: {
+            'name': 'Hydraulic System',
+            'description': 'Check hydraulic system pressure and fluid levels',
+            'criteria': 'Hydraulic pressure and fluid levels within range'
+        },
+        10: {
+            'name': 'Belt and Chain Tension',
+            'description': 'Inspect all belts and chains for proper tension',
+            'criteria': 'Correct tension and no visible damage'
+        },
+        11: {
+            'name': 'Lubrication Points',
+            'description': 'Check all lubrication points and systems',
+            'criteria': 'All points properly lubricated'
+        },
+        12: {
+            'name': 'Tool Condition',
+            'description': 'Inspect condition of all cutting tools and attachments',
+            'criteria': 'Tools sharp and in good condition'
+        },
+        13: {
+            'name': 'Ventilation System',
+            'description': 'Check ventilation and exhaust systems',
+            'criteria': 'Proper airflow and filter condition'
+        },
+        14: {
+            'name': 'Material Feed System',
+            'description': 'Verify material feeding mechanism operation',
+            'criteria': 'Smooth operation without obstructions'
+        },
+        15: {
+            'name': 'Waste Collection',
+            'description': 'Check waste collection systems and containers',
+            'criteria': 'Proper waste removal and container condition'
+        },
+        16: {
+            'name': 'Emergency Systems',
+            'description': 'Test emergency stop and safety systems',
+            'criteria': 'All emergency systems responding correctly'
+        },
+        17: {
+            'name': 'Calibration Check',
+            'description': 'Verify machine calibration and alignment',
+            'criteria': 'All measurements within specified tolerances'
+        },
+        18: {
+            'name': 'Electrical Connections',
+            'description': 'Inspect all electrical connections and wiring',
+            'criteria': 'No loose connections or damaged wiring'
+        },
+        19: {
+            'name': 'Warning Indicators',
+            'description': 'Check all warning lights and indicators',
+            'criteria': 'All indicators functioning properly'
+        },
+        20: {
+            'name': 'Operating Temperature',
+            'description': 'Verify normal operating temperature range',
+            'criteria': 'Temperature within specified limits'
+        },
+        21: {
+            'name': 'Safety Equipment',
+            'description': 'Check availability and condition of safety equipment',
+            'criteria': 'All safety equipment present and functional'
+        },
+        22: {
+            'name': 'Documentation',
+            'description': 'Verify presence of required documentation',
+            'criteria': 'All necessary documents available and current'
+        },
+        23: {
+            'name': 'Communication System',
+            'description': 'Test machine communication systems',
+            'criteria': 'All communication functions operational'
+        },
+        24: {
+            'name': 'Auxiliary Systems',
+            'description': 'Check all auxiliary equipment and attachments',
+            'criteria': 'All auxiliary systems functioning correctly'
+        },
+        25: {
+            'name': 'Final Inspection',
+            'description': 'Overall equipment condition assessment',
+            'criteria': 'All parameters within acceptable ranges'
         }
     }
+    def get_notification_message(self, checkpoint_number, status):
+        """Generate structured notification message"""
+        checkpoint_info = self.CHECKPOINT_INFO.get(checkpoint_number, {
+            'name': f'Checkpoint {checkpoint_number}',
+            'description': 'General equipment check',
+            'criteria': 'Must meet operational standards'
+        })
+
+        return {
+            'type': 'chat_message',
+            'message': {
+                # Record identification
+                'record_id': self.pk,
+                'alert_type': 'startup_checksheet_alert',
+                
+                # Document control information
+                'revision_no': self.revision_no or 'Not Specified',
+                'process_operation': str(self.process_operation) or 'Not Specified',
+                'effective_date': self.effective_date.strftime('%Y-%m-%d'),
+                
+                # Checkpoint details
+                'checkpoint': {
+                    'number': checkpoint_number,
+                    'name': checkpoint_info['name'],
+                    'description': checkpoint_info['description'],
+                    'criteria': checkpoint_info['criteria'],
+                    'status': status
+                },
+                
+                # Alert metadata
+                'needs_attention': True,
+                'severity': 'high' if status == '✘' else 'normal',
+                'check_time': timezone.now().strftime('%H:%M:%S'),
+                
+                # Management information
+                'manager': str(self.manager) if self.manager else 'Not Assigned',
+                'month': self.month.strftime('%B %Y'),
+                
+                # Additional context
+                'shift': getattr(self, 'shift', 'Not Specified'),
+                'department': str(getattr(self, 'department', 'Not Specified'))
+            }
+        }
 
     def save(self, *args, **kwargs):
-        if not self.manager and hasattr(self, 'request'):
-            self.manager = self.request.user
+            if not self.manager and hasattr(self, 'request'):
+                self.manager = self.request.user
 
-        super().save(*args, **kwargs)
+            super().save(*args, **kwargs)
 
-        # Check for 'Not OK' checkpoints and send structured notifications
-        channel_layer = get_channel_layer()
-        
-        checkpoints = [
-            self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
-            self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
-            self.checkpoint_9, self.checkpoint_10, self.checkpoint_11, self.checkpoint_12,
-            self.checkpoint_13, self.checkpoint_14, self.checkpoint_15, self.checkpoint_16,
-            self.checkpoint_17, self.checkpoint_18, self.checkpoint_19, self.checkpoint_20,
-            self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
-            self.checkpoint_25
-        ]
+            # Check for 'Not OK' checkpoints and send structured notifications
+            channel_layer = get_channel_layer()
+            
+            checkpoints = [
+                self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
+                self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
+                self.checkpoint_9, self.checkpoint_10, self.checkpoint_11, self.checkpoint_12,
+                self.checkpoint_13, self.checkpoint_14, self.checkpoint_15, self.checkpoint_16,
+                self.checkpoint_17, self.checkpoint_18, self.checkpoint_19, self.checkpoint_20,
+                self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
+                self.checkpoint_25
+            ]
 
-        for i, checkpoint in enumerate(checkpoints, start=1):
-            if checkpoint == '✘':
-                notification = self.get_notification_message(i, checkpoint)
-                async_to_sync(channel_layer.group_send)('test', notification)
+            for i, checkpoint in enumerate(checkpoints, start=1):
+                if checkpoint == '✘':
+                    notification = self.get_notification_message(i, checkpoint)
+                    async_to_sync(channel_layer.group_send)('test', notification)
     def __str__(self):
-        return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
+            return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
 
 
 

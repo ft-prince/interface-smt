@@ -17,6 +17,8 @@
         --card-bg: #FFFFFF;
         --text-color: #1E293B;
         --border-color: #E2E8F0;
+        --navbar-height: 72px;
+
       }
     
       html, body {
@@ -26,50 +28,96 @@
         overflow-x: hidden;
       }
     
+
       body {
         font-family: Arial, sans-serif;
         background-color: var(--background-color);
         color: var(--text-color);
         line-height: 1.6;
-        padding-top: 0px;
+        padding-top: var(--navbar-height);
+        position: relative;
       }
-    
-      .navbar {
-        transition: transform 0.3s ease;
-        background-color: #FFFFFF !important;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        padding: 1rem 2rem;
 
+      .navbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: var(--navbar-height);
+        background-color: #FFFFFF !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        padding: 0.75rem 2rem;
+        z-index: 1030;
+        transition: all 0.3s ease;
       }
       
-      .navbar-brand, .nav-link {
-        color: #4169E1 !important;
-        margin: 0 0.5rem;
-        font-size: 1rem;
+      .navbar-brand {
+        padding: 0;
+        margin-right: 2rem;
+      }
       
+      .navbar-brand img {
+        height: 28px;
+        vertical-align: middle;
+      }
+      
+      .navbar-nav {
+        gap: 1rem;
+        align-items: center;
+      }
+      
+      .nav-link {
+        color: #4169E1 !important;
+        font-weight: 600;
+        padding: 0.5rem 0.75rem;
+        transition: color 0.2s ease;
+        position: relative;
       }
       
       .nav-link:hover {
         color: #1e40af !important;
       }
-      .navbar-nav .nav-link:hover {
-        color: #1e40af !important;
-      }
-      .navbar .btn {
-        padding: 0.5rem 1.5rem;
-        
-      }
-      .navbar-nav {
-        gap: 0.5rem;
+      
+      .nav-link.active::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: var(--primary-color);
+        border-radius: 2px;
       }
       
-      /* Adjust button vertical alignment */
+      .navbar .btn {
+        padding: 0.5rem 1.25rem;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+      }
+      
       .navbar .btn-outline-primary {
-        line-height: 1.5;
-        height: 38px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        border: 2px solid var(--primary-color);
+      }
+      
+      .navbar .btn-outline-primary:hover {
+        background-color: var(--primary-color);
+        color: white !important;
+      }
+      
+      @media (max-width: 991.98px) {
+        .navbar-nav {
+          padding: 1rem 0;
+          gap: 0.5rem;
+        }
+        
+        .nav-link {
+          padding: 0.5rem 0;
+        }
+        
+        .navbar .btn {
+          width: 100%;
+          margin: 0.25rem 0;
+        }
       }
       
       body::-webkit-scrollbar {
@@ -220,9 +268,12 @@
                    href="{% url 'dashboard' %}">Dashboard</a>
               </li>
               <li class="nav-item">
+                {% if user.is_staff %}
                 <a class="nav-link fw-bold {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
                    href="{% url 'audit_history' %}">Audit history</a>
               </li>
+              {% endif %}
+
               <li class="nav-item">
                 <a class="nav-link fw-bold {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
                    href="{% url 'station_media_slider' 1 %}">Screen-1</a>
