@@ -304,7 +304,8 @@
 
 
     <!-- Statistics Section -->
-    {% comment %} <div class="row">
+    
+    <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
@@ -344,10 +345,9 @@
                 </div>
             </div>
         </div>
- {% endcomment %}
 
 
-<!-- Process Capability Section - Temporarily Disabled
+
 <div class="col-md-6">
     <div class="card">
         <div class="card-header">
@@ -373,9 +373,7 @@
                     </tbody>
                 </table>
             </div>
-            -->
 
-<!-- Specification Limits Section - Temporarily Disabled            
 <div class="col-md-6 mt-4">
     <div class="card">
         <div class="card-header">
@@ -405,36 +403,13 @@
         </div>
     </div>
 </div>
--->
 
-<div class="col-md-6 mt-4">
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Specification Limits</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <tbody>
-                        <tr>
-                            <th>Upper Specification Limit (USL):</th>
-                            <td class="text-end">{{ specification_limits.usl|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <th>Lower Specification Limit (LSL):</th>
-                            <td class="text-end">{{ specification_limits.lsl|floatformat:2 }}</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-</div>
+
           
         </div>
 
 <!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% comment %} <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> {% endcomment %}
 
 <script>
 
@@ -446,12 +421,12 @@
         // Calculate sigma levels
         const calculateSigmaLevels = () => {
             return {
-                plusThreeSigma: xBarAvg + (3 * stdDev),
-                plusTwoSigma: xBarAvg + (2 * stdDev),
-                plusOneSigma: xBarAvg + stdDev,
-                minusOneSigma: xBarAvg - stdDev,
-                minusTwoSigma: xBarAvg - (2 * stdDev),
-                minusThreeSigma: xBarAvg - (3 * stdDev)
+                plusThreeSigma: Math.round((xBarAvg + (3 * stdDev)) * 10) / 10,
+                plusTwoSigma: Math.round((xBarAvg + (2 * stdDev)) * 10) / 10,
+                plusOneSigma: Math.round((xBarAvg + stdDev) * 10) / 10,
+                minusOneSigma: Math.round((xBarAvg - stdDev) * 10) / 10,
+                minusTwoSigma: Math.round((xBarAvg - (2 * stdDev)) * 10) / 10,
+                minusThreeSigma: Math.round((xBarAvg - (3 * stdDev)) * 10) / 10
             };
         };
     
@@ -475,7 +450,7 @@
                     callbacks: {
                         label: function(context) {
                             const label = context.dataset.label || '';
-                            const value = context.parsed.y.toFixed(2);
+                            const value = context.parsed.y.toFixed(1); // Changed to 1 decimal place
                             return `${label}: ${value}`;
                         }
                     }

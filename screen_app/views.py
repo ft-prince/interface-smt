@@ -2352,12 +2352,11 @@ def control_chart(request):
     data_points = list(monthly_stats.values('date', 'x_bar', 'r'))
     
     if data_points:
-        # Calculate mean and standard deviation for violation detection
         x_bars = [point['x_bar'] for point in data_points]
-        mean = sum(x_bars) / len(x_bars)
-        std_dev = (
+        mean = round(sum(x_bars) / len(x_bars), 1)
+        std_dev = round((
             sum((x - mean) ** 2 for x in x_bars) / len(x_bars)
-        ) ** 0.5
+        ) ** 0.5, 2)
         
         # Get violations and process them for display
         violations = ControlChartStatistics.check_special_causes(data_points, mean, std_dev)
@@ -2379,7 +2378,10 @@ def control_chart(request):
             'x_bar_avg': monthly_stats.aggregate(Avg('x_bar'))['x_bar__avg'],
             'r_avg': monthly_stats.aggregate(Avg('r'))['r__avg'],
             'current_usl': current_usl,
-            'current_lsl': current_lsl
+            'current_lsl': current_lsl,
+            'x_bar_avg': round(monthly_stats.aggregate(Avg('x_bar'))['x_bar__avg'], 1),
+            'r_avg': round(monthly_stats.aggregate(Avg('r'))['r__avg'], 1),
+
         }
 
     # Get available months for the dropdown
@@ -2395,6 +2397,10 @@ def control_chart(request):
 
     # Determine overall violation severity
     violation_severity = determine_violation_severity(processed_violations)
+
+    print("Monthly Stats Count:", monthly_stats.count())
+    print("Sample X-bar values:", [stat.x_bar for stat in monthly_stats[:5]])
+    print("Control Limits:", control_limits)
 
     # Prepare context for template
     context = {
@@ -2413,6 +2419,12 @@ def control_chart(request):
         'violation_count': len(processed_violations),
         'violation_severity': violation_severity
     }
+    
+    print("Context data sample:", {
+        'stats_count': len(context['statistics']),
+        'has_monthly_summary': bool(context['monthly_summary']),
+        'control_limits': context['control_limits']
+    })
     
     return render(request, 'control_chart.html', context)
 

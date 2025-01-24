@@ -1152,9 +1152,9 @@ class ControlChartReading(models.Model):
             raise ValidationError("Upper specification limit must be greater than lower specification limit.")
 
     def _create_or_update_statistics(self):
-        readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
-        x_bar = sum(readings) / len(readings)
-        r = max(readings) - min(readings)
+        readings = self.get_readings()
+        x_bar = round(sum(readings) / len(readings), 2)
+        r = round(max(readings) - min(readings), 2)
 
         try:
             stats = ControlChartStatistics.objects.filter(date=self.date).first()
@@ -1268,16 +1268,21 @@ class ControlChartStatistics(models.Model):
                 'lcl_r': 0
             }
 
-        x_bar_avg = data.aggregate(Avg('x_bar'))['x_bar__avg']
-        r_bar = data.aggregate(Avg('r'))['r__avg']
+        # Calculate x_bar and range averages with rounding
+        x_bars = [round(record.x_bar, 2) for record in data]
+        ranges = [round(record.r, 2) for record in data]
+
+        x_bar_avg = round(sum(x_bars) / len(x_bars), 2)
+        r_bar = round(sum(ranges) / len(ranges), 2)
 
         # Constants for n=5 subgroup size
         a2, d3, d4 = 0.58, 0, 2.11
 
-        ucl_x_bar = x_bar_avg + a2 * r_bar
-        lcl_x_bar = x_bar_avg - a2 * r_bar
-        ucl_r = d4 * r_bar
-        lcl_r = d3 * r_bar
+        # Calculate control limits with rounding
+        ucl_x_bar = round(x_bar_avg + (a2 * r_bar), 2)
+        lcl_x_bar = round(x_bar_avg - (a2 * r_bar), 2)
+        ucl_r = round(d4 * r_bar, 2)
+        lcl_r = round(d3 * r_bar, 2)
 
         return {
             'x_bar_avg': x_bar_avg,
@@ -1299,22 +1304,23 @@ class ControlChartStatistics(models.Model):
             }
 
         latest_record = data.latest('date')
-        x_bar_avg = data.aggregate(Avg('x_bar'))['x_bar__avg']
-        std_dev = data.aggregate(StdDev('x_bar'))['x_bar__stddev']
-
-        if std_dev is None or std_dev == 0:
-            return {
-                'cp': 0,
-                'cpk': 0,
-                'std_dev': 0
-            }
-
+        x_bars = [record.x_bar for record in data]
+        
+        # Calculate standard deviation using R-bar method
+        r_bar = round(data.aggregate(Avg('r'))['r__avg'], 2)
+        std_dev = round(r_bar / 2.326, 2)  # d2 constant for n=5 is 2.326
+        
+        x_bar_avg = round(sum(x_bars) / len(x_bars), 2)
+        
         # Use the specification limits from the latest record
         usl = latest_record.usl
         lsl = latest_record.lsl
-
-        cp = (usl - lsl) / (6 * std_dev)
-        cpk = min((usl - x_bar_avg) / (3 * std_dev), (x_bar_avg - lsl) / (3 * std_dev))
+        
+        # Calculate capability indices with Excel methodology
+        cp = round((usl - lsl) / (6 * std_dev), 2)
+        cpu = round((usl - x_bar_avg) / (3 * std_dev), 2)
+        cpl = round((x_bar_avg - lsl) / (3 * std_dev), 2)
+        cpk = round(min(cpu, cpl), 2)
 
         return {
             'cp': cp,
