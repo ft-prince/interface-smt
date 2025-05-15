@@ -14,14 +14,10 @@
             <p class="card-text"><strong>Nonconforming Units:</strong> {{ pchart_data.nonconforming_units }}</p>
             <p class="card-text"><strong>Proportion:</strong> {{ pchart_data.proportion|floatformat:4 }}</p>
             <h6>Control Limits:</h6>
-            <p class="card-text"><strong>UCL-np:</strong> {{ ucl_np|floatformat:4 }}</p>
-            <p class="card-text"><strong>LCL-np:</strong> {{ lcl_np|floatformat:4 }}</p>
-            <p class="card-text"><strong>UCL-p:</strong> {{ ucl_p|floatformat:4 }}</p>
-            <p class="card-text"><strong>LCL-p:</strong> {{ lcl_p|floatformat:4 }}</p>
-            <p class="card-text"><strong>UCL-c:</strong> {{ ucl_c|floatformat:4 }}</p>
-            <p class="card-text"><strong>LCL-c:</strong> {{ lcl_c|floatformat:4 }}</p>
-            <p class="card-text"><strong>UCL-u:</strong> {{ ucl_u|floatformat:4 }}</p>
-            <p class="card-text"><strong>LCL-u:</strong> {{ lcl_u|floatformat:4 }}</p>
+
+            <p class="card-text"><strong>UCL-p:</strong>{{pchart_data.ucl_p }} {{ ucl_p|floatformat:4 }}</p>
+            <p class="card-text"><strong>LCL-p:</strong>{{pchart_data.lcl_p }} {{ lcl_p|floatformat:4 }}</p>
+
         </div>
         <p>Debug Info:</p>
 <p>average_sample_size: {{ pchart_data.average_sample_size }}</p>

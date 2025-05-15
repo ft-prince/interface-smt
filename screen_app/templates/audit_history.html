@@ -3,6 +3,46 @@
 
 {% block content %}
 <div class="container mt-4">
+
+<!-- Add after header before table -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-2">
+                <label class="form-label">From Date</label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">To Date</label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Module</label>
+                <select name="module" class="form-select">
+                    <option value="">All Modules</option>
+                    {% for module in available_modules %}
+                        <option value="{{ module }}" {% if selected_module == module %}selected{% endif %}>
+                            {{ module }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Event Type</label>
+                <select name="event_type" class="form-select">
+                    <option value="">All Events</option>
+                    <option value="+" {% if selected_event_type == '+' %}selected{% endif %}>Created</option>
+                    <option value="~" {% if selected_event_type == '~' %}selected{% endif %}>Modified</option>
+                    <option value="-" {% if selected_event_type == '-' %}selected{% endif %}>Deleted</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">Filter</button>
+                <a href="{% url 'audit_history' %}" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+</div>
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">System Audit Log</h2>
         <div class="d-flex gap-3">

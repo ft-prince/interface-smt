@@ -44,12 +44,30 @@
         <td>Station</td>
         <td>{{ sheet.station }}</td>
       </tr>
-  
+      <tr>
+        <td>QSF Number</td>
+        <td>{{ sheet.doc_number }}</td>
+      </tr>
+      <tr>
+        <td>Rev Number</td>
+        <td>{{ sheet.rev_number }}</td>
+      </tr>
+      <tr>
+        <td>Rev Date</td>
+        <td>{{ sheet.rev_date }}</td>
+      </tr>
+      <tr>
+        <td>Shift</td>
+        <td>{{ sheet.shift }}</td>
+      </tr>
     <tr>
       <td>Part Description</td>
-      <td>{{ sheet.get_part_description_display }}</td>
+      <td>{{ sheet.part_description }}</td>
     </tr>
-
+    <tr>
+      <td>Part Name</td>
+      <td>{{ sheet.part_name }}</td>
+  </tr>
     <tr>
       <td>Month</td>
       <td>{{ sheet.month|date:"F Y" }}</td>
@@ -60,7 +78,7 @@
     </tr>
     <tr>
       <td>Stage</td>
-      <td>{{ sheet.get_stage_display }}</td>
+      <td>{{ sheet.stage }}</td>
     </tr>
     <tr>
       <td>Opening Balance</td>
@@ -90,6 +108,25 @@
       {{sheet.operator_name.username}}
     </td>
     </tr>
+    <tr>
+      <td>Defective Type</td>
+      <td>{{ sheet.defect_type }}</td>
+  </tr>
+  
+  {% if sheet.defect_type != "avail"  %}
+      <tr>
+          <td>Defects</td>
+          <td>{{ sheet.defect }}</td>
+      </tr>
+  
+      {% if sheet.defect == "Others" %}
+          <tr>
+              <td>Custom Defect</td>
+              <td>{{ sheet.custom_defect }}</td>
+          </tr>
+      {% endif %}
+  {% endif %}
+
     <tr>
       <td>Verified By Operator </td>
       <td>{{ sheet.get_operator_signature_display }}</td>

@@ -6,6 +6,7 @@
         <div class="card-body">
             <p><strong>User:</strong> {{ profile.user.username }}</p>
             <p><strong>Skill:</strong> {{ profile.my_skill }}</p>
+            <p><strong>User-Id:</strong> {{ profile.matrix }}</p>
             <div class="mt-4">
                 <a href="{% url 'profile_update' profile.pk %}" class="btn btn-warning">Edit</a>
                 <a href="{% url 'profile_list' %}" class="btn btn-secondary">Back to List</a>

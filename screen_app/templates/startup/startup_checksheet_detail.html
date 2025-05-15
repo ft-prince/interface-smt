@@ -1,71 +1,381 @@
-{% extends 'base.html' %}  <!-- Assuming you have a base template -->
-
-{% load custom_filters %}
+{% extends 'base.html' %}
 
 {% block content %}
-<h1>Start-Up Check Sheet Details</h1>
+<div style="max-width: 1200px; margin: 30px auto; padding: 0 20px;">
+    <!-- Header with navigation -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <div>
+            <h1 style="color: #1E40AF; margin: 0; font-size: 28px; font-weight: 600;">Start-Up Check Sheet Details</h1>
+            <p style="color: #64748b; margin: 5px 0 0 0; font-size: 16px;">
+                Effective: {{ check_sheet.effective_date|date:"F d, Y" }}
+            </p>
+        </div>
+        <div style="display: flex; gap: 15px;">
+            <!-- Edit Button -->
+            <a href="{% url 'checksheet_edit' check_sheet.pk %}" 
+               style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                <i class="fas fa-edit"></i> Edit Check Sheet
+            </a>
+            <!-- Back Button -->
+            <a href="{% url 'checksheet_list' %}" 
+               style="background-color: #f1f5f9; color: #475569; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+        </div>
+    </div>
 
-<div class="container">
+    <!-- Info Card -->
+    <div style="background-color: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 30px;">
+        <h2 style="font-size: 20px; color: #1E40AF; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+            Basic Information
+        </h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 25px;">
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Process/Operation</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.process_operation }}</p>
+            </div>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Revision Number</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.rev_number }}</p>
+            </div>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">QSF Number</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.doc_number }}</p>
+            </div>
 
-    <div class="form-section">
-        <div class="form-group">
-            <label>Rev. No.</label>
-            <span>{{ check_sheet.revision_no }}</span>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Part Name</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.process_machine.part_name }}</p>
+            </div>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Month</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.month|date:"F Y" }}</p>
+            </div>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Operator</p>
+                <p style="font-size: 16px; color: #1e293b; font-weight: 500; margin: 0;">{{ check_sheet.manager }}</p>
+            </div>
+            <div>
+                <p style="font-size: 14px; color: #64748b; margin: 0 0 5px 0;">Verification Status</p>
+                <p style="font-size: 16px; margin: 0;">
+                    <span style="background-color: {% if check_sheet.verified_by == '✔' %}#dcfce7{% else %}#fee2e2{% endif %}; 
+                                color: {% if check_sheet.verified_by == '✔' %}#166534{% else %}#991b1b{% endif %};
+                                padding: 4px 10px; border-radius: 4px; font-weight: 500;">
+                        {% if check_sheet.verified_by == '✔' %}Verified{% else %}Not Verified{% endif %}
+                    </span>
+                </p>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Operator</label>
-            <span>{{ check_sheet.manager }}</span>
+    </div>
+
+    <!-- Checkpoints Table -->
+    <div style="background-color: white; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); padding: 25px; margin-bottom: 30px; overflow-x: auto;">
+        <h2 style="font-size: 20px; color: #1E40AF; margin-top: 0; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;">
+            Checkpoints
+        </h2>
+        <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <thead>
+                <tr style="background-color: #f8fafc;">
+                    <th style="padding: 12px 15px; text-align: center; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; width: 60px;">S.No.</th>
+                    <th style="padding: 12px 15px; text-align: left; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0;">CHECK POINTS</th>
+                    <th style="padding: 12px 15px; text-align: left; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0;">Specification</th>
+                    <th style="padding: 12px 15px; text-align: center; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; width: 120px;">Control Method</th>
+                    <th style="padding: 12px 15px; text-align: center; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; width: 100px;">Frequency</th>
+                    <th style="padding: 12px 15px; text-align: center; color: #475569; font-weight: 600; border-bottom: 2px solid #e2e8f0; width: 100px;">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in json_data %}
+                <tr style="{% if forloop.counter|divisibleby:2 %}background-color: #f8fafc;{% endif %}">
+                    <td style="padding: 12px 15px; text-align: center; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 500;">{{ item.s_no }}</td>
+                    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0;">{{ item.checkpoint }}</td>
+                    <td style="padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-weight: 500; color: #1e293b;">{{ item.specification }}</td>
+                    <td style="padding: 12px 15px; text-align: center; border-bottom: 1px solid #e2e8f0; color: #64748b;">{{ item.control_method }}</td>
+                    <td style="padding: 12px 15px; text-align: center; border-bottom: 1px solid #e2e8f0; color: #64748b;">{{ item.frequency }}</td>
+                    <td style="padding: 12px 15px; text-align: center; border-bottom: 1px solid #e2e8f0;">
+                        {% if item.s_no == 1 %}
+                            {% if check_sheet.checkpoint_1 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_1 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_1 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_1 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 2 %}
+                            {% if check_sheet.checkpoint_2 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_2 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_2 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_2 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 3 %}
+                            {% if check_sheet.checkpoint_3 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_3 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_3 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_3 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 4 %}
+                            {% if check_sheet.checkpoint_4 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_4 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_4 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_4 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 5 %}
+                            {% if check_sheet.checkpoint_5 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_5 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_5 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_5 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 6 %}
+                            {% if check_sheet.checkpoint_6 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_6 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_6 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_6 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 7 %}
+                            {% if check_sheet.checkpoint_7 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_7 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_7 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_7 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 8 %}
+                            {% if check_sheet.checkpoint_8 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_8 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_8 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_8 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 9 %}
+                            {% if check_sheet.checkpoint_9 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_9 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_9 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_9 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 10 %}
+                            {% if check_sheet.checkpoint_10 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_10 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_10 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_10 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 11 %}
+                            {% if check_sheet.checkpoint_11 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_11 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_11 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_11 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 12 %}
+                            {% if check_sheet.checkpoint_12 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_12 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_12 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_12 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 13 %}
+                            {% if check_sheet.checkpoint_13 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_13 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_13 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_13 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 14 %}
+                            {% if check_sheet.checkpoint_14 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_14 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_14 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_14 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 15 %}
+                            {% if check_sheet.checkpoint_15 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_15 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_15 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_15 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 16 %}
+                            {% if check_sheet.checkpoint_16 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_16 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_16 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_16 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 17 %}
+                            {% if check_sheet.checkpoint_17 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_17 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_17 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_17 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 18 %}
+                            {% if check_sheet.checkpoint_18 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_18 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_18 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_18 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 19 %}
+                            {% if check_sheet.checkpoint_19 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_19 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_19 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_19 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 20 %}
+                            {% if check_sheet.checkpoint_20 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_20 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_20 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_20 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 21 %}
+                            {% if check_sheet.checkpoint_21 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_21 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_21 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_21 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 22 %}
+                            {% if check_sheet.checkpoint_22 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_22 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_22 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_22 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 23 %}
+                            {% if check_sheet.checkpoint_23 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_23 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_23 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_23 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 24 %}
+                            {% if check_sheet.checkpoint_24 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_24 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_24 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_24 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                        {% elif item.s_no == 25 %}
+                            {% if check_sheet.checkpoint_25 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_25 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_25 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_25 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+
+                            {% elif item.s_no == 26 %}
+                            {% if check_sheet.checkpoint_26 == "✔" %}
+                                <span style="background-color: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 4px; font-weight: 500;">OK</span>
+                            {% elif check_sheet.checkpoint_26 == "✘" %}
+                                <span style="background-color: #fee2e2; color: #991b1b; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not OK</span>
+                            {% elif check_sheet.checkpoint_26 == "available" %}
+                                <span style="background-color: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 4px; font-weight: 500;">AVAILABLE</span>
+                            {% elif check_sheet.checkpoint_26 == "not available" %}
+                                <span style="background-color: #fef3c7; color: #92400e; padding: 4px 10px; border-radius: 4px; font-weight: 500;">Not AVAILABLE</span>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
-        
-        <div class="form-group">
-            <label>Eff. Date</label>
-            <span>{{ check_sheet.effective_date }}</span>
+    
+        <!-- Action Buttons (Bottom) -->
+        <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+            <a href="{% url 'checksheet_list' %}" 
+               style="background-color: #f1f5f9; color: #475569; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'checksheet_edit' check_sheet.pk %}" 
+               style="background-color: #2563EB; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: all 0.2s ease;">
+                <i class="fas fa-edit"></i> Edit Check Sheet
+            </a>
         </div>
-        
-        <div class="form-group">
-        <label>PROCESS/OPERATION</label>
-        <span>{{ check_sheet.get_process_operation_display }}</span>
     </div>
     
-    <div class="form-group">
-        <label>MIN. SKILL REQUIRED</label>
-        <span>{{ check_sheet.min_skill_required }}</span>
-    </div>
-    
-    <div class="form-group">
-        <label>Month</label>
-        <span>{{ check_sheet.month|date:"F Y" }}</span>
-    </div>
-</div>
-
-<table id="checklistTable">
-    <thead>
-        <tr>
-            <th>S.No.</th>
-            <th>CHECK POINTS</th>
-            <th>Specification</th>
-            <th>Control Method</th>
-            <th>Frequency</th>
-            <th>Input</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for item in json_data %}
-        <tr>
-            <td>{{ item.s_no }}</td>
-            <td>{{ item.checkpoint }}</td>
-            <td>{{ item.specification }}</td>
-            <td>{{ item.control_method }}</td>
-            <td>{{ item.frequency }}</td>
-            <td>
-                {{ checkpoint_fields|get_item:forloop.counter0 }}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
-
-<a href="{% url 'checksheet_list' %}" class="btn btn-secondary">Back to List</a>
-</div>
-
-{% endblock %}
+    {% block extra_js %}
+    <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
+    {% endblock %}
+    {% endblock %}

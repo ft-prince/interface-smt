@@ -1,28 +1,114 @@
 {% extends 'base.html' %}
 
-{% block title %}Reading Detail{% endblock %}
 
 {% block content %}
-    <h1>Reading Detail</h1>
-    <dl class="row">
-        <dt class="col-sm-3">Date</dt>
-        <dd class="col-sm-9">{{ reading.date }}</dd>
-        <dt class="col-sm-3">Reading 1</dt>
-        <dd class="col-sm-9">{{ reading.reading1 }}</dd>
-        <dt class="col-sm-3">Reading 2</dt>
-        <dd class="col-sm-9">{{ reading.reading2 }}</dd>
-        <dt class="col-sm-3">Reading 3</dt>
-        <dd class="col-sm-9">{{ reading.reading3 }}</dd>
-        <dt class="col-sm-3">Reading 4</dt>
-        <dd class="col-sm-9">{{ reading.reading4 }}</dd>
-        <dt class="col-sm-3">Reading 5</dt>
-        <dd class="col-sm-9">{{ reading.reading5 }}</dd>
-    </dl>
-    <a href="{% url 'reading_update' reading.id %}" class="btn btn-warning">Edit</a>
-    <a href="{% url 'reading_delete' reading.id %}" class="btn btn-danger">Delete</a>
-
-    {% if user.is_staff %}
-
-    <a href="{% url 'reading_list' %}" class="btn btn-secondary">Back to List</a>
-    {% endif %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Reading Detail</h4>
+        </div>
+        <div class="card-body">
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">Date & Time</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 30%">Date:</th>
+                            <td>{{ reading.date|date:"F j, Y" }}</td>
+                        </tr>
+                        {% if reading.time %}
+                        <tr>
+                            <th>Time:</th>
+                            <td>{{ reading.time|time:"g:i A" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+                
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2 mb-3">Specification Limits</h5>
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 30%">Upper Limit:</th>
+                            <td>{{ reading.usl|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Lower Limit:</th>
+                            <td>{{ reading.lsl|floatformat:2 }}</td>
+                        </tr>
+                        <tr>
+                            <th>Process machine</th>
+                            <td>{{ reading.process_machine.process }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <h5 class="border-bottom pb-2 mb-3">Readings</h5>
+            <div class="row">
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Reading 1</h6>
+                            <h3>{{ reading.reading1|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Reading 2</h6>
+                            <h3>{{ reading.reading2|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Reading 3</h6>
+                            <h3>{{ reading.reading3|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Reading 4</h6>
+                            <h3>{{ reading.reading4|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Reading 5</h6>
+                            <h3>{{ reading.reading5|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-6 mb-3">
+                    <div class="card h-100 bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted">Average</h6>
+                            <h3>{{ avg|floatformat:2 }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer bg-light">
+            <div class="d-flex gap-2">
+                <a href="{% url 'reading_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Back to List
+                </a>
+                <a href="{% url 'reading_update' reading.id %}" class="btn btn-warning">
+                    <i class="fas fa-edit me-2"></i>Edit
+                </a>
+                <a href="{% url 'reading_delete' reading.id %}" class="btn btn-danger">
+                    <i class="fas fa-trash-alt me-2"></i>Delete
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

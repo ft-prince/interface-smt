@@ -11,24 +11,76 @@
         </div>
     </div>
 
-    <!-- Location Selection -->
+    <!-- Location & Month Selection -->
     <div class="row mb-4">
         <div class="col-md-4">
             <div class="card">
                 <div class="card-body">
-                    <h5 class="card-title">Select Location</h5>
-                    <form method="GET">
-                        <select name="location" class="form-select" onchange="this.form.submit()">
-                            <option value="">All Locations</option>
-                            {% for value, name in locations.items %}
-                                <option value="{{ value }}" {% if value == selected_location %}selected{% endif %}>
-                                    {{ name }}
-                                </option>
-                            {% endfor %}
-                        </select>
+                    <h5 class="card-title">Select Filters</h5>
+                    <form method="GET" id="filterForm">
+                        <div class="mb-3">
+                            <label for="locationSelect" class="form-label">Location</label>
+                            <select name="location" class="form-select" id="locationSelect">
+                                <option value="">All Locations</option>
+                                {% for value, name in locations.items %}
+                                    <option value="{{ value }}" {% if value == selected_location %}selected{% endif %}>
+                                        {{ name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="monthSelect" class="form-label">View Daily Data (Select Month)</label>
+                            <select name="selected_month" class="form-select" id="monthSelect">
+                                <option value="">Overview (All Months)</option>
+                                {% for month in available_months %}
+                                    <option value="{{ month.value }}" {% if month.value == selected_month %}selected{% endif %}>
+                                        {{ month.display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Apply Filters</button>
                     </form>
                 </div>
             </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Summary</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Total Sample Size</h6>
+                                <h3 id="totalSampleSize">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Average Proportion</h6>
+                                <h3 id="avgProportion">0.0000</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border rounded p-3 text-center">
+                                <h6>Out of Control Points</h6>
+                                <h3 id="outOfControlCount">0</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Title -->
+    <div class="row mb-2">
+        <div class="col-12">
+            <h4 id="chartTitle" class="text-center">Monthly P-Chart Analysis</h4>
         </div>
     </div>
 
@@ -36,24 +88,32 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
+                <div class="card-body">
+                    <div style="height: 400px;">
+                        <canvas id="pChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
                 <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs">
-                        <li class="nav-item">
-                            <a class="nav-link active" data-bs-toggle="tab" href="#p-chart">P Chart</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="tab" href="#np-chart">NP Chart</a>
-                        </li>
-                    </ul>
+                    <h5 class="card-title mb-0" id="tableTitle">Data Summary</h5>
                 </div>
                 <div class="card-body">
-                    <div class="tab-content">
-                        <div class="tab-pane fade show active" id="p-chart">
-                            <canvas id="pChart" style="height: 400px;"></canvas>
-                        </div>
-                        <div class="tab-pane fade" id="np-chart">
-                            <canvas id="npChart" style="height: 400px;"></canvas>
-                        </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead id="tableHead">
+                                <!-- Will be populated by JS based on view -->
+                            </thead>
+                            <tbody id="tableBody">
+                                <!-- Will be populated by JS -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -64,92 +124,371 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Load data
     const chartData = {{ chart_data|safe }};
+    const dailyData = {{ daily_data|safe }};
+    const selectedMonth = "{{ selected_month }}";
     
-    // P-Chart
-    new Chart(document.getElementById('pChart'), {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
+    // Check if we have data to display
+    if ((!chartData || !chartData.labels || chartData.labels.length === 0) && 
+        (!dailyData || !dailyData.labels || dailyData.labels.length === 0)) {
+        document.getElementById('pChart').parentNode.innerHTML = 
+            '<div class="alert alert-info">No data available for the selected criteria.</div>';
+        return;
+    }
+    
+    // Format numbers for display
+    function formatNumber(value, decimals = 4) {
+        return (typeof value === 'number') ? value.toFixed(decimals) : value;
+    }
+    
+    // Global chart reference to destroy when switching views
+    let currentChart = null;
+    
+    // Function to render monthly overview chart
+    function renderMonthlyChart() {
+        // Update UI
+        document.getElementById('chartTitle').textContent = 'Monthly P-Chart Analysis';
+        document.getElementById('tableTitle').textContent = 'Monthly Data Summary';
+        
+        // Clear any existing chart
+        if (currentChart) {
+            currentChart.destroy();
+        }
+        
+        // Setup datasets
+        const datasets = [
+            {
                 label: 'Proportion',
                 data: chartData.proportion,
                 borderColor: '#0d6efd',
-                tension: 0.1
-            }, {
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.1,
+                fill: false,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }, 
+            {
                 label: 'UCL',
                 data: chartData.ucl_p,
                 borderColor: '#dc3545',
-                borderDash: [5, 5]
-            }, {
+                borderDash: [5, 5],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }, 
+            {
                 label: 'LCL',
                 data: chartData.lcl_p,
                 borderColor: '#dc3545',
-                borderDash: [5, 5]
-            }, {
+                borderDash: [5, 5],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }, 
+            {
                 label: 'Center Line',
                 data: chartData.center_line,
                 borderColor: '#198754',
-                borderDash: [2, 2]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                borderDash: [2, 2],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }
+        ];
+        
+        // Create chart
+        const chartCtx = document.getElementById('pChart').getContext('2d');
+        currentChart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: datasets
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            afterTitle: function(context) {
+                                const index = context[0].dataIndex;
+                                return `Days: ${chartData.days_count[index]} | Sample Size: ${chartData.sample_sizes[index]}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Monthly P-Chart (Proportion Defective)',
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Proportion'
+                        },
+                        ticks: {
+                            precision: 4
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Month'
+                        }
+                    }
                 }
             }
+        });
+        
+        // Update summary statistics
+        let totalSampleSize = 0;
+        let outOfControlCount = 0;
+        
+        chartData.sample_sizes.forEach((size, index) => {
+            totalSampleSize += size;
+            const proportion = chartData.proportion[index];
+            const ucl = chartData.ucl_p[index];
+            const lcl = chartData.lcl_p[index];
+            if (proportion > ucl || (lcl > 0 && proportion < lcl)) {
+                outOfControlCount++;
+            }
+        });
+        
+        document.getElementById('totalSampleSize').textContent = totalSampleSize.toLocaleString();
+        document.getElementById('avgProportion').textContent = formatNumber(chartData.center_line[0]);
+        document.getElementById('outOfControlCount').textContent = outOfControlCount;
+        
+        // Create table header
+        const tableHead = document.getElementById('tableHead');
+        tableHead.innerHTML = `
+            <tr>
+                <th>Month</th>
+                <th>Days Recorded</th>
+                <th>Total Sample Size</th>
+                <th>Proportion Defective</th>
+                <th>UCL</th>
+                <th>LCL</th>
+                <th>Status</th>
+            </tr>
+        `;
+        
+        // Populate table
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        
+        chartData.labels.forEach((month, index) => {
+            const proportion = chartData.proportion[index];
+            const ucl = chartData.ucl_p[index];
+            const lcl = chartData.lcl_p[index];
+            const isOutOfControl = proportion > ucl || (lcl > 0 && proportion < lcl);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${month}</td>
+                <td>${chartData.days_count[index]}</td>
+                <td>${chartData.sample_sizes[index].toLocaleString()}</td>
+                <td>${formatNumber(proportion)}</td>
+                <td>${formatNumber(ucl)}</td>
+                <td>${formatNumber(lcl)}</td>
+                <td>
+                    <span class="badge ${isOutOfControl ? 'bg-danger' : 'bg-success'}">
+                        ${isOutOfControl ? 'Out of Control' : 'In Control'}
+                    </span>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+    
+    // Function to render daily chart for a selected month
+    function renderDailyChart() {
+        // Update UI
+        document.getElementById('chartTitle').textContent = `Daily P-Chart Analysis for ${dailyData.month_display}`;
+        document.getElementById('tableTitle').textContent = 'Daily Data Summary';
+        
+        // Clear any existing chart
+        if (currentChart) {
+            currentChart.destroy();
         }
-    });
-
-    // NP-Chart
-    new Chart(document.getElementById('npChart'), {
-        type: 'line',
-        data: {
-            labels: chartData.labels,
-            datasets: [{
-                label: 'Number of Defects',
-                data: chartData.np_value,
+        
+        // Setup datasets
+        const datasets = [
+            {
+                label: 'Proportion',
+                data: dailyData.proportion,
                 borderColor: '#0d6efd',
-                tension: 0.1
-            }, {
+                backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                tension: 0.1,
+                fill: false,
+                borderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }, 
+            {
                 label: 'UCL',
-                data: chartData.ucl_np,
+                data: dailyData.ucl_p,
                 borderColor: '#dc3545',
-                borderDash: [5, 5]
-            }, {
+                borderDash: [5, 5],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }, 
+            {
                 label: 'LCL',
-                data: chartData.lcl_np,
+                data: dailyData.lcl_p,
                 borderColor: '#dc3545',
-                borderDash: [5, 5]
-            }, {
+                borderDash: [5, 5],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }, 
+            {
                 label: 'Center Line',
-                data: chartData.center_line_np,
+                data: dailyData.center_line,
                 borderColor: '#198754',
-                borderDash: [2, 2]
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
+                borderDash: [2, 2],
+                pointRadius: 0,
+                borderWidth: 2,
+                fill: false
+            }
+        ];
+        
+        // Create chart
+        const chartCtx = document.getElementById('pChart').getContext('2d');
+        currentChart = new Chart(chartCtx, {
+            type: 'line',
+            data: {
+                labels: dailyData.labels,
+                datasets: datasets
             },
-            scales: {
-                y: {
-                    beginAtZero: true
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            afterTitle: function(context) {
+                                const index = context[0].dataIndex;
+                                return `Sample Size: ${dailyData.sample_sizes[index]}`;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 15,
+                            padding: 15
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: `Daily P-Chart for ${dailyData.month_display}`,
+                        font: {
+                            size: 16
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Proportion'
+                        },
+                        ticks: {
+                            precision: 4
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Day'
+                        }
+                    }
                 }
             }
-        }
-    });
+        });
+        
+        // Update summary statistics
+        let totalSampleSize = 0;
+        let outOfControlCount = 0;
+        
+        dailyData.sample_sizes.forEach((size, index) => {
+            totalSampleSize += size;
+            const proportion = dailyData.proportion[index];
+            const ucl = dailyData.ucl_p[index];
+            const lcl = dailyData.lcl_p[index];
+            if (proportion > ucl || (lcl > 0 && proportion < lcl)) {
+                outOfControlCount++;
+            }
+        });
+        
+        document.getElementById('totalSampleSize').textContent = totalSampleSize.toLocaleString();
+        document.getElementById('avgProportion').textContent = formatNumber(dailyData.center_line[0]);
+        document.getElementById('outOfControlCount').textContent = outOfControlCount;
+        
+        // Create table header
+        const tableHead = document.getElementById('tableHead');
+        tableHead.innerHTML = `
+            <tr>
+                <th>Date</th>
+                <th>Sample Size</th>
+                <th>Nonconforming</th>
+                <th>Proportion</th>
+                <th>UCL</th>
+                <th>LCL</th>
+                <th>Status</th>
+            </tr>
+        `;
+        
+        // Populate table
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        
+        dailyData.labels.forEach((day, index) => {
+            const proportion = dailyData.proportion[index];
+            const ucl = dailyData.ucl_p[index];
+            const lcl = dailyData.lcl_p[index];
+            const isOutOfControl = proportion > ucl || (lcl > 0 && proportion < lcl);
+            
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${day}</td>
+                <td>${dailyData.sample_sizes[index].toLocaleString()}</td>
+                <td>${dailyData.nonconforming[index].toLocaleString()}</td>
+                <td>${formatNumber(proportion)}</td>
+                <td>${formatNumber(ucl)}</td>
+                <td>${formatNumber(lcl)}</td>
+                <td>
+                    <span class="badge ${isOutOfControl ? 'bg-danger' : 'bg-success'}">
+                        ${isOutOfControl ? 'Out of Control' : 'In Control'}
+                    </span>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+    
+    // Initial render based on selected view
+    if (selectedMonth && dailyData && dailyData.labels && dailyData.labels.length > 0) {
+        renderDailyChart();
+    } else {
+        renderMonthlyChart();
+    }
 });
-</script>{% endblock %}
+</script>
+{% endblock %}

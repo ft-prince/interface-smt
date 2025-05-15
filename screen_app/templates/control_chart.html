@@ -1,26 +1,110 @@
 {% extends 'base.html' %}
 
 {% block content %}
+<!-- Reminder System Alert -->
+<div class="position-fixed bottom-4 end-4 p-4" style="z-index: 1050; min-width: 300px;">
+    <div id="reminderAlert" class="alert alert-primary alert-dismissible fade shadow-lg border-0" role="alert" style="display: none;">
+        <div class="d-flex align-items-center">
+            <div class="alert-icon me-3">
+                <i class="fas fa-bell fs-4"></i>
+            </div>
+            <div>
+                <h6 class="alert-heading mb-1">Control Chart Reminder</h6>
+                <span id="reminderMessage" class="text-sm"></span>
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+
 <div class="container py-4">
     <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center bg-light p-3 rounded">
-                <h1 class="h3 mb-0">Quality Control Chart</h1>
-                <span class="badge bg-secondary">QSF-13-06</span>
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-primary">Quality Control Chart</h1>
+                    {% if active_machine %}
+                    <p class="text-muted mb-0">{{ active_machine.name }}</p>
+                    {% endif %}
+                </div>
+                <span class="badge bg-secondary rounded-pill px-3 py-2">QSF-13-06</span>
             </div>
         </div>
     </div>
 
+    <!-- Staff View Controls - Only shown to staff users -->
+    {% if is_staff_view %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-users-cog me-2"></i>
+                {% if viewing_all_machines %}
+                Staff View - All Machines
+                {% else %}
+                Staff View - {{ active_machine.name }}
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" class="row g-3">
+                <!-- Preserve month selection when changing machines -->
+                {% if request.GET.month %}
+                <input type="hidden" name="month" value="{{ request.GET.month }}">
+                {% endif %}
+                
+                <div class="col-lg-4">
+                    <label class="form-label">Machine Selection</label>
+                    <select name="machine_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">-- Choose Machine --</option>
+                        {% for machine in all_machines %}
+                        <option value="{{ machine.id }}" {% if active_machine.id == machine.id %}selected{% endif %}>
+                            {{ machine.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-lg-4">
+                    <label class="form-label">View Mode</label>
+                    <div class="btn-group w-100" role="group">
+                        <input type="radio" class="btn-check" name="filter_machine" id="single_machine" value="single" 
+                               {% if not viewing_all_machines %}checked{% endif %} autocomplete="off">
+                        <label class="btn btn-outline-primary" for="single_machine">Single Machine</label>
+                        
+
+                    </div>
+                </div>
+                
+                <div class="col-lg-4 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i>Apply Selection
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+     
     <!-- Month Selection and Summary -->
     <div class="row mb-4">
         <!-- Month Selection -->
         <div class="col-md-4">
-            <div class="card h-100">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Select Period</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Select Period</h5>
                     <form method="GET">
-                        <select name="month" class="form-select mb-3" onchange="this.form.submit()">
+                        <!-- Preserve machine selection when changing months -->
+                        {% if request.GET.machine_id %}
+                        <input type="hidden" name="machine_id" value="{{ request.GET.machine_id }}">
+                        {% endif %}
+                        {% if request.GET.filter_machine %}
+                        <input type="hidden" name="filter_machine" value="{{ request.GET.filter_machine }}">
+                        {% endif %}
+                        
+                        <select name="month" class="form-select" onchange="this.form.submit()">
                             {% for month in available_months %}
                                 <option value="{{ month.month|date:'Y-m' }}" 
                                         {% if selected_month == month.month|date:'Y-m' %}selected{% endif %}>
@@ -36,7 +120,7 @@
         <!-- Monthly Summary -->
         {% if monthly_summary %}
         <div class="col-md-8">
-            <div class="card h-100">
+            <div class="card h-100 shadow-sm border-0">
                 <div class="card-header bg-primary text-white">
                     <h5 class="card-title mb-0">{{ monthly_summary.month_name }} {{ monthly_summary.year }} Overview</h5>
                 </div>
@@ -76,239 +160,269 @@
         {% endif %}
     </div>
 
+    <!-- Date Range Display -->
+    {% if dates_in_month %}
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-light">
+            <h5 class="card-title mb-0">Available Data Dates</h5>
+        </div>
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2">
+                {% for date in dates_in_month %}
+                <span class="badge bg-primary">{{ date }}</span>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Charts Section -->
-<!-- Update the Charts Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <ul class="nav nav-tabs card-header-tabs" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" data-bs-toggle="tab" href="#xbar-chart">X-Bar Chart</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="tab" href="#r-chart">R Chart</a>
-                    </li>
-                </ul>
-            </div>
-            <div class="card-body">
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="xbar-chart" style="height: 500px;">
-                        <canvas id="xBarChart"></canvas>
-                    </div>
-                    <div class="tab-pane fade" id="r-chart" style="height: 400px;">
-                        <canvas id="rChart"></canvas>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-<!-- Special Causes Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header bg-primary text-white">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="card-title mb-0">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Special Cause Violations
-                    </h5>
-                    <div class="d-flex gap-2 align-items-center">
-                        {% if has_violations %}
-                            <span class="badge bg-light text-primary fs-6">
-                                {{ violation_count }} Active
-                            </span>
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <ul class="nav nav-tabs card-header-tabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#xbar-chart">X-Bar Chart</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#r-chart">R Chart</a>
+                        </li>
+                        {% if viewing_all_machines %}
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#machine-comparison">Machine Comparison</a>
+                        </li>
                         {% endif %}
-                        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#rulesExplanation">
-                            <i class="bi bi-info-circle me-1"></i>View Rules
-                        </button>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="xbar-chart" style="height: 500px;">
+                            <canvas id="xBarChart"></canvas>
+                        </div>
+                        <div class="tab-pane fade" id="r-chart" style="height: 400px;">
+                            <canvas id="rChart"></canvas>
+                        </div>
+                        {% if viewing_all_machines %}
+                        <div class="tab-pane fade" id="machine-comparison" style="height: 500px;">
+                            <canvas id="machineComparisonChart"></canvas>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-            <div class="collapse" id="rulesExplanation">
-                <div class="card-body bg-light border-bottom">
-                    <h6 class="mb-3 text-primary">
-                        <i class="bi bi-book me-2"></i>Control Chart Rules Reference
-                    </h6>
-                    <div class="table-responsive">
-                        <table class="table table-sm">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;">Rule</th>
-                                    <th>Description</th>
-                                    <th style="width: 120px;">Severity</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-danger">A</span>
-                                    </td>
-                                    <td>1 point more than 3 standard deviations from centerline</td>
-                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-danger">B</span>
-                                    </td>
-                                    <td>7 points in a row on same side of centerline</td>
-                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning">C</span>
-                                    </td>
-                                    <td>6 points in a row, all increasing or decreasing</td>
-                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning">D</span>
-                                    </td>
-                                    <td>14 points in a row, alternating up and down</td>
-                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-danger">E</span>
-                                    </td>
-                                    <td>2 out of 3 points > 2 standard deviations from centerline (same side)</td>
-                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning">F</span>
-                                    </td>
-                                    <td>4 out of 5 points > 1 standard deviation from centerline (same side)</td>
-                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-warning">G</span>
-                                    </td>
-                                    <td>15 points in a row within 1 standard deviation of centerline (either side)</td>
-                                    <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
-                                </tr>
-                                <tr>
-                                    <td class="text-center">
-                                        <span class="badge rounded-pill bg-danger">H</span>
-                                    </td>
-                                    <td>8 points in a row > 1 standard deviation from centerline (either side)</td>
-                                    <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+        </div>
+    </div>
 
-            <!-- Active Violations -->
-            <div class="card-body p-0">
-                {% if has_violations %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th class="ps-3">Rule</th>
-                                    <th>Description</th>
-                                    <th>Date Range</th>
-                                    <th>Status</th>
-                                    <th class="pe-3">Analysis</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for violation in violations %}
+    <!-- Special Causes Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            Special Cause Violations
+                        </h5>
+                        <div class="d-flex gap-2 align-items-center">
+                            {% if has_violations %}
+                                <span class="badge bg-light text-primary fs-6">
+                                    {{ violation_count }} Active
+                                </span>
+                            {% endif %}
+                            <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#rulesExplanation">
+                                <i class="fas fa-info-circle me-1"></i>View Rules
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="collapse" id="rulesExplanation">
+                    <div class="card-body bg-light border-bottom">
+                        <h6 class="mb-3 text-primary">
+                            <i class="fas fa-book me-2"></i>Control Chart Rules Reference
+                        </h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
                                     <tr>
-                                        <td class="ps-3">
-                                            <span class="badge rounded-pill fs-6 {% if violation.severity == 'high' %}bg-danger{% elif violation.severity == 'medium' %}bg-warning{% endif %}">
-                                                {{ violation.rule }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="text-body-secondary">{{ violation.message }}</span>
-                                        </td>
-                                        <td>
-                                            <i class="bi bi-calendar3 me-1 text-muted"></i>
-                                            <small>{{ violation.date_display }}</small>
-                                        </td>
-                                        <td>
-                                            <div class="d-inline-block px-3 py-1 rounded-pill {% if violation.severity == 'high' %}bg-danger-subtle text-danger{% elif violation.severity == 'medium' %}bg-warning-subtle text-warning{% endif %}">
-                                                <i class="bi bi-exclamation-circle me-1"></i>
-                                                {{ violation.severity|title }}
-                                            </div>
-                                        </td>
-                                        <td class="pe-3">
-                                            <div class="d-flex gap-2">
-                                                {% if violation.trend %}
-                                                    <span class="badge bg-secondary-subtle text-secondary">
-                                                        <i class="bi bi-graph-up me-1"></i>
-                                                        {{ violation.trend|title }}
-                                                    </span>
-                                                {% endif %}
-                                                {% if violation.value %}
-                                                    <span class="badge bg-info-subtle text-info">
-                                                        <i class="bi bi-hash me-1"></i>
-                                                        {{ violation.value|floatformat:2 }}
-                                                    </span>
-                                                {% endif %}
-                                            </div>
-                                        </td>
+                                        <th style="width: 80px;">Rule</th>
+                                        <th>Description</th>
+                                        <th style="width: 120px;">Severity</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-danger">A</span>
+                                        </td>
+                                        <td>1 point more than 3 standard deviations from centerline</td>
+                                        <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-danger">B</span>
+                                        </td>
+                                        <td>7 points in a row on same side of centerline</td>
+                                        <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-warning">C</span>
+                                        </td>
+                                        <td>6 points in a row, all increasing or decreasing</td>
+                                        <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-warning">D</span>
+                                        </td>
+                                        <td>14 points in a row, alternating up and down</td>
+                                        <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-danger">E</span>
+                                        </td>
+                                        <td>2 out of 3 points > 2 standard deviations from centerline (same side)</td>
+                                        <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-warning">F</span>
+                                        </td>
+                                        <td>4 out of 5 points > 1 standard deviation from centerline (same side)</td>
+                                        <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-warning">G</span>
+                                        </td>
+                                        <td>15 points in a row within 1 standard deviation of centerline (either side)</td>
+                                        <td><span class="badge bg-warning-subtle text-warning border border-warning">Medium</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-center">
+                                            <span class="badge rounded-pill bg-danger">H</span>
+                                        </td>
+                                        <td>8 points in a row > 1 standard deviation from centerline (either side)</td>
+                                        <td><span class="badge bg-danger-subtle text-danger border border-danger">High</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                {% else %}
-                    <div class="alert alert-success m-3 mb-0 d-flex align-items-center">
-                        <i class="bi bi-check-circle-fill me-2 fs-5"></i>
-                        <span>No special cause violations detected for this period.</span>
-                    </div>
-                {% endif %}
+                </div>
+
+                <!-- Active Violations -->
+                <div class="card-body p-0">
+                    {% if has_violations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light">
+                                    <tr>
+                                        <th class="ps-3">Rule</th>
+                                        <th>Description</th>
+                                        <th>Date Range</th>
+                                        {% if viewing_all_machines %}
+                                        <th>Machine</th>
+                                        {% endif %}
+                                        <th>Status</th>
+                                        <th class="pe-3">Analysis</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for violation in violations %}
+                                        <tr>
+                                            <td class="ps-3">
+                                                <span class="badge rounded-pill fs-6 {% if violation.severity == 'high' %}bg-danger{% elif violation.severity == 'medium' %}bg-warning{% endif %}">
+                                                    {{ violation.rule }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="text-body-secondary">{{ violation.message }}</span>
+                                            </td>
+                                            <td>
+                                                <i class="fas fa-calendar me-1 text-muted"></i>
+                                                <small>{{ violation.date_display }}</small>
+                                            </td>
+                                            {% if viewing_all_machines %}
+                                            <td>
+                                                <span class="badge bg-secondary">
+                                                    {{ violation.machine_name|default:"Unknown" }}
+                                                </span>
+                                            </td>
+                                            {% endif %}
+                                            <td>
+                                                <div class="d-inline-block px-3 py-1 rounded-pill {% if violation.severity == 'high' %}bg-danger-subtle text-danger{% elif violation.severity == 'medium' %}bg-warning-subtle text-warning{% endif %}">
+                                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                                    {{ violation.severity|title }}
+                                                </div>
+                                            </td>
+                                            <td class="pe-3">
+                                                <div class="d-flex gap-2">
+                                                    {% if violation.trend %}
+                                                        <span class="badge bg-secondary-subtle text-secondary">
+                                                            <i class="fas fa-chart-line me-1"></i>
+                                                            {{ violation.trend|title }}
+                                                        </span>
+                                                    {% endif %}
+                                                    {% if violation.value %}
+                                                        <span class="badge bg-info-subtle text-info">
+                                                            <i class="fas fa-hashtag me-1"></i>
+                                                            {{ violation.value|floatformat:2 }}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-success m-3 mb-0 d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2 fs-5"></i>
+                            <span>No special cause violations detected for this period.</span>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-
-
-<!-- Line Marking Legend -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title mb-0">Standard Deviation Indicators</h5>
-            </div>
-            <div class="card-body">
-                <div class="d-flex flex-wrap gap-3">
-                    <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 30px; height: 2px; background-color: blue; display: inline-block;"></span>
-                        <span>±1σ (Standard Deviation)</span>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 30px; height: 2px; background-color: green; display: inline-block;"></span>
-                        <span>±2σ (Standard Deviation)</span>
-                    </div>
-                    <div class="d-flex align-items-center">
-                        <span class="me-2" style="width: 30px; height: 2px; background-color: red; display: inline-block;"></span>
-                        <span>±3σ (Standard Deviation)</span>
+    <!-- Line Marking Legend -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Standard Deviation Indicators</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-3">
+                        <div class="d-flex align-items-center">
+                            <span class="me-2" style="width: 30px; height: 2px; background-color: blue; display: inline-block;"></span>
+                            <span>±1σ (Standard Deviation)</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2" style="width: 30px; height: 2px; background-color: green; display: inline-block;"></span>
+                            <span>±2σ (Standard Deviation)</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <span class="me-2" style="width: 30px; height: 2px; background-color: red; display: inline-block;"></span>
+                            <span>±3σ (Standard Deviation)</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-
-    <!-- Statistics Section -->
-    
+    <!-- Statistics Sections -->
     <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
+        <!-- Control Limits -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
                     <h5 class="card-title mb-0">Control Limits</h5>
                 </div>
                 <div class="card-body">
@@ -346,73 +460,68 @@
             </div>
         </div>
 
-
-
-<div class="col-md-6">
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Process Capability</h5>
-        </div>
-        <div class="card-body">
-            {% if capability_indices %}
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <tbody>
-                        <tr>
-                            <th>Cp:</th>
-                            <td class="text-end">{{ capability_indices.cp|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <th>Cpk:</th>
-                            <td class="text-end">{{ capability_indices.cpk|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <th>Standard Deviation:</th>
-                            <td class="text-end">{{ capability_indices.std_dev|floatformat:2 }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Process Capability -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Process Capability</h5>
+                </div>
+                <div class="card-body">
+                    {% if capability_indices %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Cp:</th>
+                                    <td class="text-end">{{ capability_indices.cp|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Cpk:</th>
+                                    <td class="text-end">{{ capability_indices.cpk|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Standard Deviation:</th>
+                                    <td class="text-end">{{ capability_indices.std_dev|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No capability indices available</p>
+                    {% endif %}
+                </div>
             </div>
-
-<div class="col-md-6 mt-4">
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title mb-0">Specification Limits</h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <tbody>
-                        <tr>
-                            <th>Upper Specification Limit (USL):</th>
-                            <td class="text-end">{{ specification_limits.usl|floatformat:2 }}</td>
-                        </tr>
-                        <tr>
-                            <th>Lower Specification Limit (LSL):</th>
-                            <td class="text-end">{{ specification_limits.lsl|floatformat:2 }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+        <!-- Specification Limits -->
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">Specification Limits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>Upper Specification Limit (USL):</th>
+                                    <td class="text-end">{{ specification_limits.usl|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Lower Specification Limit (LSL):</th>
+                                    <td class="text-end">{{ specification_limits.lsl|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
-            {% else %}
-            <p class="text-muted">No capability indices available</p>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-
-          
-        </div>
 
 <!-- Scripts -->
-{% comment %} <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> {% endcomment %}
-
 <script>
-
     document.addEventListener('DOMContentLoaded', function() {
         // Calculate standard deviation lines
         const xBarAvg = {{ monthly_summary.x_bar_avg|default:0 }};
@@ -482,15 +591,33 @@
             gradient.addColorStop(1, `rgba(${color}, 0)`);
             return gradient;
         }
+        
+        // Parse chart data from template
+        const chartData = [
+            {% for item in chart_data %}
+                {
+                    date: "{{ item.date }}",
+                    dateDisplay: "{{ item.date_display }}",
+                    xBar: {{ item.x_bar }},
+                    r: {{ item.r }},
+                    machineId: {{ item.machine_id }},
+                    machineName: "{{ item.machine_name }}"
+                }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
     
         // X-Bar Chart Configuration
         const xBarCtx = document.getElementById('xBarChart').getContext('2d');
-        const dataLength = {{ statistics|length }};
+        const dataLength = chartData.length;
+        
+        // Extract labels and data from chartData
+        const dateLabels = chartData.map(item => item.dateDisplay);
+        const xBarValues = chartData.map(item => item.xBar);
         
         new Chart(xBarCtx, {
             type: 'line',
             data: {
-                labels: [{% for stat in statistics %}'{{ stat.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                labels: dateLabels,
                 datasets: [
                     {
                         label: '+3σ',
@@ -521,7 +648,7 @@
                     },
                     {
                         label: 'X-Bar',
-                        data: [{% for stat in statistics %}{{ stat.x_bar }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                        data: xBarValues,
                         borderColor: '#0d6efd',
                         backgroundColor: createGradient(xBarCtx, '13, 110, 253'),
                         borderWidth: 2,
@@ -571,19 +698,12 @@
                 ...chartOptions,
                 plugins: {
                     ...chartOptions.plugins,
-                    annotation: {
-                        annotations: {
-                            {% for violation in violations %}
-                            {% if violation.date %}
-                            violation{{ forloop.counter }}: {
-                                type: 'point',
-                                xValue: '{{ violation.date|date:"M d" }}',
-                                yValue: {{ violation.value }},
-                                backgroundColor: '{{ violation.severity|yesno:"rgba(220,53,69,0.8),rgba(255,193,7,0.8)" }}',
-                                radius: 6
-                            },
-                            {% endif %}
-                            {% endfor %}
+                    title: {
+                        display: true,
+                        text: 'X-Bar Control Chart',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
                         }
                     }
                 }
@@ -592,13 +712,15 @@
     
         // R Chart Configuration
         const rCtx = document.getElementById('rChart').getContext('2d');
+        const rValues = chartData.map(item => item.r);
+        
         new Chart(rCtx, {
             type: 'line',
             data: {
-                labels: [{% for stat in statistics %}'{{ stat.date|date:"M d" }}'{% if not forloop.last %}, {% endif %}{% endfor %}],
+                labels: dateLabels,
                 datasets: [{
                     label: 'Range',
-                    data: [{% for stat in statistics %}{{ stat.r }}{% if not forloop.last %}, {% endif %}{% endfor %}],
+                    data: rValues,
                     borderColor: '#0d6efd',
                     backgroundColor: createGradient(rCtx, '13, 110, 253'),
                     borderWidth: 2,
@@ -620,8 +742,90 @@
                     pointRadius: 0
                 }]
             },
-            options: chartOptions
+            options: {
+                ...chartOptions,
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: 'Range Control Chart',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            }
         });
+        
+        // Machine Comparison Chart - Only for staff view with all machines
+        {% if viewing_all_machines and machine_grouped_data %}
+        const machineComparisonCtx = document.getElementById('machineComparisonChart').getContext('2d');
+        
+        // Prepare data for machine comparison
+        const machineDatasets = [];
+        const colors = [
+            { border: 'rgb(54, 162, 235)', bg: 'rgba(54, 162, 235, 0.2)' },
+            { border: 'rgb(255, 99, 132)', bg: 'rgba(255, 99, 132, 0.2)' },
+            { border: 'rgb(75, 192, 192)', bg: 'rgba(75, 192, 192, 0.2)' },
+            { border: 'rgb(255, 159, 64)', bg: 'rgba(255, 159, 64, 0.2)' },
+            { border: 'rgb(153, 102, 255)', bg: 'rgba(153, 102, 255, 0.2)' },
+            { border: 'rgb(255, 205, 86)', bg: 'rgba(255, 205, 86, 0.2)' }
+        ];
+        
+        let colorIndex = 0;
+        {% for machine_id, machine_data in machine_grouped_data.items %}
+        if (colorIndex >= colors.length) colorIndex = 0;
+        
+        // Create dataset for this machine
+        machineDatasets.push({
+            label: "{{ machine_data.machine_name }}",
+            data: [
+                {% for item in machine_data.data %}
+                { x: "{{ item.date_display }}", y: {{ item.x_bar }} }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            borderColor: colors[colorIndex].border,
+            backgroundColor: colors[colorIndex].bg,
+            borderWidth: 2,
+            fill: false,
+            tension: 0.1
+        });
+        
+        colorIndex++;
+        {% endfor %}
+        
+        // Create the machine comparison chart
+        new Chart(machineComparisonCtx, {
+            type: 'line',
+            data: {
+                datasets: machineDatasets
+            },
+            options: {
+                ...chartOptions,
+                scales: {
+                    ...chartOptions.scales,
+                    x: {
+                        type: 'category',
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    ...chartOptions.plugins,
+                    title: {
+                        display: true,
+                        text: 'Machine Comparison - X-Bar Values',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
     
         // Handle violation alerts
         const violationCount = {{ violation_count|default:0 }};
@@ -634,4 +838,113 @@
         }
     });
 </script>
+
+<!-- Reminder System Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+       let entriesLeft = parseInt(localStorage.getItem('entriesLeft')) || 5;
+       
+       function showAlert(message) {
+           const alert = document.getElementById('reminderAlert');
+           document.getElementById('reminderMessage').textContent = message;
+           
+           // Remove existing classes
+           alert.classList.remove('alert-primary', 'alert-success', 'alert-warning');
+           
+           // Add appropriate class based on entries left
+           if (entriesLeft === 0) {
+               alert.classList.add('alert-success');
+           } else if (entriesLeft <= 2) {
+               alert.classList.add('alert-warning');
+           } else {
+               alert.classList.add('alert-primary');
+           }
+           
+           alert.style.display = 'block';
+           alert.classList.add('show');
+           
+           setTimeout(() => {
+               alert.classList.remove('show');
+               setTimeout(() => alert.style.display = 'none', 150);
+           }, 5000);
+       }
+    
+       function startReminderSystem() {
+           showAlert(`${entriesLeft} entries pending for today's control chart`);
+           setInterval(() => {
+               if (entriesLeft > 0) {
+                   showAlert(`${entriesLeft} entries pending for today's control chart`);
+               }
+           }, 60 * 60 * 1000); // Show reminder every hour
+       }
+    
+       startReminderSystem();
+    
+       window.completeEntry = function() {
+           if (entriesLeft > 0) {
+               entriesLeft--;
+               localStorage.setItem('entriesLeft', entriesLeft);
+               const message = entriesLeft > 0 ? 
+                   `Entry completed successfully. ${entriesLeft} more ${entriesLeft === 1 ? 'entry' : 'entries'} pending.` :
+                   'All entries completed for today!';
+               showAlert(message);
+           }
+       };
+    
+       // Reset entries at midnight
+       const now = new Date();
+       const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+       setTimeout(() => {
+           localStorage.setItem('entriesLeft', 5);
+           entriesLeft = 5;
+           startReminderSystem();
+       }, tomorrow - now);
+    });
+</script>
+
+<style>
+/* Custom styles for the dashboard */
+.card {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.card-header {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.progress {
+    height: 0.7rem;
+    border-radius: 0.35rem;
+}
+
+.badge.rounded-pill {
+    font-weight: 500;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.nav-tabs .nav-link.active {
+    font-weight: 500;
+    color: #0d6efd;
+}
+
+@media (max-width: 767.98px) {
+    .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 0.5rem;
+        align-items: flex-start !important;
+    }
+    
+    .card-header .d-flex.justify-content-between {
+        flex-direction: row;
+        align-items: center !important;
+    }
+}
+</style>
 {% endblock %}

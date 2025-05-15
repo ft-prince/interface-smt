@@ -5,12 +5,17 @@ from django.conf.urls.static import static
 
 from .views import (
     AddFixtureCleaningRecordView,
+    AddPCBPanelInspectionRecordView,
+    DeletePCBPanelInspectionRecordView,
     ListFixtureCleaningRecordView,
+    ListPCBPanelInspectionRecordView,
+    PCBPanelInspectionRecordDetailView,
     UpdateFixtureCleaningRecordView,
     DeleteFixtureCleaningRecordView,
     FixtureCleaningRecordDetailView,
     AddRejectionSheetView,
     ListRejectionSheetView,
+    UpdatePCBPanelInspectionRecordView,
     UpdateRejectionSheetView,
     DeleteRejectionSheetView,
     RejectionSheetDetailView,
@@ -46,8 +51,24 @@ from .views import (
     UpdateFixtureCleaningRecordView,
     DeleteFixtureCleaningRecordView,
     FixtureCleaningRecordDetailView,
-    AuditHistoryView
+    AuditHistoryView,
 
+# 
+
+    AddReworkAnalysisRecordView,
+    ListReworkAnalysisRecordView,
+    ReworkAnalysisRecordDetailView,
+    UpdateReworkAnalysisRecordView,
+    DeleteReworkAnalysisRecordView,
+
+   
+# 
+
+    AddSolderPasteControlView,
+    ListSolderPasteControlView,
+    SolderPasteControlDetailView,
+    UpdateSolderPasteControlView,
+    DeleteSolderPasteControlView,
    
 )
 
@@ -112,6 +133,8 @@ urlpatterns = [
     path('startup/<int:pk>/', StartUpCheckSheetDetailView.as_view(), name='checksheet_detail'),
     path('startup/<int:pk>/edit/', StartUpCheckSheetUpdateView.as_view(), name='checksheet_edit'),
     path('startup/<int:pk>/delete/', StartUpCheckSheetDeleteView.as_view(), name='checksheet_delete'),
+    path('api/reading-status/', views.reading_status_api, name='reading_status_api'),
+    path('checksheets/export/', views.export_checksheet_excel, name='export_checksheet_excel'),
 
 # ----------------------------------------------------------------
     path('get-process-info/<int:location_id>', views.get_process_info, name='get_process_info'),
@@ -126,8 +149,62 @@ urlpatterns = [
     path('pchart/delete/<int:pk>/', views.PChartDataDeleteView.as_view(), name='pchart_delete'),
     path('pchart/chart/', views.PChartView.as_view(), name='pchart_chart'),
 
-# ----------------------------------------------------------------
+
+# ----------------------------------------
     path('audit-history/', AuditHistoryView.as_view(), name='audit_history'),
+    path('dashboard/api/check-notifications/', views.check_notifications, name='check_notifications'),
+
+# ---
+    path('pcb/add/', AddPCBPanelInspectionRecordView.as_view(), name='add_pcb_inspection_record'),
+    path('pcb/list/', ListPCBPanelInspectionRecordView.as_view(), name='list_pcb_inspection_records'),
+    path('pcb/<int:pk>/', PCBPanelInspectionRecordDetailView.as_view(), name='pcb_inspection_record_detail'),
+    path('pcb/<int:pk>/update/', UpdatePCBPanelInspectionRecordView.as_view(), name='update_pcb_inspection_record'),
+    path('pcb/<int:pk>/delete/', DeletePCBPanelInspectionRecordView.as_view(), name='delete_pcb_inspection_record'),
+ 
+# 
+
+
+
+    path('rework/add/', AddReworkAnalysisRecordView.as_view(), name='add_rework_analysis_record'),
+    path('rework/list/', ListReworkAnalysisRecordView.as_view(), name='list_rework_analysis_records'),
+    path('rework/<int:pk>/', ReworkAnalysisRecordDetailView.as_view(), name='rework_analysis_record_detail'),
+    path('rework/<int:pk>/update/', UpdateReworkAnalysisRecordView.as_view(), name='update_rework_analysis_record'),
+    path('rework/<int:pk>/delete/', DeleteReworkAnalysisRecordView.as_view(), name='delete_rework_analysis_record'),
+    
+    
+    # 
+    
+    path('solder-paste/add/', AddSolderPasteControlView.as_view(), name='add_solder_paste_control'),
+    path('solder-paste/list/', ListSolderPasteControlView.as_view(), name='list_solder_paste_controls'),
+    path('solder-paste/<int:pk>/', SolderPasteControlDetailView.as_view(), name='solder_paste_control_detail'),
+   path('solder-paste/<int:pk>/update',UpdateSolderPasteControlView.as_view(),name='update_solder_paste_control'),
+    
+   path('solder-paste/<int:pk>/delete',DeleteSolderPasteControlView.as_view(),name='delete_solder_paste_control'),
+    
+
+
+# 
+
+    path('tip-voltage-resistance/add/', 
+         views.AddTipVoltageResistanceRecordView.as_view(), 
+         name='add_tip_voltage_resistance_record'),
+    
+    path('tip-voltage-resistance/list/', 
+         views.ListTipVoltageResistanceRecordView.as_view(), 
+         name='list_tip_voltage_resistance_records'),
+    
+    path('tip-voltage-resistance/update/<int:pk>/', 
+         views.UpdateTipVoltageResistanceRecordView.as_view(), 
+         name='update_tip_voltage_resistance_record'),
+    
+    path('tip-voltage-resistance/delete/<int:pk>/', 
+         views.DeleteTipVoltageResistanceRecordView.as_view(), 
+         name='delete_tip_voltage_resistance_record'),
+    
+    path('tip-voltage-resistance/detail/<int:pk>/', 
+         views.TipVoltageResistanceRecordDetailView.as_view(), 
+         name='tip_voltage_resistance_record_detail'),
+
 
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
 

@@ -1,28 +1,65 @@
 {% extends 'base.html' %}
 {% block content %}
 <div class="container mt-5">
-    <h2 class="text-center mb-4">Profile List</h2>
-    <div class="row">
-        {% for profile in profiles %}
-        <div class="col-md-4 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h5 class="card-title">{{ profile.user.username }}</h5>
-                    <p class="card-text">Skill Level: {{ profile.my_skill }}</p>
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'profile_detail' profile.pk %}" class="btn btn-primary btn-sm">View</a>
-                        <div>
-                            <a href="{% url 'profile_update' profile.pk %}" class="btn btn-warning btn-sm">Edit</a>
-                            <a href="{% url 'profile_delete' profile.pk %}" class="btn btn-danger btn-sm">Delete</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-    <div class="text-center mt-4">
-        <a href="{% url 'profile_create' %}" class="btn btn-success">Create New Profile</a>
-    </div>
+   <h2 class="text-center mb-4">Profile List</h2>
+   
+   <!-- Supervisor Card -->
+   <div class="card mb-4">
+       <div class="card-header bg-dark text-white">
+           <h5 class="mb-0">Supervisor</h5>
+       </div>
+       <div class="card-body">
+           {% for profile in profiles %}
+               {% if profile.my_skill > 4 %}
+               <div class="d-flex justify-content-between align-items-center mb-2">
+                   <span>{{ profile.user.username }}</span>
+                   <span class="badge bg-dark">Supervisor</span>
+               </div>
+               {% endif %}
+           {% endfor %}
+       </div>
+   </div>
+
+   <!-- Profile Table -->
+   <div class="card">
+       <div class="card-body">
+           <table class="table">
+               <thead class="table-light">
+                   <tr>
+                       <th>Username</th>
+                       <th>Skill Level</th>
+                       <th>Operator Id </th>
+                       <th>Actions</th>
+                   </tr>
+               </thead>
+               <tbody>
+                   {% for profile in profiles %}
+                   {% if profile.my_skill <= 4 %}
+                   <tr>
+                       <td>{{ profile.user.username }}</td>
+                       <td>
+                           <span class="badge {% if profile.my_skill == 0 %}bg-secondary{% elif profile.my_skill == 1 %}bg-secondary{% elif profile.my_skill == 2 %}bg-success{% elif profile.my_skill == 3 %}bg-primary{% elif profile.my_skill == 4 %}bg-info{% endif %}">
+                               L{{ profile.my_skill }}
+                           </span>
+                       </td>
+                       <td>{{ profile.matrix }}</td>
+                       <td>
+                           <div class="btn-group">
+                               <a href="{% url 'profile_detail' profile.pk %}" class="btn btn-sm btn-outline-primary">View</a>
+                               <a href="{% url 'profile_update' profile.pk %}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                               <a href="{% url 'profile_delete' profile.pk %}" class="btn btn-sm btn-outline-danger">Delete</a>
+                           </div>
+                       </td>
+                   </tr>
+                   {% endif %}
+                   {% endfor %}
+               </tbody>
+           </table>
+       </div>
+   </div>
+
+   <div class="text-center mt-4">
+       <a href="{% url 'profile_create' %}" class="btn btn-success">Create New Profile</a>
+   </div>
 </div>
 {% endblock %}

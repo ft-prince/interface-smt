@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">Machine Login Debug</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Current Browser Key</h2>
+        </div>
+        <div class="card-body">
+            <code>{{ browser_key }}</code>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Session Data</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, value in session_items %}
+                    <tr>
+                        <td>{{ key }}</td>
+                        <td><code>{{ value }}</code></td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="2" class="text-center">No session data</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">Machine Logins for Current Browser</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Machine</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tracker in trackers %}
+                    <tr>
+                        <td>{{ tracker.machine.name }}</td>
+                        <td>
+                            {% if tracker.is_active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ tracker.created_at }}</td>
+                        <td>
+                            {% if tracker.is_active %}
+                            <a href="{% url 'machine_logout' %}" class="btn btn-sm btn-danger">Logout</a>
+                            {% else %}
+                            <form method="post" action="{% url 'machine_login' %}" style="display: inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="machine" value="{{ tracker.machine.id }}">
+                                <button type="submit" class="btn btn-sm btn-primary">Login</button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No machine logins for this browser</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="h5 mb-0">All Active Machine Logins</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-striped">
+                <thead>
+                    <tr>
+                        <th>Machine</th>
+                        <th>Browser Key</th>
+                        <th>Created At</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tracker in all_active_trackers %}
+                    <tr>
+                        <td>{{ tracker.machine.name }}</td>
+                        <td><code>{{ tracker.browser_key|truncatechars:16 }}</code></td>
+                        <td>{{ tracker.created_at }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No active machine logins</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-12">
+            <a href="{% url 'home' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,20 +1,22 @@
 
 ---
 
-# Interface With Machine
+# Interface With Machine For SMT LINE 
 
 This project provides an interface to interact with machines via a web-based application. It allows users to control and monitor various machine operations, manage media files, and configure process settings using a user-friendly interface.
 
 ## Table of Contents
 
-1. [Introduction](#introduction)
-2. [Features](#features)
-3. [Installation](#installation)
-4. [Running Daphne for ASGI](#running-daphne-for-asgi)
-5. [Technologies Used](#technologies-used)
-6. [Contributing](#contributing)
-7. [License](#license)
-8. [Contact](#contact)
+- [Interface With Machine For SMT LINE](#interface-with-machine-for-smt-line)
+  - [Table of Contents](#table-of-contents)
+  - [Introduction](#introduction)
+  - [Features](#features)
+  - [Installation](#installation)
+  - [Running Daphne for ASGI](#running-daphne-for-asgi)
+  - [Technologies Used](#technologies-used)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Contact](#contact)
 
 ## Introduction
 

@@ -1,42 +1,204 @@
 {% extends 'base.html' %}
 
-{% load custom_filters %}
+{% load custom_filters%}
 
 {% block content %}
 <style>
-    /* Add custom styling for form errors */
-    .error {
-        color: #dc3545; /* Bootstrap red for errors */
-        font-size: 0.875rem; /* Slightly smaller font size for errors */
-        margin-top: 0.25rem; /* Space above the error message */
+    /* Modern Color Scheme */
+    :root {
+        --primary: #1E40AF;
+        --primary-light: #3B82F6;
+        --primary-dark: #1E3A8A;
+        --success: #10B981;
+        --success-light: #D1FAE5;
+        --error: #EF4444;
+        --error-light: #FEE2E2;
+        --warning: #F59E0B;
+        --warning-light: #FEF3C7;
+        --info: #3B82F6;
+        --info-light: #E0F2FE;
+        --gray-50: #F9FAFB;
+        --gray-100: #F3F4F6;
+        --gray-200: #E5E7EB;
+        --gray-300: #D1D5DB;
+        --gray-400: #9CA3AF;
+        --gray-500: #6B7280;
+        --gray-600: #4B5563;
+        --gray-700: #374151;
+        --gray-800: #1F2937;
+        --gray-900: #111827;
     }
-    
+
+    /* Base Styles */
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    h1.page-title {
+        color: var(--primary);
+        font-size: 28px;
+        font-weight: 600;
+        margin-bottom: 30px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid var(--gray-200);
+    }
+
+    /* Form Card */
+    .form-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .form-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
     .form-group {
-        margin-bottom: 1rem; /* Space below each form group */
+        margin-bottom: 20px;
     }
-    
+
     .form-group label {
-        font-weight: bold; /* Make labels bold */
+        display: block;
+        font-weight: 500;
+        color: var(--gray-700);
+        margin-bottom: 6px;
+        font-size: 14px;
     }
-    
-    .btn-primary {
-        background-color: #007bff; /* Bootstrap primary color */
+
+    .form-group input,
+    .form-group select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        font-size: 14px;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        outline: none;
+    }
+
+    .error {
+        color: var(--error);
+        font-size: 13px;
+        margin-top: 6px;
+        display: block;
+    }
+
+    /* Button Styles */
+    .btn {
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
         border: none;
+    }
+
+    .btn-primary {
+        background-color: var(--primary);
         color: white;
     }
-    
+
     .btn-primary:hover {
-        background-color: #0056b3; /* Darker blue for hover effect */
+        background-color: var(--primary-dark);
     }
-    /* Alert Container */
+
+    .btn-secondary {
+        background-color: var(--gray-100);
+        color: var(--gray-600);
+    }
+
+    .btn-secondary:hover {
+        background-color: var(--gray-200);
+    }
+
+    /* Table Styles */
+    .table-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        margin-bottom: 30px;
+        overflow-x: auto;
+    }
+
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .table-title {
+        font-size: 18px;
+        color: var(--primary);
+        font-weight: 600;
+        margin: 0;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 14px;
+    }
+
+    th {
+        padding: 12px 15px;
+        text-align: left;
+        color: var(--gray-600);
+        font-weight: 600;
+        border-bottom: 2px solid var(--gray-200);
+        background-color: var(--gray-50);
+    }
+
+    td {
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: middle;
+    }
+
+    tr:nth-child(even) {
+        background-color: var(--gray-50);
+    }
+
+    /* Inputs in table */
+    .checkbox-container {
+        display: flex;
+        justify-content: center;
+    }
+
+    .status-select {
+        padding: 6px 10px;
+        border-radius: 4px;
+        border: 1px solid var(--gray-300);
+        width: 100px;
+    }
+
+    /* Alert Styles */
     .alert-container {
         width: 100%;
-        max-width: 480px;
+        max-width: 800px;
         margin: 0 auto 24px;
         position: relative;
     }
     
-    /* Base Alert Styles */
     .alert {
         background-color: #ffffff;
         border-radius: 8px;
@@ -48,6 +210,7 @@
         position: relative;
         gap: 16px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        animation: slideIn 0.3s ease-out forwards;
     }
     
     .alert:hover {
@@ -55,7 +218,6 @@
         box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
     }
     
-    /* Alert Content Area */
     .alert-content {
         display: flex;
         align-items: center;
@@ -63,7 +225,6 @@
         flex: 1;
     }
     
-    /* Emoji Group Styling */
     .emoji-group {
         position: relative;
         display: inline-block;
@@ -95,9 +256,8 @@
         transform: scale(1);
     }
     
-    /* Alert Message */
     .alert-message {
-        color: #1f2937;
+        color: var(--gray-800);
         font-size: 14px;
         line-height: 1.5;
     }
@@ -109,11 +269,10 @@
         margin-bottom: 2px;
     }
     
-    /* Close Button */
     .alert-close {
         background: transparent;
         border: none;
-        color: #6b7280;
+        color: var(--gray-500);
         cursor: pointer;
         font-size: 20px;
         height: 28px;
@@ -132,26 +291,24 @@
         transform: rotate(90deg);
     }
     
-    /* Alert Types */
     .alert-success {
-        background-color: #f0fdf4;
-        border-left: 4px solid #22c55e;
+        background-color: var(--success-light);
+        border-left: 4px solid var(--success);
     }
     
     .alert-success .alert-title {
-        color: #15803d;
+        color: var(--success);
     }
     
     .alert-error {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
+        background-color: var(--error-light);
+        border-left: 4px solid var(--error);
     }
     
     .alert-error .alert-title {
-        color: #dc2626;
+        color: var(--error);
     }
     
-    /* Animation Keyframes */
     @keyframes slideIn {
         from {
             opacity: 0;
@@ -174,20 +331,36 @@
         }
     }
     
-    /* Animation Classes */
-    .alert {
-        animation: slideIn 0.3s ease-out forwards;
-    }
-    
     .alert.fade-out {
         animation: fadeOut 0.3s ease-in forwards;
     }
 
-    </style>
-    
-<h1>Create Start-Up Check Sheet</h1>
-<div class="container">
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .form-row {
+            grid-template-columns: 1fr;
+        }
+        
+        th, td {
+            padding: 10px 8px;
+        }
+    }
+</style>
 
+<div class="container">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+    <h1 class="page-title">
+        {% if form.instance.pk %}Edit{% else %}{% endif %} Start-Up Check Sheet
+
+    </h1>
+    <p class="text-secondary">QSF-12-05<br>Rev-09
+        <br> 10-11-2024
+    </p>
+</div>
+
+    <!-- Alert Messages -->
     <div class="alert-container">
         {% if messages %}
             {% for message in messages %}
@@ -221,106 +394,237 @@
         {% endif %}
     </div>
 
-    <form method="post" action="{% url 'checksheet_create' %}">
+    <!-- Form Section -->
+    <form method="post" action="{% if form.instance.pk %}{% url 'checksheet_edit' form.instance.pk %}{% else %}{% url 'checksheet_create' %}{% endif %}">
         {% csrf_token %}
         
-        <!-- Display non-field errors with styling -->
-        <div class="form-group">
-            {{ form.non_field_errors }}
-        </div>
 
-        <div class="form-group">
-            {{ form.revision_no.label_tag }}
-            {{ form.revision_no }}
-            {% if form.revision_no.errors %}
-            <span class="error">{{ form.revision_no.errors }}</span>
-            {% endif %}
-        </div>
         
-        <div class="form-group">
-            {{ form.process_operation.label_tag }}
-            {{ form.process_operation }}
-            {% if form.process_operation.errors %}
-            <span class="error">{{ form.process_operation.errors }}</span>
-            {% endif %}
-        </div>
-        
-        <div class="form-group" id="minSkillGroup">
-            {{ form.min_skill_required.label_tag }}
-            {{ form.min_skill_required }}
-            {% if form.min_skill_required.errors %}
-            <span class="error">{{ form.min_skill_required.errors }}</span>
-            {% endif %}
-        </div>
-
-        <table id="checklistTable" class="table table-striped">
-            <thead>
-                <tr>
-                    <th>S.No.</th>
-                    <th>Check Points</th>
-                    <th>Specification</th>
-                    <th>Control Method</th>
-                    <th>Frequency</th>
-                    <th>Input</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in json_data %}
-                <tr>
-                    <td>{{ item.s_no }}</td>
-                    <td>{{ item.checkpoint }}</td>
-                    <td>{{ item.specification }}</td>
-                    <td>{{ item.control_method }}</td>
-                    <td>{{ item.frequency }}</td>
-                    <td>
-                        {% if checkpoint_fields|index:forloop.counter0 %}
-                            {{ checkpoint_fields|index:forloop.counter0 }}
-                            {% if checkpoint_fields|index:forloop.counter0.errors %}
-                            <span class="error">{{ checkpoint_fields|index:forloop.counter0.errors }}</span>
-                            {% endif %}
-                        {% else %}
-                            <input type="text" name="checkpoint_{{ forloop.counter }}" />
+        <!-- Checkpoints Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h2 class="table-title">Checkpoints</h2>
+            </div>
+                        <!-- Display non-field errors -->
+                        {% if form.non_field_errors %}
+                        <div class="form-group" style="background-color: var(--error-light); padding: 12px; border-radius: 6px; margin-bottom: 20px;">
+                            {{ form.non_field_errors }}
+                        </div>
                         {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">S.No.</th>
+                        <th style="width: 30%;">Check Points</th>
+                        <th style="width: 20%;">Specification</th>
+                        <th style="width: 15%;">Control Method</th>
+                        <th style="width: 10%;">Frequency</th>
+                        <th style="width: 15%;">Status</th>
+                    </tr>
+                    
+                </thead>
+                <!-- Verification Section -->
+
+                <tbody>
+</div>
+
+                    {% for item in json_data %}
+                    <tr>
+                        <td style="text-align: center;">{{ item.s_no }}</td>
+                        <td>{{ item.checkpoint }}</td>
+                        <td>{{ item.specification }}</td>
+                        <td>{{ item.control_method }}</td>
+                        <td>{{ item.frequency }}</td>
+                        <td>
+                            <div class="checkbox-container">
+                                <select name="checkpoint_{{ item.s_no }}" class="status-select">
+                                    {% if form.instance.pk %}
+                                        {% with field_index=item.s_no %}
+                                            {% if field_index == 1 %}
+                                                <option value="✔" {% if form.instance.checkpoint_1 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_1 == "✘" %}selected{% endif %}>Not OK</option>
+                                    <option value="not applicable" {% if form.instance.checkpoint_1 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+
+                                                <option value="not available" {% if form.instance.checkpoint_1 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 2 %}
+                                                <option value="✔" {% if form.instance.checkpoint_2 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_2 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_2 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_2 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 3 %}
+                                                <option value="✔" {% if form.instance.checkpoint_3 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_3 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_3 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_3 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 4 %}
+                                                <option value="✔" {% if form.instance.checkpoint_4 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_4 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_4 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_4 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 5 %}
+                                                <option value="✔" {% if form.instance.checkpoint_5 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_5 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_5 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_5 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 6 %}
+                                                <option value="✔" {% if form.instance.checkpoint_6 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_6 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_6 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_6 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 7 %}
+                                                <option value="✔" {% if form.instance.checkpoint_7 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_7 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_7 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_7 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 8 %}
+                                                <option value="✔" {% if form.instance.checkpoint_8 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_8 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_8 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_8 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 9 %}
+                                                <option value="✔" {% if form.instance.checkpoint_9 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_9 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_9 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_9 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 10 %}
+                                                <option value="✔" {% if form.instance.checkpoint_10 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_10 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_10 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_10 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 11 %}
+                                                <option value="✔" {% if form.instance.checkpoint_11 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_11 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_11 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_11 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 12 %}
+                                                <option value="✔" {% if form.instance.checkpoint_12 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_12 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_12 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_12 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 13 %}
+                                                <option value="✔" {% if form.instance.checkpoint_13 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_13 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_13 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_13 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 14 %}
+                                                <option value="✔" {% if form.instance.checkpoint_14 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_14 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_14 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_14 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 15 %}
+                                                <option value="✔" {% if form.instance.checkpoint_15 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_15 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_15 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_15 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 16 %}
+                                                <option value="✔" {% if form.instance.checkpoint_16 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_16 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_16 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_16 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 17 %}
+                                                <option value="✔" {% if form.instance.checkpoint_17 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_17 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_17 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_17 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 18 %}
+                                                <option value="✔" {% if form.instance.checkpoint_18 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_18 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_18 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_18 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 19 %}
+                                                <option value="✔" {% if form.instance.checkpoint_19 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_19 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_19 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_19 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 20 %}
+                                                <option value="✔" {% if form.instance.checkpoint_20 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_20 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_20 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_20 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 21 %}
+                                                <option value="✔" {% if form.instance.checkpoint_21 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_21 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_21 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_21 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 22 %}
+                                                <option value="✔" {% if form.instance.checkpoint_22 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_22 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_22 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_22 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 23 %}
+                                                <option value="✔" {% if form.instance.checkpoint_23 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_23 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_23 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_23 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 24 %}
+                                                <option value="✔" {% if form.instance.checkpoint_24 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_24 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_24 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_24 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 25 %}
+                                                <option value="✔" {% if form.instance.checkpoint_25 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_25 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_25 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_25 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% elif field_index == 26 %}
+                                                <option value="✔" {% if form.instance.checkpoint_26 == "✔" %}selected{% endif %}>OK</option>
+                                                <option value="✘" {% if form.instance.checkpoint_26 == "✘" %}selected{% endif %}>Not OK</option>
+                                                <option value="not applicable" {% if form.instance.checkpoint_26 == "not applicable" %}selected{% endif %}>Not APPLICABLE</option>
+                                                <option value="not available" {% if form.instance.checkpoint_26 == "not available" %}selected{% endif %}>Not AVAILABLE</option>
+                                            {% endif %}
+                                        {% endwith %}
+                                    {% else %}
+                                        <!-- For new forms -->
+                                        <option value="✔">OK</option>
+                                        <option value="✘">Not OK</option>
+                                        <option value="not applicable">Not Applicable</option>
+                                        <option value="not available">Not AVAILABLE</option>
+                                    {% endif %}
+                                </select>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 30px;">
+                            <p style="color: var(--gray-500); margin: 0;">No checkpoints available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
         
-        <button type="submit" class="btn btn-primary">Save</button>
+        <!-- Action Buttons -->
+        <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+            <a href="{% url 'checksheet_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Cancel
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> {% if form.instance.pk %}Update{% else %}Save{% endif %} Check Sheet
+            </button>
+        </div>
     </form>
 </div>
 
+<!-- Custom Filter Template Tag for Update Mode -->
+{% block extrajs %}
 <script>
-        
     document.addEventListener('DOMContentLoaded', function () {
-        console.log('DOM fully loaded and parsed.');
-    
         const processOperationField = document.querySelector('[name="process_operation"]');
         const minSkillRequiredField = document.querySelector('[name="min_skill_required"]');
         const formGroup = document.getElementById('minSkillGroup');
     
-        console.log('processOperationField:', processOperationField);
-        console.log('minSkillRequiredField:', minSkillRequiredField);
-        console.log('formGroup:', formGroup);
-    
-        if (!processOperationField) {
-            console.error('Process operation field is missing in the DOM.');
-        }
-        if (!minSkillRequiredField) {
-            console.error('Min skill required field is missing in the DOM.');
-        }
-        if (!formGroup) {
-            console.error('Form group for min skill required is missing in the DOM.');
-        }
-    
         if (!processOperationField || !minSkillRequiredField || !formGroup) {
+            console.error('One or more form elements are missing.');
             return;
         }
     
         function updateFormBasedOnOperation() {
             const selectedValue = processOperationField.value;
-    console.log(selectedValue)
+            
             if (selectedValue) {
                 fetch(`/screen/get-machine-skill/${selectedValue}/`)
                     .then(response => {
@@ -348,30 +652,21 @@
     
         // Add event listener for changes
         processOperationField.addEventListener('change', updateFormBasedOnOperation);
-    });
-    </script>
-    
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Function to handle alert closure
-        function closeAlert(button) {
-            const alertElement = button.closest('.alert');
-            alertElement.classList.add('fade-out');
-            
-            // Remove the alert after animation completes
-            setTimeout(() => {
-                alertElement.remove();
-            }, 300); // Matches the CSS animation duration
-        }
-
-        // Add click event listeners to all close buttons
+        
+        // Handle alert closures
         document.querySelectorAll('.alert-close').forEach(button => {
             button.addEventListener('click', function() {
-                closeAlert(this);
+                const alertElement = this.closest('.alert');
+                alertElement.classList.add('fade-out');
+                
+                // Remove the alert after animation completes
+                setTimeout(() => {
+                    alertElement.remove();
+                }, 300); // Matches the CSS animation duration
             });
         });
 
-        // Optional: Auto-dismiss alerts after 5 seconds
+        // Auto-dismiss alerts after 5 seconds
         const autoDismissDelay = 5000; // 5 seconds
         document.querySelectorAll('.alert').forEach(alert => {
             setTimeout(() => {
@@ -384,6 +679,64 @@
             }, autoDismissDelay);
         });
     });
-
 </script>
+
+<!-- Add this code just before the closing </body> tag to debug the issue -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if checkpoint_26 is in the JSON data
+        let found = false;
+        {% for item in json_data %}
+            {% if item.s_no == 26 %}
+                found = true;
+                console.log("Found checkpoint 26 in JSON data");
+            {% endif %}
+        {% endfor %}
+        
+        if (!found) {
+            console.log("Checkpoint 26 is NOT in the JSON data");
+        }
+        
+        // Check if the select for checkpoint_26 exists
+        const checkpoint26Select = document.querySelector('[name="checkpoint_26"]');
+        if (checkpoint26Select) {
+            console.log('Checkpoint 26 select found:', checkpoint26Select);
+        } else {
+            console.log('Checkpoint 26 select NOT found - check your template');
+        }
+        
+        // If none of the above work, manually create the select
+        if (!checkpoint26Select && found) {
+            console.log("Attempting to manually create checkpoint_26 select");
+            const tableBody = document.querySelector('table tbody');
+            if (tableBody) {
+                {% for item in json_data %}
+                    {% if item.s_no == 26 %}
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td style="text-align: center;">26</td>
+                        <td>{{ item.checkpoint|escapejs }}</td>
+                        <td>{{ item.specification|escapejs }}</td>
+                        <td>{{ item.control_method|escapejs }}</td>
+                        <td>{{ item.frequency|escapejs }}</td>
+                        <td>
+                            <div class="checkbox-container">
+                                <select name="checkpoint_26" class="status-select">
+                                    <option value="✔">OK</option>
+                                    <option value="✘">Not OK</option>
+                                    <option value="not applicable">Not Applicable</option>
+                                    <option value="not available">Not AVAILABLE</option>
+                                </select>
+                            </div>
+                        </td>
+                    `;
+                    tableBody.appendChild(newRow);
+                    console.log("Manually created checkpoint_26 row");
+                    {% endif %}
+                {% endfor %}
+            }
+        }
+    });
+    </script>
+{% endblock %}
 {% endblock %}

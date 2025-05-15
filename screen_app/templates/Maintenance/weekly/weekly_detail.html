@@ -29,24 +29,52 @@
             <tr>
                 <td>Station</td>
                 <td>{{ record.station }}</td>
-            </tr>
-            <tr>
+              </tr>
+              <tr>
                 <td>Doc Number</td>
                 <td>{{ record.doc_number }}</td>
-            </tr>
-            <tr>
+              </tr>
+              <tr>
+                <td>Rev Number</td>
+                <td>{{ record.rev_number }}</td>
+              </tr>
+              <tr>
+                <td>Rev Date</td>
+                <td>{{ record.rev_date }}</td>
+              </tr>
+              <tr>
                 <td>Machine Name</td>
-                <td>{{ record.get_machine_name_display }}</td>
-            </tr>
-            <tr>
+                <td>{{ record.machine_name }}</td>
+              </tr>
+              <tr>
+                <td>Shift</td>
+                <td>{{ record.shift }}</td>
+              </tr>
+              <tr>
                 <td>Machine Location</td>
                 <td>{{ record.machine_location }}</td>
+              </tr>
+              <tr>
+                <td>Control number</td>
+                <td>{{ record.control_number }}</td>
+              </tr>
+              <tr>
+                <td>Part Name</td>
+                <td>{{ record.part_name }}</td>
             </tr>
-            <tr>
+              <tr>
+                <td>Process number</td>
+                <td>{{ record.process_no }}</td>
+              </tr>
+              <tr>
                 <td>Month/Year</td>
                 <td>{{ record.month_year|date:"F Y" }}</td>
-            </tr>
-        </table>
+              </tr>
+              <tr>
+                <td>Date</td>
+                <td>{{record.date}}</td>
+              </tr>
+                </table>
     </div>
     
     <div class="section">
@@ -59,30 +87,29 @@
                 <th>Remark</th>
             </tr>
             <tr>
-                <td>{{record.check_point_8}}</td>
-                <td>{{ record.requirement_range_8 }}</td>
-                <td>{{ record.method_of_checking_8 }}</td>
+                <td>Check Conveyor Belts</td>
+                <td>No Damage</td>
+                <td>By Hand</td>
                 <td>{{ record.Remark_8 }}</td>
             </tr>
             <tr>
-                <td>{{record.check_point_9}}</td>
-                <td>{{ record.requirement_range_9 }}</td>
-                <td>{{ record.method_of_checking_9 }}</td>
+                <td>Check Solder bit Assembly. For any Bolts & Screw Loose</td>
+                <td>Proper Tight</td>
+                <td>By Hand</td>
                 <td>{{ record.Remark_9 }}</td>
             </tr>
             <tr>
-                <td>{{record.check_point_10}}</td>
-                <td>{{ record.requirement_range_10 }}</td>
-                <td>{{ record.method_of_checking_10 }}</td>
+                <td>Check Wire & Cable</td>
+                <td>No Damage No Broken</td>
+                <td>By Hand</td>
                 <td>{{ record.Remark_10 }}</td>
             </tr>
             <tr>
-                <td>{{record.check_point_11}}</td>
-                <td>{{ record.requirement_range_11 }}</td>
-                <td>{{ record.method_of_checking_11 }}</td>
+                <td>Electrical Insulation</td>
+                <td>No Cut & No Damage Wire</td>
+                <td>By Hand</td>
                 <td>{{ record.Remark_11 }}</td>
             </tr>
-
         </table>
     </div>
     

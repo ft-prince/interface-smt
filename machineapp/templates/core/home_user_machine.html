@@ -1,16 +1,31 @@
-{% extends 'core/base.html' %}
 
-{% block title %}User and Machine Dashboard{% endblock %}
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}{{ user.username }} - {{ active_machine.name }}{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h2 class="mb-0">Welcome, {{ user.username }}!</h2>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                <h3>User Information</h3>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">User & Machine Dashboard</h2>
+            </div>
+            
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <strong>Welcome, {{ user.username }}!</strong> You are logged in to {{ active_machine.name }}.
+                </div>
+                
+                <h3 class="card-title">User Information</h3>
+                <div class="profile-image">
+                    {% if request.user.profile.Image %}
+                        <img src="{{ request.user.profile.Image.url }}" alt="{{ request.user.username }}'s profile picture" class="user-avatar">
+                    {% else %}
+                        <img src="{% static 'images/avatar.jpg' %}"alt="Default profile picture" class="user-avatar">
+                    {% endif %}
+                </div>
+
                 <table class="table table-bordered">
                     <tr>
                         <th>Username:</th>
@@ -21,33 +36,160 @@
                         <td>{{ user_profile.my_skill }}</td>
                     </tr>
                 </table>
-            </div>
-            <div class="col-md-6">
-                <h3>Active Machine</h3>
+                
+                <h3 class="card-title mt-4">Active Machine</h3>
                 <table class="table table-bordered">
                     <tr>
                         <th>Machine Name:</th>
-                        <td>{{ machine.name }}</td>
+                        <td>{{ active_machine.name }}</td>
                     </tr>
                     <tr>
                         <th>Required Skill:</th>
-                        <td>{{ machine.required_skills }}</td>
+                        <td>{{ active_machine.required_skills }}</td>
                     </tr>
                 </table>
+                
+                {% if user_profile.my_skill >= active_machine.required_skills %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle me-2"></i> You have sufficient skills to operate this machine.
+                    </div>
+                    
+                    <!-- Go to Dashboard Button -->
+                    <div class="d-grid gap-2 mt-4 mb-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-lg" style="background-color: #F97316; color: white;">
+                            <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="alert alert-danger mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i> Warning: Your skill level is insufficient for this machine.
+                    </div>
+                {% endif %}
+                
+                {% if active_machines|length > 1 %}
+                <div class="machine-switcher mb-3">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="machineSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-exchange-alt"></i> Switch Machine
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="machineSwitcherDropdown">
+                            {% for machine in active_machines %}
+                                {% if machine.id != active_machine.id %}
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'switch_machine' machine.id %}">
+                                        {{ machine.name }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="d-flex mt-3">
+                    <a href="{% url 'logout' %}" class="btn btn-warning me-2">User Logout</a>
+                    <a href="{% url 'machine_logout' %}" class="btn btn-danger">Machine Logout</a>
+                </div>
             </div>
         </div>
-        {% if user_profile.my_skill >= machine.required_skills %}
-            <div class="alert alert-success mt-3">
-                You have sufficient skills to operate this machine.
+        
+        <!-- Quick Status Card -->
+        {% if user_profile.my_skill >= active_machine.required_skills %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header" style="background-color: #1E40AF; color: white;">
+                <h3 class="mb-0 h5">Session Information</h3>
             </div>
-            <div class="text-center mt-4">
-                <a href="{% url 'dashboard' %}" class="btn btn-lg btn-success">Go to Dashboard</a>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" style="color: #1E40AF;">Machine</h5>
+                                <p class="h3 mb-0">{{ active_machine.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" style="color: #F97316;">Operator</h5>
+                                <p class="h3 mb-0">{{ user.username }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-        {% else %}
-            <div class="alert alert-danger mt-3">
-                Warning: Your skill level is insufficient for this machine.
-            </div>
+        </div>
         {% endif %}
     </div>
 </div>
+
+<!-- Custom styles to match Royal Blue and Orange theme -->
+<style>
+    .btn-primary {
+        background-color: #1E40AF;
+        border-color: #1E40AF;
+    }
+    .btn-primary:hover {
+        background-color: #1e3a8a;
+        border-color: #1e3a8a;
+    }
+    .btn-outline-primary {
+        color: #1E40AF;
+        border-color: #1E40AF;
+    }
+    .btn-outline-primary:hover {
+        background-color: #1E40AF;
+        border-color: #1E40AF;
+    }
+    .bg-primary {
+        background-color: #1E40AF !important;
+    }
+    .card-header {
+        padding: 1rem;
+    }
+    .alert-success {
+        background-color: #ecfdf5;
+        border-color: #10b981;
+        color: #047857;
+    }
+    .alert-danger {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #b91c1c;
+    }
+    .card {
+        border: none;
+        border-radius: 0.5rem;
+    }
+    .card-header {
+        border-radius: 0.5rem 0.5rem 0 0 !important;
+    }
+    .table-bordered {
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+    .dropdown-menu {
+        border: none;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    .dropdown-item:hover {
+        background-color: #eff6ff;
+    }
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 30%;
+        object-fit: cover;
+        border: 3px solid #f97316;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease;
+    }
+    
+    .user-avatar:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+</style>
 {% endblock %}

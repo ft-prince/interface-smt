@@ -1,57 +1,57 @@
 {% extends 'core/base.html' %}
 
-{% block title %}Home - Machine User Auth{% endblock %}
+{% block title %}Machine - {{ active_machine.name }}{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
             <div class="card-header bg-primary text-white">
-                <h2 class="mb-0">Dashboard</h2>
+                <h2 class="mb-0">Machine Dashboard</h2>
             </div>
+            
             <div class="card-body">
-                {% if machine %}
-                    <h3 class="card-title">Active Machine Information</h3>
+                {% if active_machine %}
+                    <h3 class="card-title">Active Machine</h3>
                     <table class="table table-bordered">
                         <tr>
                             <th>Machine Name:</th>
-                            <td>{{ machine.name }}</td>
+                            <td>{{ active_machine.name }}</td>
                         </tr>
                         <tr>
                             <th>Required Skills:</th>
-                            <td>{{ machine.required_skills }}</td>
+                            <td>{{ active_machine.required_skills }}</td>
                         </tr>
                     </table>
-                    <a href="{% url 'machine_logout' %}" class="btn btn-danger">Logout Machine</a>
-                {% else %}
-                    <p class="alert alert-info">No machine is currently active. Please log in a machine.</p>
-                    <a href="{% url 'machine_login' %}" class="btn btn-success">Login Machine</a>
-                {% endif %}
-
-                {% if user.is_authenticated %}
-                    <hr>
-                    <h3 class="card-title mt-4">User Information</h3>
-                    <table class="table table-bordered">
-                        <tr>
-                            <th>Username:</th>
-                            <td>{{ user.username }}</td>
-                        </tr>
-                        <tr>
-                            <th>Skill Level:</th>
-                            <td>{{ user.profile.my_skill }}</td>
-                        </tr>
-                    </table>
-                    {% if machine %}
-                        {% if user.profile.my_skill >= machine.required_skills %}
-                            <p class="alert alert-success">You have sufficient skills to operate this machine.</p>
-                        {% else %}
-                            <p class="alert alert-danger">Warning: Your skill level is insufficient for this machine.</p>
-                        {% endif %}
+                    
+                    {% if active_machines|length > 1 %}
+                    <div class="machine-switcher mb-3">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary dropdown-toggle" type="button" id="machineSwitcherDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-exchange-alt"></i> Switch Machine
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="machineSwitcherDropdown">
+                                {% for machine in active_machines %}
+                                    {% if machine.id != active_machine.id %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'switch_machine' machine.id %}">
+                                            {{ machine.name }}
+                                        </a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
                     {% endif %}
+                    
+                    <div class="d-flex mt-3">
+                        <a href="{% url 'machine_logout' %}" class="btn btn-danger me-2">Logout Machine</a>
+                        <a href="{% url 'login' %}" class="btn btn-primary">User Login</a>
+                    </div>
                 {% else %}
-                    <hr>
-                    <p class="alert alert-warning mt-4">You are not logged in. Please log in to view your information.</p>
-                    <a href="{% url 'login' %}" class="btn btn-primary">User Login</a>
+                    <p class="alert alert-warning">No active machine. Please log in a machine first.</p>
+                    <a href="{% url 'machine_login' %}" class="btn btn-success">Machine Login</a>
                 {% endif %}
             </div>
         </div>

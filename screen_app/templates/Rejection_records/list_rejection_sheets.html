@@ -53,8 +53,8 @@
           {% for sheet in sheets %}
           <tr>
             <td>{{ sheet.station }}</td>
-            <td>{{ sheet.get_stage_display }}</td>
-            <td>{{ sheet.get_part_description_display }}</td>
+            <td>{{ sheet.stage }}</td>
+            <td>{{ sheet.part_description }}</td>
             <td>{{ sheet.total_rejection_qty }}</td>
             <td>{{ sheet.operator_name }}</td>
             <td>{{ sheet.month|date:"F Y" }}</td>

@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
 {% block title %}
-<title>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Control Chart Reading</title>
+<title>Add Control Chart Reading</title>
 {% endblock title %}
 
 {% block content %}
 <div class="background-container">
     <div class="container content-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary">{% if form.instance.pk %}Edit{% else %}Add{% endif %} Control Chart Reading</h1>
-            <p class="text-secondary">QSF-13-06</p>
+            <h1 class="text-primary"> Control Chart Reading</h1>
+            <p class="text-secondary">QSF 12-18 <br> Rev 00 <br> 05-04-2022 </p>
         </div>
 
         <div class="alert-container">
@@ -45,115 +45,257 @@
             {% endif %}
         </div>
 
+        <!-- Daily Readings Progress -->
+        <div class="alert alert-info mb-4">
+            <div class="alert-content">
+                <div class="alert-icon">
+                    <span class="emoji-group">
+                        <span class="emoji primary">ℹ️</span>
+                        <span class="emoji secondary">📊</span>
+                    </span>
+                </div>
+                <div class="alert-message">
+                    <span class="alert-title">Today's Readings Progress</span>
+                    <div class="progress mt-2" style="height: 20px;">
+                        {% with count=request.GET.count|default:"0"|add:"0" %}
+                        <div class="progress-bar" role="progressbar" 
+                             style="width: {% widthratio count 5 100 %}%;" 
+                             aria-valuenow="{{ count }}" 
+                             aria-valuemin="0" 
+                             aria-valuemax="5">
+                            {{ count }} of 5
+                        </div>
+                        {% endwith %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Previous Readings Display (only show if any exist) -->
+        {% if today_reading %}
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">Previous Readings Today</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% if today_reading.reading1 is not None %}
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card reading-display h-100">
+                            <div class="card-body text-center">
+                                <h6>Reading #1</h6>
+                                <span class="reading-value">{{ today_reading.reading1|floatformat:1 }}</span>
+                                <div class="text-muted small">
+                                    {% with reading_time=today_reading.time|time:'g:i A' %}
+                                    {{ today_reading.date|date:'M d' }} at {{ reading_time }}
+                                    {% endwith %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if today_reading.reading2 is not None %}
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card reading-display h-100">
+                            <div class="card-body text-center">
+                                <h6>Reading #2</h6>
+                                <span class="reading-value">{{ today_reading.reading2|floatformat:1 }}</span>
+                                <div class="text-muted small">90 min. later</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if today_reading.reading3 is not None %}
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card reading-display h-100">
+                            <div class="card-body text-center">
+                                <h6>Reading #3</h6>
+                                <span class="reading-value">{{ today_reading.reading3|floatformat:1 }}</span>
+                                <div class="text-muted small">90 min. later</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if today_reading.reading4 is not None %}
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card reading-display h-100">
+                            <div class="card-body text-center">
+                                <h6>Reading #4</h6>
+                                <span class="reading-value">{{ today_reading.reading4|floatformat:1 }}</span>
+                                <div class="text-muted small">90 min. later</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if today_reading.reading5 is not None %}
+                    <div class="col-md-4 col-lg-2">
+                        <div class="card reading-display h-100">
+                            <div class="card-body text-center">
+                                <h6>Reading #5</h6>
+                                <span class="reading-value">{{ today_reading.reading5|floatformat:1 }}</span>
+                                <div class="text-muted small">90 min. later</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Time Restriction Alert -->
+        {% if not can_add_reading %}
+        <div class="alert alert-warning">
+            <div class="alert-content">
+                <div class="alert-icon">
+                    <span class="emoji-group">
+                        <span class="emoji primary">⏱️</span>
+                        <span class="emoji secondary">⚠️</span>
+                    </span>
+                </div>
+                <div class="alert-message">
+                    <span class="alert-title">Time Restriction</span>
+                    <p class="mb-2">You must wait <strong id="countdown-timer">{{ minutes_remaining }}</strong> minutes before adding another reading.</p>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                             id="time-progress-bar" style="width: 0%" 
+                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const nextReadingTime = new Date("{{ next_reading_time|date:'c' }}");
+                const totalWaitTime = {{ minutes_remaining }} * 60; // in seconds
+                const countdownDisplay = document.getElementById('countdown-timer');
+                const progressBar = document.getElementById('time-progress-bar');
+                const form = document.querySelector('form');
+                
+                // Disable form fields and submit button
+                const formInputs = form.querySelectorAll('input, button[type="submit"]');
+                formInputs.forEach(input => input.disabled = true);
+                
+                function updateCountdown() {
+                    const now = new Date();
+                    const timeDiff = nextReadingTime - now;
+                    
+                    if (timeDiff <= 0) {
+                        // Time's up!
+                        countdownDisplay.textContent = "0";
+                        progressBar.style.width = "100%";
+                        
+                        // Re-enable form
+                        formInputs.forEach(input => input.disabled = false);
+                        
+                        // Refresh page
+                        location.reload();
+                        return;
+                    }
+                    
+                    // Calculate minutes and seconds
+                    const minutesLeft = Math.floor(timeDiff / 60000);
+                    const secondsLeft = Math.floor((timeDiff % 60000) / 1000);
+                    
+                    // Update countdown display
+                    countdownDisplay.textContent = `${minutesLeft}:${secondsLeft.toString().padStart(2, '0')}`;
+                    
+                    // Update progress bar
+                    const elapsedTime = totalWaitTime - (timeDiff / 1000);
+                    const progressPercent = (elapsedTime / totalWaitTime) * 100;
+                    progressBar.style.width = `${progressPercent}%`;
+                    
+                    // Schedule next update
+                    setTimeout(updateCountdown, 1000);
+                }
+                
+                // Start the countdown
+                updateCountdown();
+            });
+        </script>
+        {% endif %}
+
+        <!-- Add New Reading Form -->
         <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Add Reading #{{ next_reading_number }}</h4>
+            </div>
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
                     
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
+                    <!-- Error display -->
+                    {% if form.errors %}
+                        <div class="alert alert-error">
+                            <div class="alert-content">
+                                <div class="alert-icon">
+                                    <span class="emoji-group">
+                                        <span class="emoji primary">❌</span>
+                                        <span class="emoji secondary">⚠️</span>
+                                    </span>
+                                </div>
+                                <div class="alert-message">
+                                    <span class="alert-title">Form Errors</span>
+                                    <ul class="mb-0">
+                                        {% for field in form %}
+                                            {% for error in field.errors %}
+                                                <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                                            {% endfor %}
+                                        {% endfor %}
+                                        {% for error in form.non_field_errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     {% endif %}
 
+                    <!-- Single Reading Input -->
                     <div class="row mb-4">
-                        <div class="col-md-4">
-                            <label for="{{ form.date.id_for_label }}" class="form-label">
-                                <i class="fas fa-calendar-alt me-2"></i>Date
-                            </label>
-                            {{ form.date }}
-                            {% if form.date.errors %}
-                                <div class="text-danger">{{ form.date.errors }}</div>
-                            {% endif %}
+                        <div class="col-md-12">
+                            <div class="reading-input-container text-center p-4">
+                                <label for="{{ form.reading_value.id_for_label }}" class="form-label fs-4 mb-3">
+                                    Enter Reading Value
+                                </label>
+                                {{ form.reading_value }}
+                            </div>
                         </div>
                     </div>
 
-                    <h2 class="mb-3">Readings</h2>
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="card reading-card">
+                    <!-- Specification Limits -->
+                    <h5 class="mb-3">Specification Limits</h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card">
                                 <div class="card-body">
-                                    <label for="{{ form.reading1.id_for_label }}" class="form-label">Reading 1</label>
-                                    {{ form.reading1 }}
-                                    {% if form.reading1.errors %}
-                                        <div class="text-danger">{{ form.reading1.errors }}</div>
+                                    <label for="{{ form.usl.id_for_label }}" class="form-label">Upper Specification Limit (USL)</label>
+                                    {{ form.usl }}
+                                    {% if form.usl.errors %}
+                                        <div class="text-danger">{{ form.usl.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-4">
-                            <div class="card reading-card">
+                        <div class="col-md-6">
+                            <div class="card">
                                 <div class="card-body">
-                                    <label for="{{ form.reading2.id_for_label }}" class="form-label">Reading 2</label>
-                                    {{ form.reading2 }}
-                                    {% if form.reading2.errors %}
-                                        <div class="text-danger">{{ form.reading2.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card reading-card">
-                                <div class="card-body">
-                                    <label for="{{ form.reading3.id_for_label }}" class="form-label">Reading 3</label>
-                                    {{ form.reading3 }}
-                                    {% if form.reading3.errors %}
-                                        <div class="text-danger">{{ form.reading3.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card reading-card">
-                                <div class="card-body">
-                                    <label for="{{ form.reading4.id_for_label }}" class="form-label">Reading 4</label>
-                                    {{ form.reading4 }}
-                                    {% if form.reading4.errors %}
-                                        <div class="text-danger">{{ form.reading4.errors }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="card reading-card">
-                                <div class="card-body">
-                                    <label for="{{ form.reading5.id_for_label }}" class="form-label">Reading 5</label>
-                                    {{ form.reading5 }}
-                                    {% if form.reading5.errors %}
-                                        <div class="text-danger">{{ form.reading5.errors }}</div>
+                                    <label for="{{ form.lsl.id_for_label }}" class="form-label">Lower Specification Limit (LSL)</label>
+                                    {{ form.lsl }}
+                                    {% if form.lsl.errors %}
+                                        <div class="text-danger">{{ form.lsl.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-<!-- Add this after the readings section -->
-<h2 class="mb-3">Specification Limits</h2>
-<div class="row g-3">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <label for="{{ form.usl.id_for_label }}" class="form-label">Upper Specification Limit (USL)</label>
-                {{ form.usl }}
-                {% if form.usl.errors %}
-                    <div class="text-danger">{{ form.usl.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-body">
-                <label for="{{ form.lsl.id_for_label }}" class="form-label">Lower Specification Limit (LSL)</label>
-                {{ form.lsl }}
-                {% if form.lsl.errors %}
-                    <div class="text-danger">{{ form.lsl.errors }}</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-</div>
+
+                    <!-- Submit Buttons -->
                     <div class="d-flex justify-content-center gap-3 mt-4">
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="fas fa-save me-2"></i>Save Reading
@@ -169,8 +311,7 @@
 </div>
 
 <style>
-    /* Previous styles remain the same */
-    /* Alert Container */
+    /* Alert container and animations */
     .alert-container {
         width: 100%;
         max-width: 480px;
@@ -178,7 +319,6 @@
         position: relative;
     }
     
-    /* Base Alert Styles */
     .alert {
         background-color: #ffffff;
         border-radius: 8px;
@@ -257,133 +397,117 @@
         border: none;
         color: #6b7280;
         cursor: pointer;
-        font-size: 20px;
-        height: 28px;
-        width: 28px;
+        font-size: 18px;
+        height: 24px;
+        line-height: 1;
         padding: 0;
-        position: relative;
-        border-radius: 50%;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        width: 24px;
+        transition: color 0.2s ease;
     }
     
     .alert-close:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        transform: rotate(90deg);
+        color: #111827;
+    }
+    
+    /* Reading Input Container */
+    .reading-input-container {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    /* Reading Value Display */
+    .reading-display {
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .reading-display:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.08);
+    }
+    
+    .reading-value {
+        display: block;
+        font-size: 24px;
+        font-weight: 700;
+        color: #0d6efd;
+        margin: 10px 0;
+    }
+    
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .alert-container {
+            max-width: 100%;
+        }
+        
+        .reading-value {
+            font-size: 20px;
+        }
+    }
+    
+    /* Background Container */
+    .background-container {
+        min-height: 100vh;
+        background-color: #f8f9fa;
+        padding: 40px 0;
+    }
+    
+    .content-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    /* Form Control Styling */
+    .form-control-lg {
+        font-size: 1.25rem;
+        font-weight: 500;
+        text-align: center;
     }
     
     /* Alert Types */
     .alert-success {
-        background-color: #f0fdf4;
-        border-left: 4px solid #22c55e;
-    }
-    
-    .alert-success .alert-title {
-        color: #15803d;
+        border-left: 4px solid #10b981;
     }
     
     .alert-error {
-        background-color: #fef2f2;
         border-left: 4px solid #ef4444;
     }
     
-    .alert-error .alert-title {
-        color: #dc2626;
+    .alert-warning {
+        border-left: 4px solid #f59e0b;
     }
     
-    /* Animation Keyframes */
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
+    .alert-info {
+        border-left: 4px solid #3b82f6;
     }
     
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(10px);
-        }
+    /* Animation for alerts */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
-    /* Animation Classes */
     .alert {
-        animation: slideIn 0.3s ease-out forwards;
+        animation: fadeIn 0.3s ease-out forwards;
     }
-    
-    .alert.fade-out {
-        animation: fadeOut 0.3s ease-in forwards;
-    }
-
 </style>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize date picker
-    if (typeof flatpickr !== 'undefined') {
-        flatpickr("#{{ form.date.id_for_label }}", {
-            dateFormat: "Y-m-d",
-            maxDate: "today",
-        });
-    }
-
-    // Add input validation for readings
-    const readingInputs = document.querySelectorAll('input[type="number"]');
-    readingInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            if (value < 0) {
-                this.value = 0;
-            }
-        });
-    });
-});
-</script>
-
-
+<!-- Alert Close Button Script -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Function to handle alert closure
-        function closeAlert(button) {
-            const alertElement = button.closest('.alert');
-            alertElement.classList.add('fade-out');
-            
-            // Remove the alert after animation completes
-            setTimeout(() => {
-                alertElement.remove();
-            }, 300); // Matches the CSS animation duration
-        }
-
-        // Add click event listeners to all close buttons
-        document.querySelectorAll('.alert-close').forEach(button => {
+        // Add event listeners to close buttons
+        const closeButtons = document.querySelectorAll('.alert-close');
+        closeButtons.forEach(button => {
             button.addEventListener('click', function() {
-                closeAlert(this);
+                const alert = this.closest('.alert');
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    alert.remove();
+                }, 300);
             });
         });
-
-        // Optional: Auto-dismiss alerts after 5 seconds
-        const autoDismissDelay = 5000; // 5 seconds
-        document.querySelectorAll('.alert').forEach(alert => {
-            setTimeout(() => {
-                if (alert && document.body.contains(alert)) {
-                    alert.classList.add('fade-out');
-                    setTimeout(() => {
-                        alert.remove();
-                    }, 300);
-                }
-            }, autoDismissDelay);
-        });
     });
-
 </script>
 {% endblock content %}

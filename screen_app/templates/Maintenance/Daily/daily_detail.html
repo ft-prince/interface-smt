@@ -65,17 +65,43 @@
         <td>{{ record.station }}</td>
       </tr>
       <tr>
-        <td>Doc Number</td>
+        <td>QSF Number</td>
         <td>{{ record.doc_number }}</td>
-      </tr>
+    </tr>
+    
+    <tr>
+        <td>Rev Number</td>
+        <td>{{ record.rev_number }}</td>
+    </tr>
+    
+    <tr>
+        <td>Rev Date</td>
+        <td>{{ record.rev_date }}</td>
+    </tr>
+    <tr>
+        <td>Shift</td>
+        <td>{{ record.shift }}</td>
+    </tr>
       <tr>
         <td>Machine Name</td>
-        <td>{{ record.get_machine_name_display }}</td>
+        <td>{{ record.machine_name }}</td>
       </tr>
       <tr>
         <td>Machine Location</td>
         <td>{{ record.machine_location }}</td>
       </tr>
+      <tr>
+        <td>Control number</td>
+        <td>{{ record.control_number }}</td>
+      </tr>
+      <tr>
+        <td>Process number</td>
+        <td>{{ record.process_no }}</td>
+      </tr>
+      <tr>
+        <td>Part Name</td>
+        <td>{{ record.part_name }}</td>
+    </tr>
       <tr>
         <td>Month/Year</td>
         <td>{{ record.month_year|date:"F Y" }}</td>
@@ -97,45 +123,45 @@
         <th>Remark</th>
       </tr>
       <tr>
-        <td>{{record.check_point_1}}</td>
-        <td>{{ record.requirement_range_1 }}</td>
-        <td>{{ record.method_of_checking_1 }}</td>
+        <td>Clean Machine Surface</td>
+        <td>Proper Clean</td>
+        <td>Clean by Cloths & Brush</td>
         <td>{{ record.Remark_1 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_2}}</td>
-        <td>{{ record.requirement_range_2 }}</td>
-        <td>{{ record.method_of_checking_2 }}</td>
+        <td>Check ON/OFF Switch</td>
+        <td>Proper Working</td>
+        <td>By Hand</td>
         <td>{{ record.Remark_2 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_3}}</td>
-        <td>{{ record.requirement_range_3 }}</td>
-        <td>{{ record.method_of_checking_3 }}</td>
+        <td>Check Emergency Switch</td>
+        <td>Proper Working</td>
+        <td>By Hand</td>
         <td>{{ record.Remark_3 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_4}}</td>
-        <td>{{ record.requirement_range_4 }}</td>
-        <td>{{ record.method_of_checking_4 }}</td>
+        <td>Check any Abnormal Sound in M/C</td>
+        <td>No any Abnormal Sound</td>
+        <td>By Eye</td>
         <td>{{ record.Remark_4 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_5}}</td>
-        <td>{{ record.requirement_range_5 }}</td>
-        <td>{{ record.method_of_checking_5 }}</td>
+        <td>Check Spray Nozzle</td>
+        <td>No Blockage No leakage</td>
+        <td>By Eye</td>
         <td>{{ record.Remark_5 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_6}}</td>
-        <td>{{ record.requirement_range_6 }}</td>
-        <td>{{ record.method_of_checking_6 }}</td>
+        <td>Check all Tubbing & Feeder pipe</td>
+        <td>No Cut & No Damage</td>
+        <td>By Eye</td>
         <td>{{ record.Remark_6 }}</td>
       </tr>
       <tr>
-        <td>{{record.check_point_7}}</td>
-        <td>{{ record.requirement_range_7 }}</td>
-        <td>{{ record.method_of_checking_7 }}</td>
+        <td>Check Maintenance & Calibration Tag</td>
+        <td>No Expiry date on tag</td>
+        <td>By Eye</td>
         <td>{{ record.Remark_7 }}</td>
       </tr>
     </table>

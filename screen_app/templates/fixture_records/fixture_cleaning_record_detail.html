@@ -47,8 +47,18 @@
         </tr>
                 
         <tr>
-            <td>Document Number</td>
+            <td>QSF Number</td>
             <td>{{ record.doc_number }}</td>
+        </tr>
+        
+        <tr>
+            <td>Rev Number</td>
+            <td>{{ record.rev_number }}</td>
+        </tr>
+        
+        <tr>
+            <td>Rev Date</td>
+            <td>{{ record.rev_date }}</td>
         </tr>
         
 
@@ -62,11 +72,15 @@
         </tr>
         <tr>
             <td>Fixture Location</td>
-        <td>{{ record.get_fixture_location_display }}</td>
+        <td>{{ record.fixture_location }}</td>
     </tr>
     <tr>
         <td>Fixture Control No.</td>
-        <td>{{ record.get_fixture_control_no_display }}</td>
+        <td>{{ record.fixture_control_no }}</td>
+    </tr>
+    <tr>
+        <td>Part Name</td>
+        <td>{{ record.process_machine.part_name }}</td>
     </tr>
     <tr>
         <td>Fixture Installation Date</td>

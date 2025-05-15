@@ -16,5 +16,5 @@ class ProfileForm(forms.ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['user', 'my_skill']
+        fields = ['user', 'my_skill','matrix']
  

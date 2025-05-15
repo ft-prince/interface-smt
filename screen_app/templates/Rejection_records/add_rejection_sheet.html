@@ -8,8 +8,8 @@
 <div class="background-container">
     <div class="container content-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Rejection Sheet</h1>
-            <p class="text-secondary">QSF-13-06</p>
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}{% endif %} Rejection Sheet</h1>
+            <p class="text-secondary">QSF-22-01 <br>Rev-00 </p>
         </div>
 
         <div class="alert-container">
@@ -49,39 +49,13 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
-                            {{ form.station }}
-                            {% if form.station.errors %}
-                                <div class="text-danger">{{ form.station.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.month.id_for_label }}" class="form-label">{{ form.month.label }}</label>
-                            {{ form.month }}
-                            {% if form.month.errors %}
-                                <div class="text-danger">{{ form.month.errors }}</div>
-                            {% endif %}
-                        </div>
+
+                    <div class="col mb-3">
+                        <label class="form-label">Part name</label>
+                        {{ form.part_name }}
                     </div>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.stage.id_for_label }}" class="form-label">{{ form.stage.label }}</label>
-                            {{ form.stage }}
-                            {% if form.stage.errors %}
-                                <div class="text-danger">{{ form.stage.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.part_description.id_for_label }}" class="form-label">{{ form.part_description.label }}</label>
-                            {{ form.part_description }}
-                            {% if form.part_description.errors %}
-                                <div class="text-danger">{{ form.part_description.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row">
+
                         <div class="col mb-3">
                             <label for="{{ form.opening_balance.id_for_label }}" class="form-label">{{ form.opening_balance.label }}</label>
                             {{ form.opening_balance }}
@@ -117,7 +91,30 @@
                                 <div class="text-danger">{{ form.closing_balance.errors }}</div>
                             {% endif %}
                         </div>
-                    </div>
+                        <div class="col-md-6 mb-3" id="defect-type-container">
+                            <label for="{{ form.defect_type.id_for_label }}" class="form-label">{{ form.defect_type.label }}</label>
+                            {{ form.defect_type }}
+                            {% if form.defect_type.errors %}
+                                <div class="text-danger">{{ form.defect_type.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <br />
+                        <div class="col-md-6 mb-3" id="defect-container" style="display: none;">
+                            <label for="{{ form.defect.id_for_label }}" class="form-label me-3 mt-4">{{ form.defect.label }}</label>
+                            {{ form.defect }}
+                            {% if form.defect.errors %}
+                                <div class="text-danger">{{ form.defect.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-12 mb-3" id="custom-defect-container" style="display: none;">
+                            <label for="{{ form.custom_defect.id_for_label }}" class="form-label">{{ form.custom_defect.label }}</label>
+                            <input type="text" name="{{ form.custom_defect.html_name }}" id="{{ form.custom_defect.id_for_label }}" class="form-control">
+                            {% if form.custom_defect.errors %}
+                                <div class="text-danger">{{ form.custom_defect.errors }}</div>
+                            {% endif %}
+                        </div>
+                                        </div>
                     <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary">Save</button>
 
@@ -390,10 +387,234 @@
     .alert.fade-out {
         animation: fadeOut 0.3s ease-in forwards;
     }
-
+    #defect-type-container select,
+    #defect-container select,
+    #custom-defect-container input {
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    }
+    
+    #defect-type-container select:focus,
+    #defect-container select:focus,
+    #custom-defect-container input:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+        outline: 0;
+    }
 </style>
 
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const defectTypeSelect = document.getElementById('{{ form.defect_type.id_for_label }}');
+        const defectSelect = document.getElementById('{{ form.defect.id_for_label }}');
+        const defectContainer = document.getElementById('defect-container');
+        const customDefectInput = document.getElementById('{{ form.custom_defect.id_for_label }}');
+        const customDefectContainer = document.getElementById('custom-defect-container');
+        const processMachineSelect = document.getElementById('{{ form.process_machine.id_for_label }}');
+        
+        console.log("Script loaded");
+        
+        // Visual defect choices
+        const visualChoices = [
+            ['', '---------'],
+            ['Dry Solder', 'Dry Solder'],
+            ['No Solder', 'No Solder'],
+            ['Shorting/ Bridging', 'Shorting/ Bridging'],
+            ['Pad Damage', 'Pad Damage'],
+            ['Component Tombstone', 'Component Tombstone'],
+            ['Solder Ball', 'Solder Ball'],
+            ['Green Masking improper', 'Green Masking improper'],
+            ['Masking Improper', 'Masking Improper'],
+            ['Component Shifted', 'Component Shifted'],
+            ['Pad Lifted', 'Pad Lifted'],
+            ['Component Damage/Break', 'Component Damage/Break'],
+            ['Solder Projection', 'Solder Projection'],
+            ['Track Cut (Open)', 'Track Cut (Open)'],
+            ['Wrong Polarity', 'Wrong Polarity'],
+            ['PTH Shorting', 'PTH Shorting'],
+            ['Component Wrong', 'Component Wrong'],
+            ['Component Missing', 'Component Missing'],
+            ['Solder Dust', 'Solder Dust'],
+            ['Pin Hole', 'Pin Hole'],
+            ['Component Up Side Down', 'Component Up Side Down'],
+            ['LED Defects', 'LED Defects'],
+            ['Microcontroller Pin Bend/Damage', 'Microcontroller Pin Bend/Damage'],
+            ['Solder Crack', 'Solder Crack'],
+            ['Others', 'Others']
+        ];
+        
+        // Programming defect choices
+        const programmingChoices = [
+            ['', '---------'],
+            ['Programme does not accept', 'Programme does not accept'],
+            ['Pin Voltage low', 'Pin Voltage low'],
+            ['Others', 'Others']
+        ];
+        
+        // Automatic testing defect choices
+        const automaticTestingChoices = [
+            ['', '---------'],
+            ['Testing fail', 'Testing fail'],
+            ['Others', 'Others']
+        ];
+        
+        // Adhesive Application choices
+        const adhesiveChoices = [
+            ['', '---------'],
+            ['Adhesive improper', 'Adhesive improper'],
+            ['Others', 'Others']
+        ];
+        
+        // PCB Screwing choices
+        const pcbScrewingChoices = [
+            ['', '---------'],
+            ['Thermal Paste Shape not OK', 'Thermal Paste Shape not OK'],
+            ['Thread NG * Heat Sink', 'Thread NG * Heat Sink'],
+            ['Thread NG * Screw', 'Thread NG * Screw'],
+            ['Others', 'Others']
+        ];
+       
+        // Helper function to clear and populate the defect select
+        function populateDefectSelect(choices) {
+            defectSelect.innerHTML = '';
+            choices.forEach(function(choice) {
+                const option = document.createElement('option');
+                option.value = choice[0];
+                option.textContent = choice[1];
+                defectSelect.appendChild(option);
+            });
+            defectContainer.style.display = 'flex';
+        }
 
+    // Function to handle machine change
+    function handleMachineChange() {
+        if (!processMachineSelect || processMachineSelect.selectedIndex < 1) {
+            return;
+        }
+        
+        const machineText = processMachineSelect.options[processMachineSelect.selectedIndex].text;
+        const machineLower = machineText.toLowerCase();
+        console.log("Selected machine:", machineText);
+        
+        // Use improved checks for special machines with multiple conditions
+        if (machineLower.includes("adhesive")) {
+            console.log("Detected Adhesive Application machine");
+            defectTypeSelect.value = 'adhesive';  // Set to correct defect type
+            populateDefectSelect(adhesiveChoices);
+        } 
+        else if (machineLower.includes("pcba screwing") || 
+                machineLower.includes("heat sink") || 
+                machineLower.includes("heatsink")) {
+            console.log("Detected PCB Screwing machine");
+            defectTypeSelect.value = 'pcb_screwing';  // Set to correct defect type
+            populateDefectSelect(pcbScrewingChoices);
+        }
+        else if (machineLower.includes("programming") || 
+                (machineLower.includes("testing") && !machineLower.includes("final"))) {
+            console.log("Detected Programming machine");
+            defectTypeSelect.value = 'programming';
+            populateDefectSelect(programmingChoices);
+        }
+        else if (machineLower.includes("final testing") || machineLower.includes("automatic")) {
+            console.log("Detected Final Testing machine");
+            defectTypeSelect.value = 'automatic_testing';
+            populateDefectSelect(automaticTestingChoices);
+        }
+        else {
+            console.log("Using default Visual defects");
+            defectTypeSelect.value = 'visual';
+            populateDefectSelect(visualChoices);
+        }
+    }        
+        // Function to handle defect type change
+        function handleDefectTypeChange() {
+            // If machine is already selected, it takes precedence
+            if (processMachineSelect && processMachineSelect.selectedIndex > 0) {
+                handleMachineChange();
+                return;
+            }
+            
+            // Otherwise use the selected defect type
+            const defectType = defectTypeSelect.value;
+            console.log("Selected defect type:", defectType);
+            
+            // Handle all possible defect types
+            if (defectType === 'visual') {
+                populateDefectSelect(visualChoices);
+            } else if (defectType === 'programming') {
+                populateDefectSelect(programmingChoices);
+            } else if (defectType === 'automatic_testing') {
+                populateDefectSelect(automaticTestingChoices);
+            } else if (defectType === 'adhesive') {
+                // Handle the adhesive defect type explicitly
+                populateDefectSelect(adhesiveChoices);
+            } else if (defectType === 'pcb_screwing') {
+                // Handle the pcb_screwing defect type explicitly
+                populateDefectSelect(pcbScrewingChoices);
+            } else {
+                defectContainer.style.display = 'none';
+            }
+        }
+        
+        // Handle defect selection change for "Others" option
+        function handleDefectChange() {
+            if (defectSelect.value === 'Others') {
+                customDefectContainer.style.display = 'flex';
+                customDefectInput.style.display = 'block';
+                customDefectInput.disabled = false;
+                customDefectInput.focus();
+            } else {
+                customDefectContainer.style.display = 'none';
+                customDefectInput.value = '';
+            }
+        }
+        
+        // Add event listeners
+        if (processMachineSelect) {
+            processMachineSelect.addEventListener('change', function() {
+                handleMachineChange();
+                customDefectContainer.style.display = 'none';
+                customDefectInput.value = '';
+            });
+        }
+        
+        if (defectTypeSelect) {
+            defectTypeSelect.addEventListener('change', function() {
+                handleDefectTypeChange();
+                customDefectContainer.style.display = 'none';
+                customDefectInput.value = '';
+            });
+        }
+        
+        if (defectSelect) {
+            defectSelect.addEventListener('change', handleDefectChange);
+        }
+        
+        // Initialize form state
+        console.log("Initializing form with defect type:", defectTypeSelect.value);
+        
+        if (processMachineSelect && processMachineSelect.selectedIndex > 0) {
+            console.log("Machine already selected, initializing...");
+            handleMachineChange();
+        } else if (defectTypeSelect && defectTypeSelect.value) {
+            console.log("Defect type already selected, initializing...");
+            handleDefectTypeChange();
+        }
+        
+        // Show custom defect if "Others" is already selected
+        if (defectSelect && defectSelect.value === 'Others') {
+            customDefectContainer.style.display = 'flex';
+        }
+    });
+</script>
+
+{% endblock %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Function to handle alert closure

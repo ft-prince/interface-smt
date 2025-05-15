@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}
+    <title>{% if form.instance.pk %}Update{% else %}Add{% endif %} PCB Panel Inspection Record</title>
+{% endblock %}
+
+{% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}{% endif %} PCB Panel Inspection Record</h1>
+            <p class="text-secondary">A-SMT-07<br>Rev-00</p>
+        </div>
+
+        <div class="alert-container">
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}" role="alert">
+                        <div class="alert-content">
+                            <div class="alert-icon">
+                                <span class="emoji-group">
+                                    {% if message.tags == 'success' %}
+                                        <span class="emoji primary">✅</span>
+                                        <span class="emoji secondary">🎉</span>
+                                    {% elif message.tags == 'error' %}
+                                        <span class="emoji primary">❌</span>
+                                        <span class="emoji secondary">⚠️</span>
+                                    {% elif message.tags == 'warning' %}
+                                        <span class="emoji primary">⚠️</span>
+                                        <span class="emoji secondary">📢</span>
+                                    {% else %}
+                                        <span class="emoji primary">ℹ️</span>
+                                        <span class="emoji secondary">💡</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="alert-message">
+                                <span class="alert-title">{{ message.tags|title }}!</span>
+                                {{ message }}
+                            </div>
+                        </div>
+                        <button type="button" class="alert-close" aria-label="Close">×</button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-4">
+                    <h5 class="text-muted mb-3">Process: Inspection of PCB Panel before loading in Magazine</h5>
+                    <p class="text-muted small">Check Points: No masking issue (No peel off, No foreign material), No Dust or contamination on PCB Panel, No Track cut / damage mark on PCB Panel</p>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.pcb_number.id_for_label }}">
+                                PCB No. / Rev.
+                            </label>
+                            {{ form.pcb_number }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.customer.id_for_label }}">
+                                Customer
+                            </label>
+                            {{ form.customer }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.pcb_batch_code.id_for_label }}">
+                                PCB Batch Code
+                            </label>
+                            {{ form.pcb_batch_code }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label" for="{{ form.inspection_qty.id_for_label }}">
+                                Inspection Qty. (Pcs)
+                            </label>
+                            {{ form.inspection_qty }}
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label  hidden"  for="{{ form.date.id_for_label }}">
+                                Date
+                            </label>
+                            
+                            {{ form.date }}
+                        </div>
+
+                    </div>
+
+                    <h5 class="mt-4 mb-3">Inspection Results</h5>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <label class="form-check-label" for="{{ form.no_masking_issue.id_for_label }}">
+                                    No Masking Issue
+                                </label>
+                                {{ form.no_masking_issue }}
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <label class="form-check-label" for="{{ form.no_dust_contamination.id_for_label }}">
+                                    No Dust Contamination
+                                </label>
+                                {{ form.no_dust_contamination }}
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="form-check">
+                                <label class="form-check-label" for="{{ form.no_track_damage.id_for_label }}">
+                                    No Track Damage
+                                </label>
+                                {{ form.no_track_damage }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label" for="{{ form.remarks.id_for_label }}">
+                                Remarks
+                            </label>
+                            {{ form.remarks }}
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <button type="submit" class="btn btn-primary">Save</button>
+                        {% if user.is_staff %}
+                        <a href="{% url 'list_pcb_inspection_records' %}" class="btn btn-secondary">Back to List</a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --notification-bg: #34445e;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+        position: relative;
+    }
+
+    .background-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 102, 51, 0.1) 0%, rgba(0, 51, 204, 0.1) 100%);
+        pointer-events: none;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    }
+
+    h1 {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+
+    .form-label {
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: #002299;
+        border-color: #002299;
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-secondary:hover {
+        background-color: #FF4500;
+        border-color: #FF4500;
+    }
+
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+
+    .alert-error {
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+
+    .form-check-label {
+        color: var(--text-color);
+    }
+
+    .text-danger {
+        color: #dc3545;
+    }
+
+
+    /* Alert Container */
+    .alert-container {
+        width: 100%;
+        max-width: 480px;
+        margin: 0 auto 24px;
+        position: relative;
+    }
+    
+    /* Base Alert Styles */
+    .alert {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px;
+        position: relative;
+        gap: 16px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .alert:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Alert Content Area */
+    .alert-content {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        flex: 1;
+    }
+    
+    /* Emoji Group Styling */
+    .emoji-group {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .emoji {
+        font-size: 20px;
+        line-height: 1;
+        transition: transform 0.3s ease;
+    }
+    
+    .emoji.primary {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .emoji.secondary {
+        position: absolute;
+        right: -8px;
+        bottom: -8px;
+        font-size: 16px;
+        opacity: 0;
+        transform: scale(0);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    .alert:hover .emoji.secondary {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
+    /* Alert Message */
+    .alert-message {
+        color: #1f2937;
+        font-size: 14px;
+        line-height: 1.5;
+    }
+    
+    .alert-title {
+        display: block;
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 2px;
+    }
+    
+    /* Close Button */
+    .alert-close {
+        background: transparent;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        font-size: 20px;
+        height: 28px;
+        width: 28px;
+        padding: 0;
+        position: relative;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .alert-close:hover {
+        background-color: rgba(0, 0, 0, 0.05);
+        transform: rotate(90deg);
+    }
+    
+    /* Alert Types */
+    .alert-success {
+        background-color: #f0fdf4;
+        border-left: 4px solid #22c55e;
+    }
+    
+    .alert-success .alert-title {
+        color: #15803d;
+    }
+    
+    .alert-error {
+        background-color: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .alert-error .alert-title {
+        color: #dc2626;
+    }
+    
+    /* Animation Keyframes */
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+    
+    @keyframes fadeOut {
+        from {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(10px);
+        }
+    }
+    
+    /* Animation Classes */
+    .alert {
+        animation: slideIn 0.3s ease-out forwards;
+    }
+    
+    .alert.fade-out {
+        animation: fadeOut 0.3s ease-in forwards;
+    }
+</style>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to handle alert closure
+        function closeAlert(button) {
+            const alertElement = button.closest('.alert');
+            alertElement.classList.add('fade-out');
+            
+            // Remove the alert after animation completes
+            setTimeout(() => {
+                alertElement.remove();
+            }, 300); // Matches the CSS animation duration
+        }
+
+        // Add click event listeners to all close buttons
+        document.querySelectorAll('.alert-close').forEach(button => {
+            button.addEventListener('click', function() {
+                closeAlert(this);
+            });
+        });
+
+        // Optional: Auto-dismiss alerts after 5 seconds
+        const autoDismissDelay = 5000; // 5 seconds
+        document.querySelectorAll('.alert').forEach(alert => {
+            setTimeout(() => {
+                if (alert && document.body.contains(alert)) {
+                    alert.classList.add('fade-out');
+                    setTimeout(() => {
+                        alert.remove();
+                    }, 300);
+                }
+            }, autoDismissDelay);
+        });
+    });
+</script>
+{% endblock content %}

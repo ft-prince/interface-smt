@@ -9,3 +9,10 @@ def get_model_name(history_record):
     Returns the verbose name of the model for a historical record.
     """
     return history_record.instance._meta.verbose_name.title()
+
+
+
+@register.filter
+def get_item(dictionary, key):
+    """Gets an item from a dictionary."""
+    return dictionary.get(key, "")

@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+
+{% block title %}<title>Rework Analysis Record Detail</title>{% endblock %}
+
+{% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <h1 class="text-primary mb-4">Rework Analysis Record Detail</h1>
+        
+        <div class="document-info mb-4">
+            <span class="doc-label">Document:</span> QSF-22-02, Rev.03, Dated: 29.12.2023
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="section mb-4">
+                    <h5 class="section-title">General Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Sr. No:</span>
+                                <span class="info-value">{{ record.sr_no }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Department:</span>
+                                <span class="info-value">{{ record.department_name }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Process:</span>
+                                <span class="info-value">{{ record.process }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Month/Year:</span>
+                                <span class="info-value">{{ record.month }} {{ record.year }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Problem Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Problem Found Date:</span>
+                                <span class="info-value">{{ record.problem_found_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Part Received Date:</span>
+                                <span class="info-value">{{ record.part_received_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Line/Shift:</span>
+                                <span class="info-value">{{ record.line_shift }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Part Identification No.:</span>
+                                <span class="info-value">{{ record.part_identification_no }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Short Code:</span>
+                                <span class="info-value">{{ record.short_code }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Problem Found Stage:</span>
+                                <span class="info-value">{{ record.problem_found_stage }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-item wide">
+                                <span class="info-label">Defects Details:</span>
+                                <span class="info-value">{{ record.defects_details }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Defect Location on PCB:</span>
+                                <span class="info-value">{{ record.defect_location_on_pcb }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Defect Quantity:</span>
+                                <span class="info-value">{{ record.defect_qty }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Analysis Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Analysis Date:</span>
+                                <span class="info-value">{{ record.analysis_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Child Part IM Code:</span>
+                                <span class="info-value">{{ record.child_part_im_code }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Component Package Size:</span>
+                                <span class="info-value">{{ record.component_package_size }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-item wide">
+                                <span class="info-label">Reason for Defect:</span>
+                                <span class="info-value">{{ record.reason_for_defect }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Rework Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item wide">
+                                <span class="info-label">Rework Details:</span>
+                                <span class="info-value">{{ record.rework_details }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Rework Date:</span>
+                                <span class="info-value">{{ record.rework_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Rework Done By:</span>
+                                <span class="info-value">{{ record.rework_done_by }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Part Status:</span>
+                                <span class="info-value">{{ record.part_status }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Verification Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Part Re-verification Status:</span>
+                                <span class="info-value verification-badge {{ record.part_re_verification|lower }}">
+                                    {{ record.part_re_verification }}
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Verified By:</span>
+                                <span class="info-value">{{ record.verified_by }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Remarks:</span>
+                                <span class="info-value">{{ record.remarks|default:"-" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="meta-info text-muted mt-4">
+                    <small>Created by: {{ record.created_by.username|default:"System" }} on {{ record.created_at|date:"Y-m-d H:i" }}</small>
+                    {% if record.created_at != record.updated_at %}
+                    <small class="ms-3">Last updated: {{ record.updated_at|date:"Y-m-d H:i" }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="action-buttons mt-4">
+                    <a href="{% url 'update_rework_analysis_record' record.pk %}" class="btn btn-warning">Edit</a>
+                    <a href="{% url 'list_rework_analysis_records' %}" class="btn btn-secondary">Back to List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+    }
+
+    h1.text-primary {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+    
+    .document-info {
+        padding: 10px 15px;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        color: #6c757d;
+    }
+    
+    .doc-label {
+        font-weight: 600;
+        margin-right: 5px;
+    }
+    
+    .section {
+        border-bottom: 1px solid #eaeaea;
+        padding-bottom: 15px;
+    }
+    
+    .section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed #d1d5db;
+    }
+    
+    .section-content {
+        padding: 0 10px;
+    }
+    
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-item {
+        flex: 1 1 30%;
+        min-width: 250px;
+        margin-bottom: 10px;
+        padding-right: 15px;
+    }
+    
+    .info-item.wide {
+        flex: 1 1 100%;
+    }
+    
+    .info-label {
+        display: block;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        display: block;
+        padding: 8px 12px;
+        background-color: #f9fafb;
+        border-radius: 4px;
+        border-left: 3px solid #d1d5db;
+    }
+    
+    .verification-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-weight: 600;
+        color: white;
+    }
+    
+    .verification-badge.pass {
+        background-color: #28a745;
+    }
+    
+    .verification-badge.fail {
+        background-color: #dc3545;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning {
+        background-color: #E5E4E2;
+        border-color: #E5E4E2;
+        color: #333;
+    }
+    
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .meta-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock content %}

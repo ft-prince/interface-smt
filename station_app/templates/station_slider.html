@@ -1,3 +1,5 @@
+{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,79 +11,109 @@
             margin: 0;
             padding: 0;
             height: 100%;
+            width: 100%;
             overflow: hidden;
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
         }
         
         .main-wrapper {
             display: flex;
+            flex-direction: column;
             height: 100vh;
             width: 100vw;
+            overflow: hidden;
             background-color: #0f172a;
             position: relative;
         }
 
-        /* Styled Sidebar */
-        .side-heading {
-            flex: 0 0 8%;
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-            z-index: 5;
+        /* Navbar Styling */
+        .navbar {
             display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .side-heading::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-        }
-
-        .user-info {
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 0.3rem 1rem;
+            border-bottom: 3px solid #f97316;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             position: relative;
-            background: rgba(255, 255, 255, 0.03);
-            padding: 1.5rem;
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            width: 100%;
+            box-sizing: border-box;
+            flex-shrink: 0; /* Prevent navbar from shrinking */
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            height: 40px;
+            margin-right: 1rem;
+        }
+
+        .date-display {
+            margin-left: auto;
+            margin-right: 2rem;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: 500;
+            background-color: #f97316;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+        /* Add this to your existing CSS */
+        /* Updated profile image styling */
+        .profile-image {
+            margin: 0 0.5rem;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 30%;
+            object-fit: cover;
+            border: 3px solid #f97316;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            background: rgba(37, 99, 235, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
         }
 
         .user-name {
-            font-size: 1.2rem;
+            font-size: 1rem;
             font-weight: 700;
-            margin: 0 0 1rem 0;
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            margin: 0 1rem 0 0;
+            color: #1e3a8a;
             letter-spacing: -0.025em;
-            text-align: center;
         }
 
         .user-skill {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            margin: 0 0 0.5rem 0;
             display: flex;
-            flex-direction: column;
             align-items: center;
-            gap: 0.5rem;
+            margin: 0 1rem 0 0;
         }
 
         .skill-badge {
-            background: rgba(59, 130, 246, 0.1);
-            color: #60a5fa;
+            background: #2563eb;
+            color: white;
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             font-weight: 500;
             white-space: nowrap;
         }
@@ -89,59 +121,39 @@
         .user-id {
             font-size: 0.8rem;
             color: #64748b;
-            margin: 0;
-            padding-top: 0.5rem;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 1rem;
-            text-align: center;
+            margin: 0 0 0 1rem;
+            padding-left: 1rem;
+            border-left: 1px solid #e2e8f0;
         }
 
-        .glow {
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: -1;
-        }
-
-        /* Dashboard Button in Sidebar */
         .dashboard-button {
-            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            background: #f97316;
             color: white;
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 1rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 0.9rem;
             font-weight: 500;
             cursor: pointer;
             text-decoration: none;
-            display: block;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
-            text-align: center;
-            width: 100%;
-            box-sizing: border-box;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            margin-left: 1rem;
         }
         
         .dashboard-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35);
-        }
-
-        .dashboard-button:active {
-            transform: translateY(0);
+            background: #ea580c;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
 
         /* Slider Container */
         .slider-container {
-            flex: 0 0 95%;
-            height: 100vh;
+            flex: 1;
             position: relative;
             z-index: 0;
             background-color: #000;
+            overflow: hidden; /* Prevent scrolling */
         }
         
         .slider-container video {
@@ -151,7 +163,7 @@
             position: absolute;
             top: 0;
             left: 0;
-            object-fit: cover;
+            object-fit: contain; /* Changed to contain to prevent cropping */
             transform: rotate(180deg);
         }
         
@@ -161,130 +173,72 @@
         }
         
         .slider-container embed {
-            height: 98%;
-            width: 95%;
+            height: 100vh; 
+            width: 100vw;
             display: none;
             position: absolute;
             top: 0;
             left: 0;
-            object-fit: cover;
+            object-fit: none; /* Changed to contain to prevent cropping */
+            border: none; /* Remove any default border */
         }
     </style>
 </head>
+
 <body>
     <div class="main-wrapper">
-        <div class="side-heading">
-            <div class="user-info">
-                <div class="glow"></div>
-                <h2 class="user-name">{{ request.user.username }}</h2>
-                <h3 class="user-skill">
-                    Skill Level
-                    <span class="skill-badge">{{ request.user.profile.my_skill }}</span>
-                </h3>
-                <p class="user-id">ID: {{ request.user.profile.matrix }}</p>
+        <nav class="navbar">
+            <div class="logo-container">
+                <img src="{% static 'images/image.png' %}"
+                alt="InterfaceAuto Logo"
+                height="28"
+                class="d-inline-block align-text-center"
+    >
             </div>
-            <a 
-                class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
-                href="{% url 'dashboard' %}"
-            >
-                <button class="dashboard-button">Dashboard</button>
-            </a>
-        </div>
+            
+            <div class="date-display">
+                <span id="current-date">March 29, 2025</span>
+                <span id="current-day">Saturday</span>
+            </div>
+            
+            <div class="user-info">
+                <h2 class="user-name">{{ request.user.username }}</h2>
+                <div class="user-skill">
+                   
+                    <span class="skill-badge">L{{ request.user.profile.my_skill }}</span>
+                </div>
+                <div class="profile-image">
+                    {% if request.user.profile.Image %}
+                        <img src="{{ request.user.profile.Image.url }}" alt="{{ request.user.username }}'s profile picture" class="user-avatar">
+                    {% else %}
+                        <img src="{% static 'images/avatar.jpg' %}"alt="Default profile picture" class="user-avatar">
+                    {% endif %}
+                </div>
+                
+                <p class="user-id">ID: {{ request.user.profile.matrix }}</p>
+                <a 
+                    class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+                    href="{% url 'dashboard' %}"
+                >
+                    <button class="dashboard-button">Dashboard</button>
+                </a>
+            </div>
+        </nav>
         
         <div class="slider-container" id="slider-container">
         </div>
     </div>
-    {% comment %} <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const stationId = `{{ station.id }}`;
-            const refreshDuration = {{ refresh_duration }} * 60 * 1000; // Convert minutes to milliseconds
-            const url = `/station/${stationId}/media/`;
-            let currentIndex = 0;
-            const mediaElements = [];
-            let slideshowTimer;
-            
-            // Set up page refresh timer independent of media playback
-            const setupPageRefresh = () => {
-                console.log(`Page will refresh in ${refreshDuration/1000} seconds`);
-                setTimeout(() => {
-                    console.log('Refreshing page...');
-                    window.location.reload();
-                }, refreshDuration);
-            };
-
-            const playCurrentMedia = () => {
-                const currentMedia = mediaElements[currentIndex];
-                
-                if (currentMedia.tagName === 'VIDEO') {
-                    currentMedia.play().catch(e => console.error("Error playing video:", e));
-                    // Video duration is handled by the 'ended' event listener
-                } else if (currentMedia.tagName === 'EMBED') {
-                    // Use the duration from the media data
-                    const duration = parseInt(currentMedia.dataset.duration) * 1000;
-                    slideshowTimer = setTimeout(switchMedia, duration);
-                }
-            };
-
-            const stopCurrentMedia = () => {
-                const currentMedia = mediaElements[currentIndex];
-                if (currentMedia.tagName === 'VIDEO') {
-                    currentMedia.pause();
-                    currentMedia.currentTime = 0;
-                } else {
-                    clearTimeout(slideshowTimer);
-                }
-            };
-
-            const switchMedia = () => {
-                stopCurrentMedia();
-                mediaElements[currentIndex].classList.remove('active');
-                currentIndex = (currentIndex + 1) % mediaElements.length;
-                mediaElements[currentIndex].classList.add('active');
-                playCurrentMedia();
-            };
-
-            fetch(url)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.media && data.media.length > 0) {
-                        const sliderContainer = document.getElementById('slider-container');
-
-                        data.media.forEach((media, index) => {
-                            let mediaElement;
-                            if (['mp4', 'mov'].includes(media.type)) {
-                                mediaElement = document.createElement('video');
-                                mediaElement.src = media.url;
-                                mediaElement.controls = false;
-                                mediaElement.loop = false;
-                                mediaElement.muted = true;
-                                mediaElement.dataset.duration = media.duration;
-                                mediaElement.className = index === 0 ? 'active' : '';
-                                mediaElement.addEventListener('ended', switchMedia);
-                            } else if (media.type === 'pdf') {
-                                mediaElement = document.createElement('embed');
-                                mediaElement.src = media.url + '#toolbar=0';
-                                mediaElement.type = 'application/pdf';
-                                mediaElement.dataset.duration = media.duration;
-                                mediaElement.className = index === 0 ? 'active' : '';
-                            }
-                            sliderContainer.appendChild(mediaElement);
-                            mediaElements.push(mediaElement);
-                        });
-
-                        playCurrentMedia();
-                        setupPageRefresh(); // Initialize page refresh timer after media is loaded
-                    } else {
-                        console.error('No media found for this station.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching media:', error);
-                });
-        });
-    </script> {% endcomment %}
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Set current date and day
+            const now = new Date();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            document.getElementById('current-date').textContent = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+            document.getElementById('current-day').textContent = days[now.getDay()];
+            
             const stationId = `{{ station.id }}`;
             const refreshDuration = {{ refresh_duration }} * 60 * 1000;
             let currentIndex = 0;
@@ -405,6 +359,434 @@
         
             setupMediaStream();
         });
-        </script>
+    </script>
+
+
+
+
+<!-- Control Chart Popup - Tailored to API Response -->
+<style>
+    /* Control Chart Popup Styles - Positioned at bottom right */
+    .control-chart-popup {
+        display: none;
+        position: fixed;
+        bottom: 20px;        /* Changed from top: 50% */
+        right: 20px;         /* Changed from left: 50% */
+        transform: none;     /* Removed the translate(-50%, -50%) */
+        background-color: white;
+        width: 280px;        /* Reduced width for smaller popup */
+        max-width: 90%;
+        border-radius: 10px; /* Slightly smaller border radius */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        overflow: hidden;
+        animation: slideUpFromBottom 0.3s ease-out; /* Added animation */
+    }
+    
+    /* Animation for bottom right popup */
+    @keyframes slideUpFromBottom {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .popup-header {
+        background-color: #f97316;
+        padding: 0.75rem;    /* Reduced padding */
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .popup-title {
+        margin: 0;
+        font-size: 1.1rem;   /* Smaller font size */
+        font-weight: 600;
+    }
+    
+    .close-popup {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+    
+    .popup-content {
+        padding: 1rem;     /* Reduced padding */
+    }
+    
+    .popup-message {
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;  /* Smaller font size */
+        line-height: 1.4;   /* Tighter line height */
+        color: #0f172a;
+    }
+    
+    .popup-stats {
+        background-color: rgba(0, 0, 0, 0.03);
+        padding: 0.6rem;    /* Reduced padding */
+        border-radius: 6px; /* Smaller border radius */
+        margin-bottom: 0.75rem;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .popup-progress {
+        margin-top: 0.75rem;
+        height: 8px;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .popup-progress-bar {
+        height: 100%;
+        background-color: #2563eb;
+        transition: width 0.3s ease;
+    }
+    
+    .popup-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .remind-later-btn {
+        background-color: transparent;
+        border: 2px solid #2563eb;
+        color: #2563eb;
+        padding: 0.5rem 0.8rem;   /* Smaller padding */
+        border-radius: 5px;       /* Smaller border radius */
+        font-weight: 600;
+        font-size: 0.85rem;       /* Smaller font size */
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .add-reading-btn {
+        background-color: #f97316;
+        color: white;
+        text-decoration: none;
+        padding: 0.5rem 0.8rem;   /* Smaller padding */
+        border-radius: 5px;       /* Smaller border radius */
+        font-weight: 600;
+        font-size: 0.85rem;       /* Smaller font size */
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+    
+    .add-reading-btn:disabled, 
+    .add-reading-btn.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+    
+    .popup-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        animation: fadeIn 0.2s ease-out;  /* Added animation */
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    .timer-container {
+        margin-top: 0.75rem;     /* Reduced margin */
+        text-align: center;
+        padding: 0.4rem;         /* Reduced padding */
+        border-radius: 5px;      /* Smaller border radius */
+        background-color: rgba(0, 0, 0, 0.05);
+    }
+    
+    .countdown {
+        font-size: 1.25rem;      /* Smaller font size */
+        font-weight: 600;
+        color: #1e3a8a;
+    }
+    </style>
+    
+    <div id="controlChartPopup" class="control-chart-popup">
+        <div class="popup-header">
+            <h3 class="popup-title">Control Chart Reminder</h3>
+            <button id="closePopup" class="close-popup">×</button>
+        </div>
+        <div class="popup-content">
+            <p class="popup-message">
+                📊 <span id="popup-main-message">Control chart reading reminder</span>
+            </p>
+            <div id="popup-reading-stats" class="popup-stats">
+                <div id="popup-reading-info">Loading reading status...</div>
+                <div class="popup-progress">
+                    <div id="popup-progress-bar" class="popup-progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div id="timer-container" class="timer-container" style="display: none;">
+                <p>Next reading available in:</p>
+                <div id="countdown" class="countdown">--:--</div>
+            </div>
+            <div class="popup-actions">
+                <button id="remindLater" class="remind-later-btn">
+                    Remind me later
+                </button>
+                <a href="/screen/reading/create/" id="addReadingNow" class="add-reading-btn">
+                    Add reading now
+                </a>
+            </div>
+        </div>
+    </div>
+    <div id="popupOverlay" class="popup-overlay"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Control chart popup code initialized");
+            
+            // Elements
+            const popup = document.getElementById('controlChartPopup');
+            const overlay = document.getElementById('popupOverlay');
+            const closeButton = document.getElementById('closePopup');
+            const remindLaterButton = document.getElementById('remindLater');
+            const addReadingButton = document.getElementById('addReadingNow');
+            const popupMainMessage = document.getElementById('popup-main-message');
+            const readingInfo = document.getElementById('popup-reading-info');
+            const progressBar = document.getElementById('popup-progress-bar');
+            const timerContainer = document.getElementById('timer-container');
+            const countdownElement = document.getElementById('countdown');
+            
+            // Settings
+            const popupInterval = 90 * 60 * 1000; // 90 minutes in milliseconds
+            const remindLaterInterval = 30 * 60 * 1000; // 30 minutes in milliseconds
+            
+            let countdownTimer;
+            
+            // Functions
+            function fetchReadingStatus() {
+                console.log("Attempting to fetch reading status");
+                return fetch('/screen/api/reading-status/')
+                    .then(response => {
+                        console.log("Reading status API response status:", response.status);
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("Reading status data:", data);
+                        return data;
+                    })
+                    .catch(error => {
+                        console.error("Error fetching reading status:", error);
+                        return { 
+                            success: false,
+                            machine_name: "Unknown",
+                            can_add_reading: false, 
+                            todays_readings_count: 0,
+                            next_reading_index: 1, 
+                            max_readings_per_day: 5,
+                            minutes_remaining: 0
+                        };
+                    });
+            }
+            
+            function updatePopupWithReadingStatus(data) {
+                // Update machine name and status
+                const machineName = data.machine_name || "Unknown";
+                
+                // Update progress bar
+                const progressPercentage = (data.todays_readings_count / data.max_readings_per_day) * 100;
+                progressBar.style.width = `${progressPercentage}%`;
+                
+                // Base reading info text
+                readingInfo.innerHTML = `
+                    <p style="margin-bottom: 0.5rem;">Machine: <strong>${machineName}</strong></p>
+                    <p style="margin-bottom: 0.5rem;">You have recorded <strong>${data.todays_readings_count} out of ${data.max_readings_per_day}</strong> readings today.</p>
+                `;
+                
+                // Update UI based on if readings are available
+                if (data.can_add_reading) {
+                    popupMainMessage.textContent = "It's time to record your control chart reading";
+                    addReadingButton.classList.remove('disabled');
+                    addReadingButton.removeAttribute('disabled');
+                    timerContainer.style.display = 'none';
+                    readingInfo.innerHTML += `
+                        <p style="color: #f97316;">
+                            <span style="margin-right: 0.25rem;">✓</span>
+                            You can add a new reading now!
+                        </p>
+                    `;
+                } else {
+                    popupMainMessage.textContent = "Control chart reading reminder";
+                    addReadingButton.classList.add('disabled');
+                    addReadingButton.setAttribute('disabled', 'disabled');
+                    timerContainer.style.display = 'block';
+                    
+                    readingInfo.innerHTML += `
+                        <p style="color: #1e3a8a;">
+                            <span style="margin-right: 0.25rem;">⏱️</span>
+                            Please wait before adding another reading.
+                        </p>
+                    `;
+                    
+                    startCountdown(data.minutes_remaining);
+                }
+            }
+            
+            function startCountdown(minutes) {
+                // Clear any existing countdown
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                }
+                
+                let secondsRemaining = minutes * 60;
+                updateCountdownDisplay(secondsRemaining);
+                
+                countdownTimer = setInterval(() => {
+                    secondsRemaining--;
+                    
+                    if (secondsRemaining <= 0) {
+                        clearInterval(countdownTimer);
+                        // Refresh data from API
+                        fetchReadingStatus().then(updatePopupWithReadingStatus);
+                    } else {
+                        updateCountdownDisplay(secondsRemaining);
+                    }
+                }, 1000);
+            }
+            
+            function updateCountdownDisplay(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                countdownElement.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            function showPopup() {
+                console.log("Showing control chart popup");
+                
+                // First fetch the latest reading status
+                fetchReadingStatus().then(data => {
+                    // Only show popup if API call was successful and reading list is enabled
+                    if (!data.success) {
+                        console.log("API call not successful or reading list not enabled");
+                        return;
+                    }
+                    
+                    // Don't show popup if all readings are complete
+                    if (data.todays_readings_count >= data.max_readings_per_day) {
+                        console.log("All readings complete for today");
+                        return;
+                    }
+                    
+                    // Don't show if user can't add a reading (unless it's the first reading)
+                    if (!data.can_add_reading && data.todays_readings_count > 0) {
+                        console.log("Can't add reading yet and not first reading of the day");
+                        return;
+                    }
+                    
+                    // Pause any video that might be playing
+                    const activeVideo = document.querySelector('video.active');
+                    if (activeVideo) {
+                        activeVideo.pause();
+                    }
+                    
+                    // Update the popup content with the latest data
+                    updatePopupWithReadingStatus(data);
+                    
+                    // Show the popup
+                    popup.style.display = 'block';
+                    overlay.style.display = 'block';
+                    
+                    // Store the current time
+                    localStorage.setItem('controlChartPopupTime', Date.now().toString());
+                });
+            }
+            
+            function hidePopup() {
+                console.log("Hiding control chart popup");
+                popup.style.display = 'none';
+                overlay.style.display = 'none';
+                
+                // Clear countdown timer if active
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                }
+                
+                // Resume video playback if there was a video playing
+                const activeVideo = document.querySelector('video.active');
+                if (activeVideo) {
+                    activeVideo.play().catch(e => console.error("Error resuming video:", e));
+                }
+            }
+            
+            function remindLater() {
+                console.log("Remind later clicked");
+                hidePopup();
+                
+                // Set the time so that the next popup will appear in 30 minutes
+                const newTime = Date.now() - popupInterval + remindLaterInterval;
+                localStorage.setItem('controlChartPopupTime', newTime.toString());
+            }
+            
+            // Event Listeners
+            closeButton.addEventListener('click', hidePopup);
+            remindLaterButton.addEventListener('click', remindLater);
+            overlay.addEventListener('click', hidePopup);
+            
+            // First check - should we initialize the popup system?
+            function initializePopupSystem() {
+                fetchReadingStatus().then(initialData => {
+                    if (initialData.success) {
+                        console.log("Reading status API successful, setting up popup system");
+                        
+                        // Check if it's the first reading of the day - show immediately
+                        if (initialData.todays_readings_count === 0 && initialData.can_add_reading) {
+                            console.log("First reading of the day, showing popup immediately");
+                            setTimeout(showPopup, 2000); // Short delay to let the page load
+                        } else {
+                            // Regular timing check for non-first readings
+                            checkPopupTime();
+                            
+                            // Set up periodic checks
+                            setInterval(checkPopupTime, 5 * 60 * 1000); // Check every 5 minutes
+                        }
+                    } else {
+                        console.log("Reading status API unsuccessful or reading list not enabled, not setting up popup system");
+                    }
+                });
+            }
+            
+            // Check when to show the popup
+            function checkPopupTime() {
+                const lastPopupTime = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+                const currentTime = Date.now();
+                
+                console.log("Checking popup time:", {
+                    lastPopupTime: new Date(lastPopupTime).toLocaleString(),
+                    currentTime: new Date(currentTime).toLocaleString(),
+                    difference: (currentTime - lastPopupTime) / 1000 / 60 + " minutes"
+                });
+                
+                if (currentTime - lastPopupTime > popupInterval) {
+                    showPopup();
+                }
+            }
+            
+            // Initialize the popup system with a short delay
+            setTimeout(initializePopupSystem, 1000);
+        });
+    
+    
+    </script>
+    
 </body>
 </html>

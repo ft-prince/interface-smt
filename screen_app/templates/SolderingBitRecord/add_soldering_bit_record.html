@@ -122,7 +122,45 @@
                             {% endif %}
                         </div>
                     </div>
-                    <div class="text-center mt-4">
+                            {# Add the defects section #}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5>Defect Information (Optional)</h5>
+            </div>
+            <div class="card-body">
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label">{{ form.defect_type.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.defect_type }}
+                        {% if form.defect_type.errors %}
+                        <div class="text-danger">{{ form.defect_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group row" id="defect-container" style="display:none;">
+                    <label class="col-sm-3 col-form-label">{{ form.defect.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.defect }}
+                        {% if form.defect.errors %}
+                        <div class="text-danger">{{ form.defect.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group row" id="custom-defect-container" style="display:none;">
+                    <label class="col-sm-3 col-form-label">{{ form.custom_defect.label }}</label>
+                    <div class="col-sm-9">
+                        {{ form.custom_defect }}
+                        {% if form.custom_defect.errors %}
+                        <div class="text-danger">{{ form.custom_defect.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+                <div class="text-center mt-4">
                         <button type="submit" class="btn btn-primary">Save</button>
                         {% if user.is_staff %}
 
@@ -396,6 +434,117 @@
     }
 
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const defectTypeSelect = document.getElementById('{{ form.defect_type.id_for_label }}');
+        const defectSelect = document.getElementById('{{ form.defect.id_for_label }}');
+        const defectContainer = document.getElementById('defect-container');
+        const customDefectInput = document.getElementById('{{ form.custom_defect.id_for_label }}');
+        const customDefectContainer = document.getElementById('custom-defect-container');
+        
+        // Define the choices directly in JavaScript instead of trying to access them from Django
+        // Visual defect choices
+        const visualChoices = [
+            ['', '---------'],
+            ['Dry Solder', 'Dry Solder'],
+            ['No Solder', 'No Solder'],
+            ['Shorting/ Bridging', 'Shorting/ Bridging'],
+            ['Pad Damage', 'Pad Damage'],
+            ['Component Tombstone', 'Component Tombstone'],
+            ['Solder Ball', 'Solder Ball'],
+            ['Green Masking improper', 'Green Masking improper'],
+            ['Masking Improper', 'Masking Improper'],
+            ['Component Shifted', 'Component Shifted'],
+            ['Pad Lifted', 'Pad Lifted'],
+            ['Component Damage/Break', 'Component Damage/Break'],
+            ['Solder Projection', 'Solder Projection'],
+            ['Track Cut (Open)', 'Track Cut (Open)'],
+            ['Wrong Polarity', 'Wrong Polarity'],
+            ['PTH Shorting', 'PTH Shorting'],
+            ['Component Wrong', 'Component Wrong'],
+            ['Component Missing', 'Component Missing'],
+            ['Solder Dust', 'Solder Dust'],
+            ['Pin Hole', 'Pin Hole'],
+            ['Component Up Side Down', 'Component Up Side Down'],
+            ['LED Defects', 'LED Defects'],
+            ['Microcontroller Pin Bend/Damage', 'Microcontroller Pin Bend/Damage'],
+            ['Solder Crack', 'Solder Crack'],
+            ['Others', 'Others']
+        ];
+        
+        // Programming defect choices
+        const programmingChoices = [
+            ['', '---------'],
+            ['Programme does not accept', 'Programme does not accept'],
+            ['Pin Voltage low', 'Pin Voltage low'],
+            ['Others', 'Others']
+        ];
+        
+        // Automatic testing defect choices
+        const automaticTestingChoices = [
+            ['', '---------'],
+            ['Testing fail', 'Testing fail'],
+            ['Others', 'Others']
+        ];
+        
+        // Function to update defect choices based on defect type
+        function updateDefectChoices(defectType) {
+            // Clear existing options
+            defectSelect.innerHTML = '';
+            
+            let choices;
+            if (defectType === 'visual') {
+                choices = visualChoices;
+            } else if (defectType === 'programming') {
+                choices = programmingChoices;
+            } else if (defectType === 'automatic_testing') {
+                choices = automaticTestingChoices;
+            } else {
+                defectContainer.style.display = 'none';
+                customDefectContainer.style.display = 'none';
+                return;
+            }
+            
+            // Add new options
+            choices.forEach(function(choice) {
+                const option = document.createElement('option');
+                option.value = choice[0];
+                option.textContent = choice[1];
+                defectSelect.appendChild(option);
+            });
+            
+            // Show defect dropdown
+            defectContainer.style.display = 'flex';
+        }
+        
+        // Handle defect type change
+        defectTypeSelect.addEventListener('change', function() {
+            updateDefectChoices(this.value);
+            customDefectContainer.style.display = 'none';
+            customDefectInput.value = '';
+        });
+        
+        // Handle defect selection change
+        defectSelect.addEventListener('change', function() {
+            if (this.value === 'Others') {
+                customDefectContainer.style.display = 'flex';
+            } else {
+                customDefectContainer.style.display = 'none';
+                customDefectInput.value = '';
+            }
+        });
+        
+        // Initialize form state if editing
+        if (defectTypeSelect.value) {
+            updateDefectChoices(defectTypeSelect.value);
+            
+            if (defectSelect.value === 'Others') {
+                customDefectContainer.style.display = 'flex';
+            }
+        }
+    });
+</script>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {

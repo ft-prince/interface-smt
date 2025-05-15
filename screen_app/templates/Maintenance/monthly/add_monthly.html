@@ -1,459 +1,201 @@
 {% extends "base.html" %}
-
 {% block title %}
 <title>{% if form.instance.pk %}Update{% else %}Add{% endif %} Monthly Checklist Item</title>
 {% endblock title %}
 
 {% block content %}
-<div class="background-container">
-    <div class="container content-container">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Monthly Checklist Item</h1>
-            <p class="text-secondary">QSF-13-06</p>
-        </div>
-
-        <div class="alert-container">
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}" role="alert">
-                        <div class="alert-content">
-                            <div class="alert-icon">
-                                <span class="emoji-group">
-                                    {% if message.tags == 'success' %}
-                                        <span class="emoji primary">✅</span>
-                                        <span class="emoji secondary">🎉</span>
-                                    {% elif message.tags == 'error' %}
-                                        <span class="emoji primary">❌</span>
-                                        <span class="emoji secondary">⚠️</span>
-                                    {% elif message.tags == 'warning' %}
-                                        <span class="emoji primary">⚠️</span>
-                                        <span class="emoji secondary">📢</span>
-                                    {% else %}
-                                        <span class="emoji primary">ℹ️</span>
-                                        <span class="emoji secondary">💡</span>
-                                    {% endif %}
-                                </span>
-                            </div>
-                            <div class="alert-message">
-                                <span class="alert-title">{{ message.tags|title }}!</span>
-                                {{ message }}
-                            </div>
-                        </div>
-                        <button type="button" class="alert-close" aria-label="Close">×</button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        </div>
-
-        <div class="card">
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
-                            {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <h2 class="mb-3">General Information</h2>
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.rev_number.id_for_label }}" class="form-label">{{ form.rev_number.label }}</label>
-                            {{ form.rev_number }}
-                            {% if form.rev_number.errors %}
-                                <div class="text-danger">{{ form.rev_number.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.rev_date.id_for_label }}" class="form-label">{{ form.rev_date.label }}</label>
-                            {{ form.rev_date }}
-                            {% if form.rev_date.errors %}
-                                <div class="text-danger">{{ form.rev_date.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.machine_name.id_for_label }}" class="form-label">{{ form.machine_name.label }}</label>
-                            {{ form.machine_name }}
-                            {% if form.machine_name.errors %}
-                                <div class="text-danger">{{ form.machine_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.machine_location.id_for_label }}" class="form-label">{{ form.machine_location.label }}</label>
-                            {{ form.machine_location }}
-                            {% if form.machine_location.errors %}
-                                <div class="text-danger">{{ form.machine_location.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.control_number.id_for_label }}" class="form-label">{{ form.control_number.label }}</label>
-                            {{ form.control_number }}
-                            {% if form.control_number.errors %}
-                                <div class="text-danger">{{ form.control_number.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
-                            {{ form.station }}
-                            {% if form.station.errors %}
-                                <div class="text-danger">{{ form.station.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.month_year.id_for_label }}" class="form-label">{{ form.month_year.label }}</label>
-                            {{ form.month_year }}
-                            {% if form.month_year.errors %}
-                                <div class="text-danger">{{ form.month_year.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <h2 class="mb-3">Check Points</h2>
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Check Point</th>
-                                    <th>Requirement Range</th>
-                                    <th>Method of Checking</th>
-                                    <th>Remark</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>Check Machine Earthing (Leakage Voltage)</td>
-                                    <td>≤ 2V</td>
-                                    <td>DMM</td>
-                                    <td>{{ form.Remark_12 }}{% if form.Remark_12.errors %}<div class="text-danger">{{ form.Remark_12.errors }}</div>{% endif %}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="text-center mt-4">
-                        <button type="submit" class="btn btn-primary">Save</button>
-                        {% if user.is_staff %}
-
-                        <a href="{% url 'list_monthly' %}" class="btn btn-secondary">Back to List</a>
-                        {% endif %}
-
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
 <style>
-    :root {
-        --primary-color: #0033CC;
-        --secondary-color: #FF6633;
-        --background-color: #F8FAFC;
-        --card-bg: #FFFFFF;
-        --text-color: #1E293B;
-        --notification-bg: #34445e;
-        --grid-color: rgba(0, 51, 204, 0.1);
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
     }
-
-    body {
-        background-color: var(--background-color);
-        color: var(--text-color);
-        font-family: Arial, sans-serif;
-    }
-
-    .background-container {
-        background-color: var(--background-color);
-        background-image: 
-            linear-gradient(var(--grid-color) 1px, transparent 1px),
-            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-        background-size: 20px 20px;
-        min-height: 100vh;
-        padding: 40px 0;
-        position: relative;
-    }
-
-    .background-container::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(135deg, rgba(255, 102, 51, 0.1) 0%, rgba(0, 51, 204, 0.1) 100%);
-        pointer-events: none;
-    }
-
-    .content-container {
-        background-color: rgba(255, 255, 255, 0.95);
-        border-radius: 10px;
-        padding: 30px;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        position: relative;
-    }
-
-    .card {
-        background-color: var(--card-bg);
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    }
-
     h1, h2 {
-        color: var(--primary-color);
+        color: #333;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .excel-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    .excel-table th, .excel-table td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+    }
+    .excel-table th {
+        background-color: #f2f2f2;
         font-weight: bold;
     }
-
-    .form-label {
-        color: var(--text-color);
-        font-weight: 500;
+    .section {
+        margin-bottom: 30px;
     }
-
-    .form-control:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 0.2rem rgba(0, 51, 204, 0.25);
-    }
-
-    .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-    }
-
-    .btn-primary:hover {
-        background-color: #002299;
-        border-color: #002299;
-    }
-
-    .btn-secondary {
-        background-color: var(--secondary-color);
-        border-color: var(--secondary-color);
-    }
-
-    .btn-secondary:hover {
-        background-color: #FF4500;
-        border-color: #FF4500;
-    }
-
-    .alert-success {
-        background-color: #d4edda;
-        border-color: #c3e6cb;
-        color: #155724;
-    }
-
-    .alert-danger {
-        background-color: #f8d7da;
-        border-color: #f5c6cb;
-        color: #721c24;
-    }
-
-    .text-danger {
-        color: #dc3545;
-    }
-
-    .table {
-        background-color: var(--card-bg);
-    }
-
-    .table th {
-        background-color: var(--primary-color);
+    .btn-submit {
+        background-color: #4CAF50;
         color: white;
+        padding: 10px 20px;
+        border: none;
+        cursor: pointer;
     }
-    /* Alert Container */
+    .btn-submit:hover {
+        background-color: #45a049;
+    }
+    .btn-back {
+        background-color: #f44336;
+        color: white;
+        padding: 10px 20px;
+        text-decoration: none;
+        margin-left: 10px;
+    }
+
+    /* Alert styling */
     .alert-container {
-        width: 100%;
-        max-width: 480px;
-        margin: 0 auto 24px;
-        position: relative;
+        margin-bottom: 20px;
     }
-    
-    /* Base Alert Styles */
     .alert {
-        background-color: #ffffff;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px;
+        background-color: #f1f1f1;
+        border-left: 6px solid;
+        padding: 10px 20px;
+        border-radius: 5px;
         position: relative;
-        gap: 16px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        margin-bottom: 15px;
     }
-    
-    .alert:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
-    }
-    
-    /* Alert Content Area */
+    .alert-success { border-color: #4CAF50; background-color: #e6f4ea; color: #2d6a4f; }
+    .alert-error { border-color: #f44336; background-color: #fbeaea; color: #721c24; }
+    .alert-warning { border-color: #ff9800; background-color: #fff3cd; color: #856404; }
+    .alert-info { border-color: #2196F3; background-color: #d1ecf1; color: #0c5460; }
+
     .alert-content {
         display: flex;
         align-items: center;
-        gap: 16px;
-        flex: 1;
+        gap: 15px;
+        flex-grow: 1;
     }
-    
-    /* Emoji Group Styling */
-    .emoji-group {
-        position: relative;
-        display: inline-block;
-    }
-    
-    .emoji {
+    .alert-icon .emoji-group {
         font-size: 20px;
-        line-height: 1;
-        transition: transform 0.3s ease;
     }
-    
-    .emoji.primary {
-        position: relative;
-        z-index: 2;
+    .alert-message .alert-title {
+        font-weight: bold;
+        margin-right: 5px;
     }
-    
-    .emoji.secondary {
-        position: absolute;
-        right: -8px;
-        bottom: -8px;
-        font-size: 16px;
-        opacity: 0;
-        transform: scale(0);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    
-    .alert:hover .emoji.secondary {
-        opacity: 1;
-        transform: scale(1);
-    }
-    
-    /* Alert Message */
-    .alert-message {
-        color: #1f2937;
-        font-size: 14px;
-        line-height: 1.5;
-    }
-    
-    .alert-title {
-        display: block;
-        font-weight: 600;
-        font-size: 15px;
-        margin-bottom: 2px;
-    }
-    
-    /* Close Button */
     .alert-close {
-        background: transparent;
+        background: none;
         border: none;
-        color: #6b7280;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
         cursor: pointer;
-        font-size: 20px;
-        height: 28px;
-        width: 28px;
-        padding: 0;
-        position: relative;
-        border-radius: 50%;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        position: absolute;
+        right: 10px;
+        top: 10px;
     }
-    
-    .alert-close:hover {
-        background-color: rgba(0, 0, 0, 0.05);
-        transform: rotate(90deg);
-    }
-    
-    /* Alert Types */
-    .alert-success {
-        background-color: #f0fdf4;
-        border-left: 4px solid #22c55e;
-    }
-    
-    .alert-success .alert-title {
-        color: #15803d;
-    }
-    
-    .alert-error {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
-    }
-    
-    .alert-error .alert-title {
-        color: #dc2626;
-    }
-    
-    /* Animation Keyframes */
-    @keyframes slideIn {
-        from {
-            opacity: 0;
-            transform: translateX(-10px);
-        }
-        to {
-            opacity: 1;
-            transform: translateX(0);
-        }
-    }
-    
-    @keyframes fadeOut {
-        from {
-            opacity: 1;
-            transform: translateX(0);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(10px);
-        }
-    }
-    
-    /* Animation Classes */
-    .alert {
-        animation: slideIn 0.3s ease-out forwards;
-    }
-    
-    .alert.fade-out {
-        animation: fadeOut 0.3s ease-in forwards;
-    }
-
 </style>
 
+<div class="container">
+    <!-- Alert Messages -->
+    <div class="alert-container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }}" role="alert">
+                    <div class="alert-content">
+                        <div class="alert-icon">
+                            <span class="emoji-group">
+                                {% if message.tags == 'success' %}
+                                    <span class="emoji primary">✅</span>
+                                    <span class="emoji secondary">🎉</span>
+                                {% elif message.tags == 'error' %}
+                                    <span class="emoji primary">❌</span>
+                                    <span class="emoji secondary">⚠️</span>
+                                {% elif message.tags == 'warning' %}
+                                    <span class="emoji primary">⚠️</span>
+                                    <span class="emoji secondary">📢</span>
+                                {% else %}
+                                    <span class="emoji primary">ℹ️</span>
+                                    <span class="emoji secondary">💡</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="alert-message">
+                            <span class="alert-title">{{ message.tags|title }}!</span>
+                            {{ message }}
+                        </div>
+                    </div>
+                    <button type="button" class="alert-close" onclick="this.parentElement.style.display='none';" aria-label="Close">×</button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+<div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Function to handle alert closure
-        function closeAlert(button) {
-            const alertElement = button.closest('.alert');
-            alertElement.classList.add('fade-out');
-            
-            // Remove the alert after animation completes
-            setTimeout(() => {
-                alertElement.remove();
-            }, 300); // Matches the CSS animation duration
-        }
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}{% endif %} Monthly Checklist Item</h1>
+        <p class="text-secondary">QSF-13-06 <br>Rev-02 <br> 31-12-2022</p>
+    </div>
 
-        // Add click event listeners to all close buttons
-        document.querySelectorAll('.alert-close').forEach(button => {
-            button.addEventListener('click', function() {
-                closeAlert(this);
-            });
-        });
+    <form method="post">
+        {% csrf_token %}
+        
+        <div class="section">
+            <div class="row mb-4">
 
-        // Optional: Auto-dismiss alerts after 5 seconds
-        const autoDismissDelay = 5000; // 5 seconds
-        document.querySelectorAll('.alert').forEach(alert => {
-            setTimeout(() => {
-                if (alert && document.body.contains(alert)) {
-                    alert.classList.add('fade-out');
-                    setTimeout(() => {
-                        alert.remove();
-                    }, 300);
-                }
-            }, autoDismissDelay);
-        });
-    });
 
-</script>
+            <table class="excel-table">
+
+                {% comment %} <div class="col-md-12 mb-3">
+                    <label for="{{ form.process_machine.id_for_label }}" class="form-label">{{ form.process_machine.label }}</label>
+                    {{ form.process_machine }}
+                    {% if form.process_machine.errors %}
+                        <div class="text-danger">{{ form.qsf_process_machinedocument.errors }}</div>
+                    {% endif %}
+                </div> {% endcomment %}
+ 
+                    <tr>
+                        <th>Part Name </th>
+                        <td>{{ form.part_name }}</td>
+                    </tr>
+   
+            </table>
+        </div>
+
+        <div class="section">
+            <h2>Check Points</h2>
+            <table class="excel-table">
+                <tr>
+                    <th>Check Point</th>
+                    <th>Requirement Range</th>
+                    <th>Method of Checking</th>
+                    <th>Remark</th>
+                </tr>
+                <tr>
+                    <td>Check Machine Earthing (Leakage Voltage)</td>
+                    <td>&lt; 2 V</td>
+                    <td>By Parameter</td>
+                    <td>{{ form.Remark_12 }}</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="section">
+            <table class="excel-table">
+                {% if form.instance.pk %}
+                <tr>
+                    <th>{{ form.checked_by_Operator.label_tag }}</th>
+                    <td>{{ form.checked_by_Operator }}</td>
+                </tr>
+                <tr>
+                    <th>{{ form.approved_by_Supervisor.label_tag }}</th>
+                    <td>{{ form.approved_by_Supervisor }}</td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+
+        <button type="submit" class="btn-submit">Save</button>
+        <a href="{% url 'list_monthly' %}" class="btn-back">Back to List</a>
+    </form>
+</div>
 {% endblock content %}

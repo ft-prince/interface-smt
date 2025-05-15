@@ -135,6 +135,27 @@
             <td>Bit Change Date</td>
             <td>{{ record.bit_change_date }}</td>
         </tr>
+        
+        <tr>
+            <td>Defective Type</td>
+            <td>{{ record.defect_type }}</td>
+        </tr>
+        
+        {% if record.defect_type != "avail"  %}
+            <tr>
+                <td>Defects</td>
+                <td>{{ record.defect }}</td>
+            </tr>
+        
+            {% if record.defect == "Others" %}
+                <tr>
+                    <td>Custom Defect</td>
+                    <td>{{ record.custom_defect }}</td>
+                </tr>
+            {% endif %}
+        {% endif %}
+        
+      
         <tr>
             <td>Prepared By</td>
             <td>{{ record.operator_name }}</td>

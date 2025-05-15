@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}
-<title>monthly Checklist Item Detail</title>
+<title>Monthly Checklist Item Detail</title>
 {% endblock title %}
 
 {% block content %}
@@ -17,7 +17,7 @@
 </style>
 
 <div class="container">
-    <h1>monthly Checklist Item Detail</h1>
+    <h1>Monthly Checklist Item Detail</h1>
     
     <div class="section">
         <h2>General Information</h2>
@@ -29,24 +29,54 @@
             <tr>
                 <td>Station</td>
                 <td>{{ record.station }}</td>
-            </tr>
-            <tr>
-                <td>Doc Number</td>
+              </tr>
+              <tr>
+                <td>QSF Number</td>
                 <td>{{ record.doc_number }}</td>
             </tr>
+            
             <tr>
-                <td>Machine Name</td>
-                <td>{{ record.get_machine_name_display }}</td>
+                <td>Rev Number</td>
+                <td>{{ record.rev_number }}</td>
+            </tr>
+            
+            <tr>
+                <td>Rev Date</td>
+                <td>{{ record.rev_date }}</td>
             </tr>
             <tr>
+                <td>Shift</td>
+                <td>{{ record.shift }}</td>
+            </tr>
+                      <tr>
+                <td>Machine Name</td>
+                <td>{{ record.machine_name }}</td>
+              </tr>
+              <tr>
                 <td>Machine Location</td>
                 <td>{{ record.machine_location }}</td>
-            </tr>
-            <tr>
+              </tr>
+              <tr>
+                <td>Control number</td>
+                <td>{{ record.control_number }}</td>
+              </tr>
+              <tr>
+                <td>Process number</td>
+                <td>{{ record.process_no }}</td>
+              </tr>
+              <tr>
+                <td>Part Name</td>
+                <td>{{ record.part_name }}</td>
+              </tr>
+              <tr>
                 <td>Month/Year</td>
                 <td>{{ record.month_year|date:"F Y" }}</td>
-            </tr>
-        </table>
+              </tr>
+              <tr>
+                <td>Date</td>
+                <td>{{record.date}}</td>
+              </tr>
+                </table>
     </div>
     
     <div class="section">
@@ -59,9 +89,9 @@
                 <th>Remark</th>
             </tr>
             <tr>
-              <td>{{record.check_point_12}}</td>
-              <td>{{ record.requirement_range_12 }}</td>
-                <td>{{ record.method_of_checking_12 }}</td>
+                <td>Check Machine Earthing (Leakage Voltage)</td>
+                <td>< 2 V</td>
+                <td>By Parameter</td>
                 <td>{{ record.Remark_12 }}</td>
             </tr>
         </table>

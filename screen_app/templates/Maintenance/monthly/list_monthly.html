@@ -25,11 +25,11 @@
           class="btn btn-outline-primary"
           >Export to Excel</a
         >
-        <a
+        {% comment %} <a
           href="?{{ request.GET.urlencode }}&export=pdf"
           class="btn btn-outline-danger"
           >Export to PDF</a
-        >
+        > {% endcomment %}
       </div>
     </div>
 
@@ -41,6 +41,7 @@
             <th>Doc No</th>
             <th>Machine Name</th>
             <th>Machine Location</th>
+            <th>Date</th>
             <th>Month/Year</th>
             <th>Actions</th>
           </tr>
@@ -49,8 +50,9 @@
           {% for record in records %}
           <tr>
             <td>{{record.doc_number}}</td>
-            <td>{{record.get_machine_name_display}}</td>
+            <td>{{record.machine_name}}</td>
             <td>{{record.machine_location}}</td>
+            <td>{{record.date}}</td>
             <td>{{record.month_year|date:"F Y"}}</td>
             <td>
               <div class="btn-group" role="group">

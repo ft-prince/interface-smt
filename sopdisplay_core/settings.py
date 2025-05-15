@@ -20,8 +20,7 @@ SECRET_KEY = env("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env("DJANGO_DEBUG")
 
-ALLOWED_HOSTS = ['*']
-
+ALLOWED_HOSTS = ['prince.local', 'localhost', '127.0.0.1','192.168.0.100','192.168.0.102']
 # Application definition
 
 INSTALLED_APPS = [
@@ -38,8 +37,7 @@ INSTALLED_APPS = [
     'channels',
     'machineapp',
     'station_app',
-       'simple_history',
-  
+    'simple_history',
 ]
 
 MIDDLEWARE = [
@@ -52,7 +50,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'simple_history.middleware.HistoryRequestMiddleware',
-    
 ]
 
 X_FRAME_OPTIONS = 'ALLOWALL'  # Allow embedding in iframes
@@ -90,8 +87,13 @@ WSGI_APPLICATION = "sopdisplay_core.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / env("DJANGO_DB_NAME"),
+        "ENGINE": "django.db.backends.mysql",
+        "NAME":'sopDisplay',
+        'USER': 'root',
+        'PASSWORD': '@Prince786',
+        'HOST': '127.0.0.1',  # Or your database host
+        'PORT': '3306',       # Default PostgreSQL port
+
     }
 }
 

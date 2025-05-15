@@ -36,6 +36,8 @@ def get_station_media(request, station_id):
 
 def station_media_slider(request, station_id):
     station = get_object_or_404(Station, pk=station_id)
+    request.session['last_station_id'] = station_id
+
     # Get the first Refresher object's time_duration or default to 3 minutes
     refresh_duration = Refresher.objects.first().time_duration if Refresher.objects.exists() else 3
     

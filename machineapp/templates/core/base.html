@@ -6,46 +6,138 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{% block title %}Machine User Auth{% endblock %}</title>
-    {% comment %}
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    {% endcomment %}
     <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
 
     <style>
-      body {
-        background-color: #f8f9fa;
+      :root {
+        --primary-color: #1E40AF;   /* Royal Blue */
+        --secondary-color: #F97316; /* Orange */
+        --light-bg: #f8f9fa;
+        --white: #ffffff;
       }
+      
+      body {
+        background-color: var(--light-bg);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      }
+      
       .navbar {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: var(--white);
       }
+      
       .navbar-brand {
         font-weight: bold;
-        color: #007bff !important;
+        color: var(--primary-color) !important;
       }
+      
       .btn-outline-primary {
-        border-color: #007bff;
-        color: #007bff;
+        border-color: var(--primary-color);
+        color: var(--primary-color);
       }
+      
       .btn-outline-primary:hover {
-        background-color: #007bff;
-        color: white;
+        background-color: var(--primary-color);
+        color: var(--white);
       }
+      
+      .btn-outline-success {
+        border-color: #198754;
+        color: #198754;
+      }
+      
+      .btn-outline-success:hover {
+        background-color: #198754;
+        color: var(--white);
+      }
+      
+      .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+      }
+      
+      .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: var(--white);
+      }
+      
       .container {
-        background-color: white;
+        background-color: var(--white);
         border-radius: 8px;
         box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         padding: 20px;
         margin-top: 20px;
       }
+      
+      .alert-success {
+        background-color: #ecfdf5;
+        border-color: #10b981;
+        color: #047857;
+      }
+      
+      .alert-danger {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #b91c1c;
+      }
+      
+      .alert-warning {
+        background-color: #fffbeb;
+        border-color: #f59e0b;
+        color: #b45309;
+      }
+      
+      .alert-info {
+        background-color: #eff6ff;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+      }
+      
+      .bg-primary {
+        background-color: var(--primary-color) !important;
+      }
+      
+      .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+      }
+      
+      .btn-primary:hover {
+        background-color: #1e3a8a;
+        border-color: #1e3a8a;
+      }
+      
+      .card-header {
+        padding: 1rem;
+      }
+      
+      .navbar-nav .nav-item {
+        margin-left: 0.5rem;
+      }
+      
+      .navbar-dark .navbar-brand {
+        color: var(--white) !important;
+      }
+      
+      .btn-dashboard {
+        background-color: var(--secondary-color);
+        color: var(--white);
+        border: none;
+      }
+      
+      .btn-dashboard:hover {
+        background-color: #ea580c;
+        color: var(--white);
+      }
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white">
+    <nav class="navbar navbar-expand-lg navbar-light">
       <div class="container-fluid">
-        <a class="navbar-brand" href="{% url 'home' %}">Machine User Auth</a>
+        <a class="navbar-brand" href="{% url 'home' %}">
+          <i class="fas fa-microchip me-2"></i>Machine User Auth
+        </a>
         <button
           class="navbar-toggler"
           type="button"
@@ -59,36 +151,55 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
+            {% if active_machine %}
+            <li class="nav-item d-flex align-items-center me-3">
+              <span class="text-success">
+                <i class="fas fa-circle me-1" style="font-size: 0.7rem;"></i>
+                Machine: {{ active_machine.name }}
+              </span>
+            </li>
+            {% endif %}
+            
             {% if user.is_authenticated %}
+            <li class="nav-item d-flex align-items-center me-3">
+              <span class="text-primary">
+                <i class="fas fa-user me-1"></i>
+                {{ user.username }}
+              </span>
+            </li>
+            
+            {% if active_machine and user.profile.my_skill >= active_machine.required_skills %}
+            <li class="nav-item me-2">
+              <a class="btn btn-dashboard" href="/screen/dashboard/">
+                <i class="fas fa-tachometer-alt me-1"></i> Dashboard
+              </a>
+            </li>
+            {% endif %}
+            
+            <li class="nav-item me-2">
+              <a class="btn btn-outline-primary" href="{% url 'user_logout' %}">
+                <i class="fas fa-sign-out-alt me-1"></i> Logout
+              </a>
+            </li>
+            {% else %}
+            <li class="nav-item me-2">
+              <a class="btn btn-outline-primary" href="{% url 'login' %}">
+                <i class="fas fa-sign-in-alt me-1"></i> Login
+              </a>
+            </li>
+            {% endif %}
+            
+            {% if active_machine %}
             <li class="nav-item">
-              <form method="post" action="{% url 'user_logout' %}">
-                {% csrf_token %}
-                <button class="btn btn-outline-primary" type="submit">
-                  Logout
-                </button>
-              </form>
+              <a class="btn btn-outline-danger" href="{% url 'machine_logout' %}">
+                <i class="fas fa-power-off me-1"></i> Machine Logout
+              </a>
             </li>
             {% else %}
             <li class="nav-item">
-              <a class="btn btn-outline-primary" href="{% url 'login' %}"
-                >Login</a
-              >
-            </li>
-            {% endif %} {% if machine %}
-            <li class="nav-item ms-2">
-              <a
-                class="btn btn-outline-danger"
-                href="{% url 'machine_logout' %}"
-                >Machine Logout</a
-              >
-            </li>
-            {% else %}
-            <li class="nav-item ms-2">
-              <a
-                class="btn btn-outline-success"
-                href="{% url 'machine_login' %}"
-                >Machine Login</a
-              >
+              <a class="btn btn-outline-success" href="{% url 'machine_login' %}">
+                <i class="fas fa-plug me-1"></i> Machine Login
+              </a>
             </li>
             {% endif %}
           </ul>
@@ -97,25 +208,18 @@
     </nav>
 
     <div class="container mt-4">
-      {% if messages %} {% for message in messages %}
-      <div
-        class="alert alert-{{ message.tags }} alert-dismissible fade show"
-        role="alert"
-      >
-        {{ message }}
-        <button
-          type="button"
-          class="btn-close"
-          data-bs-dismiss="alert"
-          aria-label="Close"
-        ></button>
-      </div>
-      {% endfor %} {% endif %} {% block content %} {% endblock %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      
+      {% block content %}{% endblock %}
     </div>
 
-    {% comment %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    {% endcomment %}
     <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
   </body>
 </html>

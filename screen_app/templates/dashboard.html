@@ -138,36 +138,42 @@
         /* Improved Notification Bar */
         .notification-bar {
             width: 380px;
-            background-color: var(--notification-bg);
+            background-color: var(--card-bg);
             border-left: 1px solid rgba(0, 0, 0, 0.1);
             display: flex;
             flex-direction: column;
             position: sticky;
             top: 0;
             height: 100vh;
+            overflow: hidden;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.05);
         }
 
         .notification-bar-header {
             padding: 1.5rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            background-color: var(--card-bg);
+            background-color: var(--primary-color);
             position: sticky;
             top: 0;
             z-index: 10;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .notification-bar-title {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin-bottom: 0;
+            width: 100%;
         }
 
         .notification-bar-title h2 {
             font-size: 1.25rem;
             font-weight: 600;
-            color: var(--text-color);
             margin: 0;
+            color: white;
         }
 
         .notification-count {
@@ -177,6 +183,8 @@
             border-radius: 999px;
             font-size: 0.875rem;
             font-weight: 600;
+            min-width: 30px;
+            text-align: center;
         }
 
         .notifications-container {
@@ -184,10 +192,12 @@
             overflow-y: auto;
             padding: 1rem;
             scroll-behavior: smooth;
+            position: relative;
         }
 
+        /* Custom Scrollbar Styling */
         .notifications-container::-webkit-scrollbar {
-            width: 8px;
+            width: 6px;
         }
 
         .notifications-container::-webkit-scrollbar-track {
@@ -195,23 +205,84 @@
         }
 
         .notifications-container::-webkit-scrollbar-thumb {
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: rgba(30, 64, 175, 0.3);
             border-radius: 20px;
-            border: 2px solid var(--notification-bg);
+            transition: background-color 0.3s ease;
         }
 
+        .notifications-container::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(30, 64, 175, 0.5);
+        }
+
+        /* Scroll Progress Indicator */
+        .scroll-progress {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 6px;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .scroll-progress-bar {
+            width: 100%;
+            background-color: var(--primary-color);
+            position: absolute;
+            top: 0;
+            right: 0;
+            transition: height 0.1s ease;
+        }
+
+        /* Scroll to Top Button */
+        .scroll-to-top {
+            position: absolute;
+            bottom: 1rem;
+            right: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 5;
+        }
+
+        .scroll-to-top.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .scroll-to-top:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* New Notification Animation */
+        @keyframes notificationSlide {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* General notification styling */
         .notification {
             margin-bottom: 1rem;
             opacity: 0;
-            transform: translateY(20px);
-            animation: slideIn 0.3s ease forwards;
-        }
-
-        @keyframes slideIn {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            transform: translateX(20px);
+            animation: notificationSlide 0.3s ease forwards;
         }
 
         .notification-card {
@@ -220,6 +291,7 @@
             box-shadow: var(--shadow-sm);
             overflow: hidden;
             transition: transform 0.2s ease;
+            border: 1px solid rgba(0, 0, 0, 0.08);
         }
 
         .notification-card:hover {
@@ -240,11 +312,12 @@
         }
 
         .notification-header {
-            padding: 1rem;
+            padding: 0.75rem 1rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background-color: rgba(0, 0, 0, 0.02);
         }
 
         .notification-icon {
@@ -271,13 +344,76 @@
         }
 
         .notification-footer {
-            padding: 0.75rem 1rem;
+            padding: 0.5rem 1rem;
             background-color: rgba(0, 0, 0, 0.02);
-            border-top: 1px solid rgba(0, 0, 0, 0.1);
-            font-size: 0.875rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.8rem;
             color: #666;
+            text-align: right;
         }
 
+        /* Reading Status for Operators */
+        .reading-status-notification {
+            background-color: var(--card-bg);
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary-color);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reading-status-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .reading-status-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin: 0;
+            color: var(--text-color);
+        }
+
+        .reading-status-content {
+            color: var(--text-color);
+        }
+
+        .reading-status-footer {
+            margin-top: 1rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .reading-status-button {
+            padding: 0.6rem 1.2rem;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .reading-status-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .reading-status-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* For mobile layouts */
         @media (max-width: 1024px) {
             .dashboard-container {
                 flex-direction: column;
@@ -306,139 +442,381 @@
                 gap: 1rem;
             }
         }
-        .notification-bar {
-          width: 380px;
-          background-color: var(--notification-bg);
-          border-left: 1px solid rgba(0, 0, 0, 0.1);
-          display: flex;
-          flex-direction: column;
-          position: sticky;
-          top: 0;
-          height: 100vh;
-          overflow: hidden;
-      }
-
-      .notification-bar-header {
-          padding: 1.5rem;
-          background-color: var(--card-bg);
-          position: sticky;
-          top: 0;
-          z-index: 10;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-      }
-
-      .notifications-container {
-          flex: 1;
-          overflow-y: auto;
-          padding: 1rem;
-          scroll-behavior: smooth;
-          position: relative;
-      }
-
-      /* Custom Scrollbar Styling */
-      .notifications-container::-webkit-scrollbar {
-          width: 6px;
-      }
-
-      .notifications-container::-webkit-scrollbar-track {
-          background: transparent;
-      }
-
-      .notifications-container::-webkit-scrollbar-thumb {
-          background-color: rgba(30, 64, 175, 0.3);
-          border-radius: 20px;
-          transition: background-color 0.3s ease;
-      }
-
-      .notifications-container::-webkit-scrollbar-thumb:hover {
-          background-color: rgba(30, 64, 175, 0.5);
-      }
-
-      /* Scroll Progress Indicator */
-      .scroll-progress {
-          position: absolute;
-          right: 0;
-          top: 0;
-          width: 6px;
-          height: 100%;
-          background-color: rgba(0, 0, 0, 0.05);
-      }
-
-      .scroll-progress-bar {
-          width: 100%;
-          background-color: var(--primary-color);
-          position: absolute;
-          top: 0;
-          right: 0;
-          transition: height 0.1s ease;
-      }
-
-      /* Scroll to Top Button */
-      .scroll-to-top {
-          position: absolute;
-          bottom: 1rem;
-          right: 1rem;
-          background-color: var(--primary-color);
-          color: white;
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          opacity: 0;
-          transform: translateY(10px);
-          transition: all 0.3s ease;
-          border: none;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      }
-
-      .scroll-to-top.visible {
-          opacity: 1;
-          transform: translateY(0);
-      }
-
-      .scroll-to-top:hover {
-          background-color: var(--secondary-color);
-          transform: translateY(-2px);
-      }
-
-      /* New Notification Animation */
-      @keyframes notificationSlide {
-          from {
-              opacity: 0;
-              transform: translateX(20px);
-          }
-          to {
-              opacity: 1;
-              transform: translateX(0);
-          }
-      }
-
-      .notification {
-          animation: notificationSlide 0.3s ease forwards;
-      }
 
 
+
+        
     </style>
 </head>
+{% if not user.is_staff %}
+<!-- Control Chart Popup - Only for operators -->
+<style>
+    /* Control Chart Popup Styles - Modified for bottom right positioning */
+    .control-chart-popup {
+        display: none;
+        position: fixed;
+        bottom: 20px;        /* Changed from top: 50% */
+        right: 20px;         /* Changed from left: 50% */
+        transform: none;     /* Removed the translate(-50%, -50%) */
+        background-color: var(--card-bg);
+        width: 280px;        /* Further reduced width for smaller popup */
+        max-width: 90%;
+        border-radius: 10px; /* Slightly smaller border radius */
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        z-index: 1000;
+        overflow: hidden;
+        animation: slideUpFromBottom 0.3s ease-out; /* Changed animation */
+    }
+    
+    /* New animation for bottom right popup */
+    @keyframes slideUpFromBottom {
+        from { transform: translateY(100px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+    
+    .popup-header {
+        background-color: var(--primary-color);
+        padding: 0.75rem;    /* Smaller padding */
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .popup-title {
+        margin: 0;
+        font-size: 1.1rem;   /* Smaller font size */
+        font-weight: 600;
+    }
+    
+    .close-popup {
+        background: transparent;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+    
+    .close-popup:hover {
+        opacity: 0.8;
+    }
+    
+    .popup-content {
+        padding: 1rem;      /* Reduced padding */
+    }
+    
+    .popup-message {
+        margin-bottom: 0.75rem;
+        font-size: 0.9rem;  /* Smaller font size */
+        line-height: 1.4;   /* Tighter line height */
+    }
+    
+    .popup-stats {
+        background-color: rgba(0, 0, 0, 0.03);
+        padding: 0.6rem;      /* Smaller padding */
+        border-radius: 6px;   /* Smaller border radius */
+        margin-bottom: 0.75rem;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .popup-progress {
+        margin-top: 0.75rem;
+        height: 8px;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    .popup-progress-bar {
+        height: 100%;
+        background-color: var(--secondary-color);
+        transition: width 0.3s ease;
+    }
+    
+    .popup-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+        margin-top: 1rem;
+    }
+    
+    .remind-later-btn {
+        background-color: transparent;
+        border: 2px solid var(--secondary-color);
+        color: var(--secondary-color);
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .remind-later-btn:hover {
+        background-color: rgba(249, 115, 22, 0.1);
+        transform: translateY(-2px);
+    }
+    
+    .add-reading-btn {
+        background-color: var(--secondary-color);
+        color: white;
+        text-decoration: none;
+        padding: 0.6rem 1rem;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-block;
+    }
+    
+    .add-reading-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .add-reading-btn:disabled, 
+    .add-reading-btn.disabled {
+        opacity: 0.6;
+        pointer-events: none;
+        cursor: not-allowed;
+    }
+    
+    .popup-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        animation: fadeIn 0.2s ease-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    /* Make sure popup is responsive on smaller screens */
+    @media (max-width: 480px) {
+        .control-chart-popup {
+            width: 95%;
+            right: 10px;
+            bottom: 10px;
+        }
+        
+        .popup-actions {
+            flex-direction: column;
+        }
+        
+        .remind-later-btn,
+        .add-reading-btn {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+
+<!-- Control Chart Popup JavaScript -->
+<script>
+// Control Chart Reminder Popup with API Integration
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if user has seen the popup recently
+    const lastPopupTime = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+    const currentTime = new Date().getTime();
+    const popupInterval = 90 * 60 * 1000; // 90 minutes in milliseconds
+    
+    // Create popup element if it doesn't exist
+    if (!document.getElementById('controlChartPopup')) {
+        const popupHTML = `
+            <div id="controlChartPopup" class="control-chart-popup">
+                <div class="popup-header">
+                    <h3 class="popup-title">Control Chart Reminder</h3>
+                    <button id="closePopup" class="close-popup">×</button>
+                </div>
+                <div class="popup-content">
+                    <p class="popup-message">
+                        📊 It's time to record your control chart reading. Maintaining regular readings helps ensure quality control.
+                    </p>
+                    <div id="popup-reading-stats" class="popup-stats">
+                        <div id="popup-reading-info">Loading reading status...</div>
+                        <div class="popup-progress">
+                            <div id="popup-progress-bar" class="popup-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="popup-actions">
+
+                        <a href="{% url 'reading_create' %}" id="addReadingNow" class="add-reading-btn">
+                            Add reading now
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div id="popupOverlay" class="popup-overlay"></div>
+        `;
+        
+        // Add popup to the body
+        const popupContainer = document.createElement('div');
+        popupContainer.innerHTML = popupHTML;
+        document.body.appendChild(popupContainer);
+    }
+    
+    // Function to fetch reading status from API
+    function fetchReadingStatus() {
+        return fetch('/screen/api/reading-status/')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .catch(error => {
+                console.error("Error fetching reading status:", error);
+                return { 
+                    todays_readings_count: 0, 
+                    can_add_reading: true, 
+                    minutes_remaining: 0 
+                };
+            });
+    }
+    
+    // Function to update the popup with reading status
+    function updatePopupWithReadingStatus(data) {
+        const readingInfo = document.getElementById('popup-reading-info');
+        const progressBar = document.getElementById('popup-progress-bar');
+        const addReadingButton = document.getElementById('addReadingNow');
+        
+        if (readingInfo && progressBar && addReadingButton) {
+            // Update text info
+            readingInfo.innerHTML = `
+                <p style="margin-bottom: 0.5rem;">You have recorded <strong>${data.todays_readings_count} out of 5</strong> readings today.</p>
+                ${!data.can_add_reading ? 
+                    `<p style="color: var(--primary-color);">
+                        <span style="margin-right: 0.25rem;">⏱️</span>
+                        Please wait ${data.minutes_remaining} minutes before adding another reading.
+                    </p>` : 
+                    `<p style="color: var(--secondary-color);">
+                        <span style="margin-right: 0.25rem;">✓</span>
+                        You can add a new reading now!
+                    </p>`
+                }
+            `;
+            
+            // Update progress bar
+            const progressPercentage = (data.todays_readings_count / 5) * 100;
+            progressBar.style.width = `${progressPercentage}%`;
+            
+            // Update button state
+            if (!data.can_add_reading) {
+                addReadingButton.classList.add('disabled');
+                addReadingButton.setAttribute('disabled', 'disabled');
+            } else {
+                addReadingButton.classList.remove('disabled');
+                addReadingButton.removeAttribute('disabled');
+            }
+        }
+    }
+    
+    // Function to show the popup
+    function showControlChartPopup() {
+        const popup = document.getElementById('controlChartPopup');
+        const overlay = document.getElementById('popupOverlay');
+        
+        if (popup && overlay) {
+            // First fetch the latest reading status
+            fetchReadingStatus().then(data => {
+                // Only show popup if user can add a reading or hasn't completed all 5
+                if (data.can_add_reading && data.todays_readings_count < 5) {
+                    popup.style.display = 'block';
+                    overlay.style.display = 'block';
+                    
+                    // Update the reading status in the popup
+                    updatePopupWithReadingStatus(data);
+                    
+                    // Update the last popup time
+                    localStorage.setItem('controlChartPopupTime', new Date().getTime().toString());
+                    
+                    // Set up event listeners
+                    document.getElementById('closePopup').addEventListener('click', hidePopup);
+                    document.getElementById('remindLater').addEventListener('click', remindLater);
+                    overlay.addEventListener('click', hidePopup);
+                } else {
+                    // If user can't add a reading now, set a shorter reminder time
+                    const adjustedTime = new Date().getTime() - (60 * 60 * 1000); // Show again in 30 minutes
+                    localStorage.setItem('controlChartPopupTime', adjustedTime.toString());
+                }
+            });
+        }
+    }
+    
+    // Function to hide the popup
+    function hidePopup() {
+        const popup = document.getElementById('controlChartPopup');
+        const overlay = document.getElementById('popupOverlay');
+        
+        if (popup && overlay) {
+            popup.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+    }
+    
+    // Function to remind later (after 30 minutes)
+    function remindLater() {
+        hidePopup();
+        // Set the time to 60 minutes ago so that the next popup will appear in 30 minutes
+        const adjustedTime = new Date().getTime() - (60 * 60 * 1000);
+        localStorage.setItem('controlChartPopupTime', adjustedTime.toString());
+    }
+    
+    // Initialize check for popup display
+    function initializePopupCheck() {
+        const lastCheck = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+        const now = new Date().getTime();
+        
+        // If it's been more than 90 minutes since the last popup
+        if (now - lastCheck > popupInterval) {
+            // Show popup after a slight delay to let the page load
+            setTimeout(showControlChartPopup, 1000);
+        } else {
+            // Schedule the next popup
+            const timeUntilNextPopup = Math.max(0, popupInterval - (now - lastCheck));
+            setTimeout(showControlChartPopup, timeUntilNextPopup);
+        }
+    }
+    
+    // Check periodically if it's time to show the popup
+    function startPeriodicChecks() {
+        setInterval(function() {
+            const lastCheck = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+            const now = new Date().getTime();
+            
+            if (now - lastCheck > popupInterval) {
+                showControlChartPopup();
+            }
+        }, 5 * 60 * 1000); // Check every 5 minutes
+    }
+    
+    // Start the popup system
+    initializePopupCheck();
+    startPeriodicChecks();
+});
+</script>
+{% endif %}
 
   <body>
     <div class="dashboard-container">
       <div class="main-dashboard">
         <header class="header">
+          {% if user.is_staff %}
           <select id="themeSelector" class="theme-selector">
             <option value="royalBlueOrange">Royal Blue & Orange</option>
             <option value="interfaceTheme">Interface Theme</option>
-
             <option value="emeraldPurple">Emerald & Purple</option>
             <option value="crimsonTeal">Crimson & Teal</option>
           </select>
-          {% if user.is_staff %}
           <div>Supervisor Dashboard</div>
           {% endif %}
-        
         </header>
 
         <div class="card-grid">
@@ -459,6 +837,71 @@
               >
             </div>
           </div>
+                    <!-- New Card for Tip Voltage & Resistance Records - Supervisor View -->
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Tip Voltage & Resistance</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_tip_voltage_resistance_record' %}" class="button"
+                >Add Record</a
+              >
+              <a href="{% url 'list_tip_voltage_resistance_records' %}" class="button"
+                >View Records</a
+              >
+            </div>
+          </div>
+
+          <!-- New Card for PCB Panel Inspection - Supervisor View -->
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>PCB Panel Inspection</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_pcb_inspection_record' %}" class="button"
+                >Add Record</a
+              >
+              <a href="{% url 'list_pcb_inspection_records' %}" class="button"
+                >View Records</a
+              >
+            </div>
+          </div>
+
+          <!-- New Card for Rework Analysis - Supervisor View -->
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Rework Analysis</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_rework_analysis_record' %}" class="button"
+                >Add Record</a
+              >
+              <a href="{% url 'list_rework_analysis_records' %}" class="button"
+                >View Records</a
+              >
+            </div>
+          </div>
+
+          <!-- New Card for Solder Paste Control - Supervisor View -->
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Solder Paste Control</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_solder_paste_control' %}" class="button"
+                >Add Record</a
+              >
+              <a href="{% url 'list_solder_paste_controls' %}" class="button"
+                >View Records</a
+              >
+            </div>
+          </div>
+
+
 
           <div class="card">
             <div class="grid-overlay"></div>
@@ -567,11 +1010,13 @@
           </div>
 
           {% else %}
-          <!-- Operator Dashboard -->
+
+
+          {% if active_machine.show_fixture_cleaning %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
-              <h2>Fixture Cleaning</h2>
+              <h2>Fixture Cleaning </h2>
             </div>
             <div class="card-content">
               <a href="{% url 'add_fixture_cleaning_record' %}" class="button"
@@ -579,7 +1024,69 @@
               >
             </div>
           </div>
+          {% endif %}
 
+                    <!-- New Card for Tip Voltage & Resistance Records - Operator View -->
+          {% if active_machine.show_tip_voltage_resistance %}
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Tip Voltage & Resistance</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_tip_voltage_resistance_record' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- New Card for PCB Panel Inspection - Operator View -->
+          {% if active_machine.show_pcb_panel_inspection %}
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>PCB Panel Inspection</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_pcb_inspection_record' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- New Card for Rework Analysis - Operator View -->
+          {% if active_machine.show_rework_analysis %}
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Rework Analysis</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_rework_analysis_record' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- New Card for Solder Paste Control - Operator View -->
+          {% if active_machine.show_solder_paste_control %}
+          <div class="card">
+            <div class="grid-overlay"></div>
+            <div class="card-header">
+              <h2>Solder Paste Control</h2>
+            </div>
+            <div class="card-content">
+              <a href="{% url 'add_solder_paste_control' %}" class="button"
+                >Add Record</a
+              >
+            </div>
+          </div>
+          {% endif %}
+
+          {% if active_machine.show_rejection_sheets %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -591,7 +1098,9 @@
               >
             </div>
           </div>
+          {% endif %}
 
+          {% if active_machine.show_soldering_bit %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -603,7 +1112,9 @@
               >
             </div>
           </div>
+          {% endif %}
 
+          {% if active_machine.show_maintenance_checklist %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -615,7 +1126,9 @@
               <a href="{% url 'add_monthly' %}" class="button">Add Monthly</a>
             </div>
           </div>
+          {% endif %}
 
+          {% if active_machine.show_reading_list %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -627,6 +1140,9 @@
               >
             </div>
           </div>
+          {% endif %}
+
+          {% if active_machine.show_pchart %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -636,7 +1152,9 @@
               <a href="{% url 'pchart_create' %}" class="button">Add Reading</a>
             </div>
           </div>
+          {% endif %}
 
+          {% if active_machine.show_startup_checklist %}
           <div class="card">
             <div class="grid-overlay"></div>
             <div class="card-header">
@@ -654,10 +1172,16 @@
             </div>
           </div>
           {% endif %}
+
+          {% endif %}
         </div>
       </div>
 
       {% if user.is_staff %}
+      <!-- Service Worker Status Indicator -->
+      <div id="serviceWorkerStatus" style="position: fixed; bottom: 10px; left: 10px; padding: 5px 10px; background-color: rgba(0,0,0,0.1); border-radius: 4px; font-size: 0.75rem; color: #666; z-index: 1000; opacity: 0.7;"></div>
+      
+      <!-- Improved Notification Bar -->
       <div class="notification-bar">
           <div class="notification-bar-header">
               <div class="notification-bar-title">
@@ -688,7 +1212,7 @@ const themes = {
       backgroundColor: "#F8FAFC",
       cardBg: "#FFFFFF",
       textColor: "#1E293B",
-      notificationBg: "#2D3748"
+      notificationBg: "#FFFFFF"
   },
   interfaceTheme: {
       primaryColor: "#0033CC",
@@ -696,7 +1220,7 @@ const themes = {
       backgroundColor: "#F8FAFC",
       cardBg: "#FFFFFF",
       textColor: "#1E293B",
-      notificationBg: "#34445e"
+      notificationBg: "#FFFFFF"
   },
   emeraldPurple: {
       primaryColor: "#047857",
@@ -704,7 +1228,7 @@ const themes = {
       backgroundColor: "#F8FAFC",
       cardBg: "#FFFFFF",
       textColor: "#1E293B",
-      notificationBg: "#2D3748"
+      notificationBg: "#FFFFFF"
   },
   crimsonTeal: {
       primaryColor: "#BE123C",
@@ -712,7 +1236,7 @@ const themes = {
       backgroundColor: "#F8FAFC",
       cardBg: "#FFFFFF",
       textColor: "#1E293B",
-      notificationBg: "#2D3748"
+      notificationBg: "#FFFFFF"
   }
 };
 
@@ -834,10 +1358,9 @@ ${violations.length > 0 ? violations.join('\n') : 'No violations reported'}`;
       }
 
       default:
-          return JSON.stringify(notification, null, 2);
-  }
+      return JSON.stringify(notification, null, 2);
+    }
 }
-
 function createNotificationElement(message, timestamp, alertType, severity) {
   const listItem = document.createElement("li");
   listItem.className = "notification";
@@ -865,21 +1388,6 @@ function createNotificationElement(message, timestamp, alertType, severity) {
       </div>
   `;
 
-  // Add animation observer
-  const observer = new IntersectionObserver(
-      (entries) => {
-          entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                  listItem.style.opacity = '1';
-                  listItem.style.transform = 'translateX(0)';
-                  observer.unobserve(entry.target);
-              }
-          });
-      },
-      { threshold: 0.1 }
-  );
-
-  observer.observe(listItem);
   return listItem;
 }
 
@@ -996,6 +1504,12 @@ chatSocket.onmessage = function(e) {
 
       messagesList.prepend(notificationElement);
       storeNotification(data.message);
+      
+      // Notification animation
+      notificationsContainer.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+      });
   } catch (error) {
       console.error("Error handling websocket message:", error);
   }
@@ -1026,9 +1540,328 @@ setInterval(() => {
   localStorage.setItem("notifications", JSON.stringify(validNotifications));
   updateNotificationCount();
 }, 30 * 60 * 1000);
+
+// Track the last notification timestamp for retrieval of missed notifications
+let lastNotificationTimestamp = parseInt(localStorage.getItem('lastNotificationTimestamp') || '0');
+
+// Function to fetch missed notifications
+function fetchMissedNotifications() {
+  fetch('/screen/api/get-missed-notifications/?since=' + lastNotificationTimestamp)
+    .then(response => response.json())
+    .then(data => {
+      if (data.notifications && data.notifications.length > 0) {
+        console.log('Fetched missed notifications:', data.notifications.length);
+        
+        // Process each missed notification
+        data.notifications.forEach(notification => {
+          storeNotification(notification);
+        });
+        
+        // Update the display
+        displayStoredNotifications();
+        
+        // Update timestamp
+        if (data.latest_timestamp) {
+          localStorage.setItem('lastNotificationTimestamp', data.latest_timestamp);
+          lastNotificationTimestamp = data.latest_timestamp;
+        }
+      }
+    })
+    .catch(error => {
+      console.error('Error fetching missed notifications:', error);
+    });
+}
+
+// Modify the WebSocket connection handler to update the timestamp
+chatSocket.onmessage = function(e) {
+  const messagesList = document.querySelector("#messagesList");
+  
+  try {
+    const data = JSON.parse(e.data);
+    
+    // Update the last notification timestamp
+    const currentTimestamp = new Date().getTime();
+    localStorage.setItem('lastNotificationTimestamp', currentTimestamp);
+    lastNotificationTimestamp = currentTimestamp;
+    
+    if (messagesList) {
+      const notificationElement = createNotificationElement(
+        data.message,
+        currentTimestamp,
+        data.message.alert_type,
+        data.message.severity
+      );
       
+      messagesList.prepend(notificationElement);
       
+      // Scroll to top to show new notification
+      const container = document.getElementById('notificationsContainer');
+      if (container) {
+        container.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+    }
+    
+    storeNotification(data.message);
+  } catch (error) {
+    console.error("Error handling websocket message:", error);
+  }
+};
+
+// Fetch missed notifications when the page loads
+window.addEventListener('load', function() {
+  fetchMissedNotifications();
+  
+  // Set up periodic checking for new notifications
+  setInterval(fetchMissedNotifications, 5 * 60 * 1000); // Check every 5 minutes
+});
+// Service Worker Registration
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    // First check if the element exists to avoid null errors
+    const statusElement = document.getElementById('serviceWorkerStatus');
+    
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+        if (statusElement) {
+          statusElement.textContent = 'Background Service Active';
+        }
+      })
+      .catch(function(error) {
+        console.error('ServiceWorker registration failed: ', error);
+        if (statusElement) {
+          statusElement.textContent = 'Background Service Failed';
+        }
+      });
+  });
+}
     </script>
+
+<!-- Reading Status Script for Operator View -->
+<script>
+// Control Chart Reminder Popup with API Integration
+document.addEventListener('DOMContentLoaded', function() {
+  // Only run for non-staff users
+  {% if not user.is_staff %}
+  
+  // First check if an active machine with reading list enabled exists
+  function checkMachineEligibility() {
+      fetch('/screen/api/reading-status/')
+          .then(response => response.json())
+          .then(data => {
+              if (data.success && data.machine_id) {
+                  // Machine is active and reading list is enabled
+                  initializeControlChartReminder(data);
+              } else {
+                  console.log("No eligible machine for control chart reminders");
+              }
+          })
+          .catch(error => {
+              console.error("Error checking machine eligibility:", error);
+          });
+  }
+  
+  function initializeControlChartReminder(initialData) {
+      // Check if user has seen the popup recently
+      const lastPopupTime = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+      const currentTime = new Date().getTime();
+      const popupInterval = 90 * 60 * 1000; // 90 minutes in milliseconds
+      
+      // Create popup element if it doesn't exist
+      if (!document.getElementById('controlChartPopup')) {
+          const popupHTML = `
+              <div id="controlChartPopup" class="control-chart-popup">
+                  <div class="popup-header">
+                      <h3 class="popup-title">Control Chart Reminder</h3>
+                      <button id="closePopup" class="close-popup">×</button>
+                  </div>
+                  <div class="popup-content">
+                      <p class="popup-message">
+                          📊 It's time to record your control chart reading. Maintaining regular readings helps ensure quality control.
+                      </p>
+                      <div id="popup-reading-stats" class="popup-stats">
+                          <div id="popup-reading-info">Loading reading status...</div>
+                          <div class="popup-progress">
+                              <div id="popup-progress-bar" class="popup-progress-bar" style="width: 0%"></div>
+                          </div>
+                      </div>
+                      <div class="popup-actions">
+                          <button id="remindLater" class="remind-later-btn">Remind me later</button>
+                          <a href="{% url 'reading_create' %}" id="addReadingNow" class="add-reading-btn">
+                              Add reading now
+                          </a>
+                      </div>
+                  </div>
+              </div>
+              <div id="popupOverlay" class="popup-overlay"></div>
+          `;
+          
+          // Add popup to the body
+          const popupContainer = document.createElement('div');
+          popupContainer.innerHTML = popupHTML;
+          document.body.appendChild(popupContainer);
+      }
+      
+      // Function to fetch reading status from API
+      function fetchReadingStatus() {
+          return fetch('/screen/api/reading-status/')
+              .then(response => {
+                  if (!response.ok) {
+                      throw new Error('Network response was not ok');
+                  }
+                  return response.json();
+              })
+              .catch(error => {
+                  console.error("Error fetching reading status:", error);
+                  return { 
+                      success: false,
+                      todays_readings_count: 0, 
+                      can_add_reading: false, 
+                      minutes_remaining: 0 
+                  };
+              });
+      }
+      
+      // Function to update the popup with reading status
+      function updatePopupWithReadingStatus(data) {
+          const readingInfo = document.getElementById('popup-reading-info');
+          const progressBar = document.getElementById('popup-progress-bar');
+          const addReadingButton = document.getElementById('addReadingNow');
+          
+          if (readingInfo && progressBar && addReadingButton) {
+              // Update text info
+              readingInfo.innerHTML = `
+                  <p style="margin-bottom: 0.5rem;">You have recorded <strong>${data.todays_readings_count} out of 5</strong> readings today.</p>
+                  ${!data.can_add_reading ? 
+                      `<p style="color: var(--primary-color);">
+                          <span style="margin-right: 0.25rem;">⏱️</span>
+                          Please wait ${data.minutes_remaining} minutes before adding another reading.
+                      </p>` : 
+                      `<p style="color: var(--secondary-color);">
+                          <span style="margin-right: 0.25rem;">✓</span>
+                          You can add a new reading now!
+                      </p>`
+                  }
+              `;
+              
+              // Update progress bar
+              const progressPercentage = (data.todays_readings_count / 5) * 100;
+              progressBar.style.width = `${progressPercentage}%`;
+              
+              // Update button state
+              if (!data.can_add_reading) {
+                  addReadingButton.classList.add('disabled');
+                  addReadingButton.setAttribute('disabled', 'disabled');
+              } else {
+                  addReadingButton.classList.remove('disabled');
+                  addReadingButton.removeAttribute('disabled');
+              }
+          }
+      }
+      
+      // Function to show the popup
+      function showControlChartPopup() {
+          const popup = document.getElementById('controlChartPopup');
+          const overlay = document.getElementById('popupOverlay');
+          
+          if (popup && overlay) {
+              // First fetch the latest reading status
+              fetchReadingStatus().then(data => {
+                  // Only show popup if user can add a reading or hasn't completed all 5
+                  if (data.success && data.can_add_reading && data.todays_readings_count < 5) {
+                      popup.style.display = 'block';
+                      overlay.style.display = 'block';
+                      
+                      // Update the reading status in the popup
+                      updatePopupWithReadingStatus(data);
+                      
+                      // Update the last popup time
+                      localStorage.setItem('controlChartPopupTime', new Date().getTime().toString());
+                      
+                      // Set up event listeners
+                      document.getElementById('closePopup').addEventListener('click', hidePopup);
+                      document.getElementById('remindLater').addEventListener('click', remindLater);
+                      overlay.addEventListener('click', hidePopup);
+                  } else {
+                      // If user can't add a reading now, set a shorter reminder time
+                      const adjustedTime = new Date().getTime() - (60 * 60 * 1000); // Show again in 30 minutes
+                      localStorage.setItem('controlChartPopupTime', adjustedTime.toString());
+                  }
+              });
+          }
+      }
+      
+      // Function to hide the popup
+      function hidePopup() {
+          const popup = document.getElementById('controlChartPopup');
+          const overlay = document.getElementById('popupOverlay');
+          
+          if (popup && overlay) {
+              popup.style.display = 'none';
+              overlay.style.display = 'none';
+          }
+      }
+      
+      // Function to remind later (after 30 minutes)
+      function remindLater() {
+          hidePopup();
+          // Set the time to 60 minutes ago so that the next popup will appear in 30 minutes
+          const adjustedTime = new Date().getTime() - (60 * 60 * 1000);
+          localStorage.setItem('controlChartPopupTime', adjustedTime.toString());
+      }
+      
+      // Initialize check for popup display
+      function initializePopupCheck() {
+          // If this is the first reading (no readings recorded yet), show immediately
+          if (initialData && initialData.todays_readings_count === 0) {
+              setTimeout(showControlChartPopup, 1000); // Short delay to let page load
+              return;
+          }
+          
+          // Otherwise use the normal timing logic
+          const lastCheck = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+          const now = new Date().getTime();
+          
+          // If it's been more than 90 minutes since the last popup
+          if (now - lastCheck > popupInterval) {
+              // Show popup after a slight delay to let the page load
+              setTimeout(showControlChartPopup, 1000);
+          } else {
+              // Schedule the next popup
+              const timeUntilNextPopup = Math.max(0, popupInterval - (now - lastCheck));
+              setTimeout(showControlChartPopup, timeUntilNextPopup);
+          }
+      }
+      
+      // Check periodically if it's time to show the popup
+      function startPeriodicChecks() {
+          setInterval(function() {
+              fetchReadingStatus().then(data => {
+                  if (data.success && data.can_add_reading && data.todays_readings_count < 5) {
+                      const lastCheck = parseInt(localStorage.getItem('controlChartPopupTime') || '0');
+                      const now = new Date().getTime();
+                      
+                      if (now - lastCheck > popupInterval) {
+                          showControlChartPopup();
+                      }
+                  }
+              });
+          }, 5 * 60 * 1000); // Check every 5 minutes
+      }
+      
+      // Start the popup system
+      initializePopupCheck();
+      startPeriodicChecks();
+  }
+  
+  // Start by checking if we have an eligible machine
+  checkMachineEligibility();
+  {% endif %}
+});
+</script>
   </body>
 </html>
 {% endblock %}

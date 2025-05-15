@@ -113,21 +113,21 @@ class StationAdmin(admin.ModelAdmin):
         return super().change_view(request, object_id, form_url, extra_context=extra_context)
     
     
-@admin.register(Refresher)
-class RefresherAdmin(admin.ModelAdmin):
-    list_display = ['id', 'time_duration']
-    list_display_links = ['id']
-    list_editable = ['time_duration']
+# @admin.register(Refresher)
+# class RefresherAdmin(admin.ModelAdmin):
+#     list_display = ['id', 'time_duration']
+#     list_display_links = ['id']
+#     list_editable = ['time_duration']
     
-    def has_add_permission(self, request):
-        # Only allow creating one Refresher instance
-        if Refresher.objects.exists():
-            return False
-        return True
+#     def has_add_permission(self, request):
+#         # Only allow creating one Refresher instance
+#         if Refresher.objects.exists():
+#             return False
+#         return True
     
-    def has_delete_permission(self, request, obj=None):
-        # Prevent deletion of the last Refresher instance
-        if obj and Refresher.objects.count() <= 1:
-            return False
-        return True
+#     def has_delete_permission(self, request, obj=None):
+#         # Prevent deletion of the last Refresher instance
+#         if obj and Refresher.objects.count() <= 1:
+#             return False
+#         return True
 

@@ -1,0 +1,523 @@
+{% extends "base.html" %}
+
+{% block title %}<title>Solder Paste Control Detail</title>{% endblock %}
+
+{% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <h1 class="text-primary mb-4">Solder Paste Control Record Detail</h1>
+        
+        <div class="specifications-card mb-4">
+            <div class="row g-0">
+                <div class="col-md-2">
+                    <div class="spec-item">
+                        <span class="spec-label">Type</span>
+                        <span class="spec-value">Lead Free Solder Paste</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="spec-item">
+                        <span class="spec-label">Make</span>
+                        <span class="spec-value">Heraeus</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="spec-item">
+                        <span class="spec-label">Part Number</span>
+                        <span class="spec-value">F640SA30C5-89M30</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="spec-item">
+                        <span class="spec-label">Alloy</span>
+                        <span class="spec-value">Sn 96.5; Ag 3; Cu 0.5</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="spec-item">
+                        <span class="spec-label">Code</span>
+                        <span class="spec-value">G1</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="section mb-4">
+                    <h5 class="section-title">Basic Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Serial Number (G1-)</span>
+                                <span class="info-value">{{ record.serial_number }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">PSR Date</span>
+                                <span class="info-value">{{ record.psr_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">PSR Number</span>
+                                <span class="info-value">{{ record.psr_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Validation Status</h5>
+                    <div class="section-content">
+                        <div class="status-grid">
+                            <div class="status-item {{ record.make_status|lower }}">
+                                <span class="status-label">Make Status</span>
+                                <span class="status-value">{{ record.make_status }}</span>
+                            </div>
+                            <div class="status-item {{ record.part_number_status|lower }}">
+                                <span class="status-label">Part Number Status</span>
+                                <span class="status-value">{{ record.part_number_status }}</span>
+                            </div>
+                            <div class="status-item {{ record.alloy_status|lower }}">
+                                <span class="status-label">Alloy Status</span>
+                                <span class="status-value">{{ record.alloy_status }}</span>
+                            </div>
+                            <div class="status-item {{ record.net_weight_status|lower }}">
+                                <span class="status-label">Net Weight Status</span>
+                                <span class="status-value">{{ record.net_weight_status }}</span>
+                            </div>
+                            <div class="status-item {% if record.expiry_status == 'Valid' %}ok{% else %}ng{% endif %}">
+                                <span class="status-label">Expiry Status</span>
+                                <span class="status-value">{{ record.expiry_status }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Lot Information</h5>
+                    <div class="section-content">
+                        <div class="info-row">
+                            <div class="info-item">
+                                <span class="info-label">Lot Number</span>
+                                <span class="info-value">{{ record.lot_number }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Expiry Date</span>
+                                <span class="info-value">{{ record.expiry_date|date:"Y-m-d" }}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Deep Storage Jar Number</span>
+                                <span class="info-value">{{ record.deep_storage_jar_number }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="section mb-4">
+                    <h5 class="section-title">Usage Timeline</h5>
+                    <div class="section-content">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-marker {% if record.thawing_date %}active{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">Removal for Thawing</h6>
+                                    <div class="timeline-details">
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Date:</span>
+                                            <span class="detail-value">{{ record.thawing_date|date:"Y-m-d"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Time:</span>
+                                            <span class="detail-value">{{ record.thawing_time|time:"H:i"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Sign:</span>
+                                            <span class="detail-value">{{ record.thawing_sign|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-connector {% if record.mixing_date %}active{% endif %}"></div>
+                            
+                            <div class="timeline-marker {% if record.mixing_date %}active{% endif %}"></div>
+
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">Paste Mixing</h6>
+                                    <div class="timeline-details">
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Date:</span>
+                                            <span class="detail-value">{{ record.mixing_date|date:"Y-m-d"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Time:</span>
+                                            <span class="detail-value">{{ record.mixing_time|time:"H:i"|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+<div class="timeline-marker {% if record.first_use_date %}active{% endif %}"></div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-marker {% if record.second_use_date %}active{% endif %}"></div>
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">First Time Use</h6>
+                                    <div class="timeline-details">
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Date:</span>
+                                            <span class="detail-value">{{ record.first_use_date|date:"Y-m-d"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Time:</span>
+                                            <span class="detail-value">{{ record.first_use_time|time:"H:i"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Sign:</span>
+                                            <span class="detail-value">{{ record.first_use_sign|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+<div class="timeline-connector {% if record.second_use_date %}active{% endif %}"></div>
+                            
+                            <div class="timeline-item">
+                                <div class="timeline-connector {% if record.second_use_date %}active{% endif %}"></div>
+
+                                <div class="timeline-content">
+                                    <h6 class="timeline-title">Second Time Use</h6>
+                                    <div class="timeline-details">
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Date:</span>
+                                            <span class="detail-value">{{ record.second_use_date|date:"Y-m-d"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Time:</span>
+                                            <span class="detail-value">{{ record.second_use_time|time:"H:i"|default:"-" }}</span>
+                                        </div>
+                                        <div class="timeline-detail-item">
+                                            <span class="detail-label">Sign:</span>
+                                            <span class="detail-value">{{ record.second_use_sign|default:"-" }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if record.remarks %}
+                <div class="section mb-4">
+                    <h5 class="section-title">Remarks</h5>
+                    <div class="section-content">
+                        <div class="remarks-box">
+                            {{ record.remarks }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="meta-info text-muted mt-4">
+                    <small>Created by: {{ record.created_by.username|default:"System" }} on {{ record.created_at|date:"Y-m-d H:i" }}</small>
+                    {% if record.created_at != record.updated_at %}
+                    <small class="ms-3">Last updated: {{ record.updated_at|date:"Y-m-d H:i" }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="action-buttons mt-4">
+                    <a href="{% url 'update_solder_paste_control' record.pk %}" class="btn btn-warning">Edit</a>
+                    <a href="{% url 'list_solder_paste_controls' %}" class="btn btn-secondary">Back to List</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        border-radius: 8px;
+    }
+
+    h1.text-primary {
+        color: var(--primary-color);
+        font-weight: bold;
+    }
+    
+    .specifications-card {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .spec-item {
+        padding: 8px 12px;
+        height: 100%;
+        border-left: 3px solid var(--primary-color);
+        margin: 0 5px;
+    }
+    
+    .spec-label {
+        display: block;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+    }
+    
+    .spec-value {
+        display: block;
+        color: #1f2937;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+    
+    .section {
+        border-bottom: 1px solid #eaeaea;
+        padding-bottom: 15px;
+    }
+    
+    .section:last-child {
+        border-bottom: none;
+    }
+    
+    .section-title {
+        color: var(--primary-color);
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 1px dashed #d1d5db;
+    }
+    
+    .section-content {
+        padding: 0 10px;
+    }
+    
+    .info-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+    
+    .info-row:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-item {
+        flex: 1 1 30%;
+        min-width: 250px;
+        margin-bottom: 10px;
+        padding-right: 15px;
+    }
+    
+    .info-label {
+        display: block;
+        font-weight: 600;
+        color: #4b5563;
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        display: block;
+        padding: 8px 12px;
+        background-color: #f9fafb;
+        border-radius: 4px;
+        border-left: 3px solid #d1d5db;
+    }
+    
+    /* Status grid for validation checks */
+    .status-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 12px;
+    }
+    
+    .status-item {
+        padding: 10px;
+        border-radius: 6px;
+        background-color: #f9fafb;
+        border-left: 4px solid #d1d5db;
+    }
+    
+    .status-item.ok {
+        background-color: #f0fdf4;
+        border-left-color: #22c55e;
+    }
+    
+    .status-item.ng {
+        background-color: #fef2f2;
+        border-left-color: #ef4444;
+    }
+    
+    .status-label {
+        display: block;
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+    }
+    
+    .status-value {
+        display: block;
+        font-weight: 600;
+        font-size: 1rem;
+    }
+    
+    .status-item.ok .status-value {
+        color: #15803d;
+    }
+    
+    .status-item.ng .status-value {
+        color: #dc2626;
+    }
+    
+    /* Timeline styling */
+    .timeline {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .timeline-item {
+        display: flex;
+        margin-bottom: 15px;
+    }
+    
+    .timeline-marker {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background-color: #d1d5db;
+        margin-right: 15px;
+        margin-top: 4px;
+        flex-shrink: 0;
+    }
+    
+    .timeline-marker.active {
+        background-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(0, 51, 204, 0.2);
+    }
+    
+    .timeline-connector {
+        width: 2px;
+        height: 30px;
+        background-color: #d1d5db;
+        margin-left: 7px;
+        margin-bottom: 15px;
+    }
+    
+    .timeline-connector.active {
+        background-color: var(--primary-color);
+    }
+    
+    .timeline-content {
+        flex: 1;
+    }
+    
+    .timeline-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 10px;
+    }
+    
+    .timeline-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        background-color: #f9fafb;
+        padding: 10px;
+        border-radius: 6px;
+    }
+    
+    .timeline-detail-item {
+        min-width: 120px;
+    }
+    
+    .detail-label {
+        font-weight: 600;
+        color: #4b5563;
+        font-size: 0.85rem;
+        margin-right: 5px;
+    }
+    
+    .detail-value {
+        color: #1f2937;
+    }
+    
+    .remarks-box {
+        background-color: #f9fafb;
+        padding: 15px;
+        border-radius: 6px;
+        border-left: 4px solid #9ca3af;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-warning {
+        background-color: #E5E4E2;
+        border-color: #E5E4E2;
+        color: #333;
+    }
+    
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+        color: white;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .meta-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        font-size: 0.85rem;
+    }
+</style>
+{% endblock content %}

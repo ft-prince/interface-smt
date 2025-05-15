@@ -1,5 +1,4 @@
 {% extends 'base.html' %}
-
 {% block content %}
 <div style="max-width: 1200px; margin: 40px auto; padding: 0 20px;">
     <!-- Header Section -->
@@ -11,13 +10,63 @@
                     Manage and monitor process operations effectively
                 </p>
             </div>
-            <a href="{% url 'checksheet_create' %}" 
-               style="background-color: white; color: #0033CC; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
-               onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'"
-               onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
-                <i class="fas fa-plus"></i> Create New Check Sheet
-            </a>
+            <div style="display: flex; gap: 12px;">
+                <a href="#" onclick="exportToExcel()" 
+                   style="background-color: #4CAF50; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <i class="fas fa-file-excel"></i> Export to Excel
+                </a>
+                <a href="{% url 'checksheet_create' %}" 
+                   style="background-color: white; color: #0033CC; padding: 12px 24px; text-decoration: none; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; font-weight: 500; transition: transform 0.2s, box-shadow 0.2s;"
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0, 0, 0, 0.15)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none'">
+                    <i class="fas fa-plus"></i> Create New Check Sheet
+                </a>
+            </div>
         </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div style="background-color: white; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); padding: 20px; margin-bottom: 30px;">
+        <form method="get" action="." style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label for="process" style="font-size: 14px; color: #475569; font-weight: 500;">Process/Operation</label>
+                <select name="process" id="process" style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8fafc;">
+                    <option value="">All Processes</option>
+                    {% for process in process_list %}
+                        <option value="{{ process.id }}" {% if process.id|stringformat:"i" == request.GET.process %}selected{% endif %}>{{ process.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label for="revision" style="font-size: 14px; color: #475569; font-weight: 500;">Revision No.</label>
+                <input type="number" name="revision" id="revision" value="{{ request.GET.revision }}" 
+                       style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8fafc;" placeholder="Revision">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label for="start_date" style="font-size: 14px; color: #475569; font-weight: 500;">Start Date</label>
+                <input type="date" name="start_date" id="start_date" value="{{ request.GET.start_date }}"
+                       style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8fafc;">
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <label for="end_date" style="font-size: 14px; color: #475569; font-weight: 500;">End Date</label>
+                <input type="date" name="end_date" id="end_date" value="{{ request.GET.end_date }}"
+                       style="padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; background-color: #f8fafc;">
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <button type="submit" 
+                        style="background-color: #0033CC; color: white; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.2s; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px;">
+                    <i class="fas fa-filter"></i> Filter
+                </button>
+            </div>
+            <div style="display: flex; align-items: flex-end;">
+                <a href="{% url 'checksheet_list' %}" 
+                   style="background-color: #f1f5f9; color: #475569; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; transition: background-color 0.2s; width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; text-decoration: none;">
+                    <i class="fas fa-times"></i> Clear Filters
+                </a>
+            </div>
+        </form>
     </div>
 
     <!-- Check Sheets List -->
@@ -39,13 +88,17 @@
                             </p>
                             <p style="color: #64748b; margin: 0; font-size: 14px; display: flex; align-items: center; gap: 6px;">
                                 <i class="fas fa-code-branch"></i>
-                                Rev. {{ sheet.revision_no }}
+                                {{ sheet.rev_number }}
+                            </p>
+                            <p style="color: #64748b; margin: 0; font-size: 14px; display: flex; align-items: center; gap: 6px;">
+                                <i class="fas fa-user"></i>
+                                {{ sheet.manager.username }}
                             </p>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <span style="background-color: #e2e8f0; color: #475569; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500;">
-                            {{ sheet.min_skill_required }}
+                        <span style="background-color: {% if sheet.verified_by == '✔' %}#10b981{% else %}#ef4444{% endif %}; color: white; padding: 6px 12px; border-radius: 6px; font-size: 14px; font-weight: 500;">
+                            {% if sheet.verified_by == '✔' %}Verified{% else %}Not Verified{% endif %}
                         </span>
                         <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
                     </div>
@@ -60,20 +113,89 @@
                     No Check Sheets Available
                 </h3>
                 <p style="color: #64748b; margin: 0; font-size: 16px;">
-                    Create your first check sheet to get started with process monitoring.
+                    {% if request.GET %}
+                        No results match your search criteria. Try adjusting your filters.
+                    {% else %}
+                        Create your first check sheet to get started with process monitoring.
+                    {% endif %}
                 </p>
-                <a href="{% url 'checksheet_create' %}" 
-                   style="display: inline-flex; align-items: center; gap: 8px; background-color: #0033CC; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 24px; font-weight: 500; transition: opacity 0.2s;"
-                   onmouseover="this.style.opacity='0.9'"
-                   onmouseout="this.style.opacity='1'">
-                    <i class="fas fa-plus"></i> Create New Check Sheet
-                </a>
+                {% if request.GET %}
+                    <a href="{% url 'checksheet_list' %}" 
+                       style="display: inline-flex; align-items: center; gap: 8px; background-color: #f1f5f9; color: #475569; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 24px; font-weight: 500; transition: opacity 0.2s;"
+                       onmouseover="this.style.opacity='0.9'"
+                       onmouseout="this.style.opacity='1'">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                {% else %}
+                    <a href="{% url 'checksheet_create' %}" 
+                       style="display: inline-flex; align-items: center; gap: 8px; background-color: #0033CC; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; margin-top: 24px; font-weight: 500; transition: opacity 0.2s;"
+                       onmouseover="this.style.opacity='0.9'"
+                       onmouseout="this.style.opacity='1'">
+                        <i class="fas fa-plus"></i> Create New Check Sheet
+                    </a>
+                {% endif %}
             </div>
         {% endfor %}
     </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div style="display: flex; justify-content: center; margin-top: 30px;">
+        <div style="display: flex; gap: 8px;">
+            {% if page_obj.has_previous %}
+                <a href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   style="padding: 8px 12px; border-radius: 6px; background-color: #f1f5f9; color: #475569; text-decoration: none; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='#e2e8f0'"
+                   onmouseout="this.style.backgroundColor='#f1f5f9'">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   style="padding: 8px 12px; border-radius: 6px; background-color: #f1f5f9; color: #475569; text-decoration: none; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='#e2e8f0'"
+                   onmouseout="this.style.backgroundColor='#f1f5f9'">
+                    <i class="fas fa-angle-left"></i>
+                </a>
+            {% endif %}
+            
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span style="padding: 8px 12px; border-radius: 6px; background-color: #0033CC; color: white; font-weight: 500;">{{ num }}</span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       style="padding: 8px 12px; border-radius: 6px; background-color: #f1f5f9; color: #475569; text-decoration: none; transition: background-color 0.2s;"
+                       onmouseover="this.style.backgroundColor='#e2e8f0'"
+                       onmouseout="this.style.backgroundColor='#f1f5f9'">{{ num }}</a>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   style="padding: 8px 12px; border-radius: 6px; background-color: #f1f5f9; color: #475569; text-decoration: none; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='#e2e8f0'"
+                   onmouseout="this.style.backgroundColor='#f1f5f9'">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                   style="padding: 8px 12px; border-radius: 6px; background-color: #f1f5f9; color: #475569; text-decoration: none; transition: background-color 0.2s;"
+                   onmouseover="this.style.backgroundColor='#e2e8f0'"
+                   onmouseout="this.style.backgroundColor='#f1f5f9'">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 {% block extra_js %}
 <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
+<script>
+    function exportToExcel() {
+        // Get all current filter parameters
+        let params = new URLSearchParams(window.location.search);
+        let exportUrl = "{% url 'export_checksheet_excel' %}?" + params.toString();
+        window.location.href = exportUrl;
+    }
+</script>
 {% endblock %}
 {% endblock %}

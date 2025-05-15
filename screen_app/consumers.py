@@ -39,6 +39,10 @@ from asgiref.sync import async_to_sync
 from django.db import models
 from channels.layers import get_channel_layer
 import json
+import json
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+
 
 class NotificationConsumer(WebsocketConsumer):
     """
@@ -130,6 +134,18 @@ class NotificationConsumer(WebsocketConsumer):
         elif bit_life_remaining <= warning_threshold:
             return 'medium'  # Warning - bit approaching end of life
         return 'normal'  # Bit life is within acceptable range
+
+    async def send_notification(self, event):
+        """Send notification to client and store it"""
+        notification_data = event['message']
+        
+        # Store notification in database
+        await self.store_notification(notification_data)
+        
+        # Send to client if connected
+        await self.send(text_data=json.dumps({
+            'message': notification_data
+        }))
 
 
 

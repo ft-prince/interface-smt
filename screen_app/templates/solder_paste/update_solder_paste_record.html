@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+
+{% block title %}
+    <title>Update Content</title>
+{% endblock title %}
+
+
+{% block content %}
+
+<h1>{% if form.instance.pk %}Update{% else %}Add{% endif %} Fixture Cleaning Record</h1>
+<div class='container'>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Save</button>
+    </form>
+</div>
+{% endblock content %}
+

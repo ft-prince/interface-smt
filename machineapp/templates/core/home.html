@@ -1,34 +1,165 @@
 {% extends 'core/base.html' %}
-
-{% block title %}Welcome to Machine User Auth{% endblock %}
+{% load static %}
+{% block title %}Home - Machine User Auth{% endblock %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header bg-primary text-white">
-        <h2 class="mb-0">Welcome to Machine User Auth</h2>
-    </div>
-    <div class="card-body">
-        <p class="lead">Please log in as a user or machine to get started.</p>
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">User Login</h3>
-                        <p class="card-text">Access your account and manage machines.</p>
-                        <a href="{% url 'login' %}" class="btn btn-primary">User Login</a>
-                    </div>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Dashboard</h2>
             </div>
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-body">
-                        <h3 class="card-title">Machine Login</h3>
-                        <p class="card-text">Log in a machine for operation.</p>
-                        <a href="{% url 'machine_login' %}" class="btn btn-success">Machine Login</a>
+            
+            <div class="card-body">
+                {% if active_machine %}
+                    <h3 class="card-title">Active Machine Information</h3>
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Machine Name:</th>
+                            <td>{{ active_machine.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Required Skills:</th>
+                            <td>{{ active_machine.required_skills }}</td>
+                        </tr>
+                    </table>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'machine_logout' %}" class="btn btn-danger">Logout Machine</a>
+                    </div>
+                {% else %}
+                    <p class="alert alert-info">No machine is currently active. Please log in a machine.</p>
+                    <a href="{% url 'machine_login' %}" class="btn btn-success">Login Machine</a>
+                {% endif %}
+
+                {% if user.is_authenticated %}
+                    <hr>
+                    <h3 class="card-title mt-4">User Information</h3>
+
+                    <div class="profile-image">
+                        {% if request.user.profile.Image %}
+                            <img src="{{ request.user.profile.Image.url }}" alt="{{ request.user.username }}'s profile picture" class="user-avatar">
+                        {% else %}
+                            <img src="{% static 'images/avatar.jpg' %}"alt="Default profile picture" class="user-avatar">
+                        {% endif %}
+                    </div>
+    
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Username:</th>
+                            <td>{{ user.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Skill Level:</th>
+                            <td>{{ user.profile.my_skill }}</td>
+                        </tr>
+                    </table>
+                    
+                    {% if active_machine %}
+                        {% if user.profile.my_skill >= active_machine.required_skills %}
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i> You have sufficient skills to operate this machine.
+                            </div>
+                            
+                            <div class="d-grid gap-2 mt-4">
+                                <a href="{% url 'screen:dashboard' %}" class="btn btn-lg" style="background-color: #F97316; color: white;">
+                                    <i class="fas fa-tachometer-alt me-2"></i> Go to Dashboard
+                                </a>
+                            </div>
+                        {% else %}
+                            <p class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i> Warning: Your skill level is insufficient for this machine.
+                            </p>
+                        {% endif %}
+                    {% endif %}
+                {% else %}
+                    <hr>
+                    <p class="alert alert-warning mt-4">You are not logged in. Please log in to view your information.</p>
+                    <a href="{% url 'login' %}" class="btn btn-primary">User Login</a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Additional card for machine and user info -->
+        {% if active_machine and user.is_authenticated and user.profile.my_skill >= active_machine.required_skills %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header" style="background-color: #1E40AF; color: white;">
+                <h3 class="mb-0 h5">Quick Status</h3>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" style="color: #1E40AF;">Machine</h5>
+                                <p class="h3 mb-0">{{ active_machine.name }}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card bg-light">
+                            <div class="card-body text-center">
+                                <h5 class="card-title" style="color: #F97316;">Operator</h5>
+                                <p class="h3 mb-0">{{ user.username }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+        {% endif %}
     </div>
 </div>
+
+<!-- Custom styles to match Royal Blue and Orange theme -->
+<style>
+    .btn-primary {
+        background-color: #1E40AF;
+        border-color: #1E40AF;
+    }
+    .btn-primary:hover {
+        background-color: #1e3a8a;
+        border-color: #1e3a8a;
+    }
+    .bg-primary {
+        background-color: #1E40AF !important;
+    }
+    .card-header {
+        padding: 1rem;
+    }
+    .alert-success {
+        background-color: #ecfdf5;
+        border-color: #10b981;
+        color: #047857;
+    }
+    .alert-danger {
+        background-color: #fef2f2;
+        border-color: #ef4444;
+        color: #b91c1c;
+    }
+    .alert-warning {
+        background-color: #fffbeb;
+        border-color: #f59e0b;
+        color: #b45309;
+    }
+    .alert-info {
+        background-color: #eff6ff;
+        border-color: #3b82f6;
+        color: #1d4ed8;
+    }
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #f97316;
+        box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        transition: transform 0.2s ease;
+    }
+    
+    .user-avatar:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+</style>
 {% endblock %}

@@ -8,8 +8,8 @@
 <div class="background-container">
     <div class="container content-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Daily Checklist Item</h1>
-            <p class="text-secondary">QSF-13-06</p>
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}{% endif %} Daily Checklist Item</h1>
+            <p class="text-secondary">QSF-13-06 <br>Rev-02 <br> 31-12-2022</p>
         </div>
 
         <div class="alert-container">
@@ -49,42 +49,13 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
-                    <h2 class="mb-3">General Information</h2>
-                    <div class="row mb-4">
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.doc_number.id_for_label }}" class="form-label">{{ form.doc_number.label }}</label>
-                            {{ form.doc_number }}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.rev_number.id_for_label }}" class="form-label">{{ form.rev_number.label }}</label>
-                            {{ form.rev_number }}
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="{{ form.rev_date.id_for_label }}" class="form-label">{{ form.rev_date.label }}</label>
-                            {{ form.rev_date }}
-                        </div>
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.machine_name.id_for_label }}" class="form-label">{{ form.machine_name.label }}</label>
-                            {{ form.machine_name }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.machine_location.id_for_label }}" class="form-label">{{ form.machine_location.label }}</label>
-                            {{ form.machine_location }}
-                        </div>
-                    </div>
-                    <div class="row mb-4">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.control_number.id_for_label }}" class="form-label">{{ form.control_number.label }}</label>
-                            {{ form.control_number }}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
-                            {{ form.station }}
-                        </div>
-                    </div>
+           
+                    <table class="excel-table table table-bordered">
+                        <tr>
+                            <th>Part Name </th>
+                            <td>{{ form.part_name }}</td>
+                        </tr>
+                    </table>
 
                     <h2 class="mb-3">Check Points</h2>
                     <div class="table-responsive">
@@ -465,4 +436,31 @@
     });
 
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const qsfSelect = document.getElementById('{{ form.qsf_document.id_for_label }}');
+        const docInfoDiv = document.getElementById('qsf-document-info');
+        
+        qsfSelect.addEventListener('change', function() {
+            const selectedQsfId = this.value;
+            if (selectedQsfId) {
+                // You'd need to add this data to your template
+                const qsfDocs = {{ qsf_documents|safe }};
+                const selectedDoc = qsfDocs.find(doc => doc.id === parseInt(selectedQsfId));
+                
+                if (selectedDoc) {
+                    docInfoDiv.innerHTML = `
+                        <p><strong>Document Number:</strong> ${selectedDoc.doc_number}</p>
+                        <p><strong>Revision:</strong> ${selectedDoc.rev_number}</p>
+                        <p><strong>Revision Date:</strong> ${selectedDoc.rev_date}</p>
+                    `;
+                }
+            } else {
+                docInfoDiv.innerHTML = '';
+            }
+        });
+    });
+    </script>
+    
+    
 {% endblock content %}

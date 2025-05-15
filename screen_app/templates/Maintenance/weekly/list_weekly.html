@@ -49,7 +49,7 @@
           {% for record in records %}
           <tr>
             <td>{{record.doc_number}}</td>
-            <td>{{record.get_machine_name_display}}</td>
+            <td>{{record.machine_name}}</td>
             <td>{{record.machine_location}}</td>
             <td>{{record.month_year|date:"F Y"}}</td>
             <td>

@@ -173,6 +173,14 @@
         "specification": "Curing Rack की condition चके करेंकक Timer सेसेटििों और रैक Damage ना िों",
         "control_method": "visual",
         "frequency": "daily"
+    },
+    {
+        "s_no": 26,
+        "checkpoint": "सुनिश्चित करें कि ESD ब्रश का स्थिर चार्ज (Static Charge) <125V है| - By Supervisor (Where Applicable)",
+        "specification": "<125 V",
+        "control_method": "Electrostatic Field Meter",
+        "frequency": "प्रतिमास"
     }
+    
    
 ]

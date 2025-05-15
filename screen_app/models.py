@@ -60,16 +60,17 @@ MACHINE_NAME_CHOICES = (
 
 
 STATION_CHOICES = [
-        ('DSL01_S01', 'DSL01_S01'),
-        ('DSL01_S02', 'DSL01_S02'),
-        ('DSL01_S03', 'DSL01_S03'),
-        ('DSL01_S04', 'DSL01_S04'),
-        ('DSL01_S05', 'DSL01_S05'),
-        ('DSL01_S06', 'DSL01_S06'),
-        ('DSL01_S07', 'DSL01_S07'),
-        ('DSL01_S08', 'DSL01_S08'),
-        ('DSL01_S09', 'DSL01_S09'),
+        ('EFL01_S01', 'EFL01_S01'),
+        ('EFL01_S02', 'EFL01_S02'),
+        ('EFL01_S03', 'EFL01_S03'),
+        ('EFL01_S04', 'EFL01_S04'),
+        ('EFL01_S05', 'EFL01_S05'),
+        ('EFL01_S06', 'EFL01_S06'),
+        ('EFL01_S07', 'EFL01_S07'),
+        ('EFL01_S08', 'EFL01_S08'),
+        ('EFL01_S09', 'EFL01_S09'),
     ]
+
 
 class Product(models.Model):
     name = models.CharField(max_length=100)
@@ -142,11 +143,53 @@ class Defects(models.Model):
     def __str__(self):
         return f"{self.visual_defect} | {self.programming_defect} | {self.automatic_testing_defect}"
 
-#  PDFs
+
+
+class ProcessMachineMapping(models.Model):
+    station = models.CharField(max_length=100, )
+    process_no = models.CharField(max_length=100,blank=True,null=True )
+    process = models.CharField(max_length=100, )
+    part_name=models.CharField(max_length=100,blank=True,null=True )
+    machine_name = models.CharField(max_length=100, )
+    control_number = models.CharField(max_length=100, )
+    Usl=models.FloatField(default=0,blank=True,null=True)
+    Lsl=models.FloatField(default=0,blank=True,null=True)
+    
+    def __str__(self):
+        return f"{self.station} - {self.process} - {self.machine_name} -{self.process_no} - {self.control_number}"
+    
+    class Meta:
+        unique_together = ('station', 'process' )
+        verbose_name = "Process-Machine Mapping"
+        verbose_name_plural = "Process-Machine Mappings"
+
 # ----------------------------------------------------------------
 # FixtureCleaningRecord
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+
+# SolderingBitRecord
+from django.db import models
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+
+class QSF(models.Model):
+    doc_number = models.CharField(max_length=20, default="QSF-13-06", blank=True)
+    rev_number = models.CharField(max_length=10, default="02")
+    rev_date = models.DateField(default=timezone.now)
+    
+    def __str__(self):
+        return f"{self.doc_number} Rev {self.rev_number}"
+    
+    
+from datetime import date
+   
+from datetime import date
+from django.utils import timezone
+from django.db import models
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 class FixtureCleaningRecord(models.Model):
     SHIFT_CHOICES = [
@@ -176,10 +219,6 @@ class FixtureCleaningRecord(models.Model):
         ('', 'Not Checked')
     ]
 
-    TAG_CHOICES = [
-        ('Available', 'Available'),
-        ('Not Available', 'Not Available'),
-    ]
     modified_TAG_CHOICES =[
         ('No Peel off','NO PEEL OFF'),
         ('No Damage','NO DAMAGE'),
@@ -187,16 +226,26 @@ class FixtureCleaningRecord(models.Model):
     ]
 
     # Fields from FixtureCleaningRecord
-    station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
-    doc_number = models.CharField(max_length=20, default="QSF-12-15",blank=True)
+    station = models.CharField(max_length=100, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 12-16",null=True,blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 00 ",null=True,blank=True)
+    
+    rev_date = models.DateField( null=True, blank=True)
+
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='FixtureCleaningRecord',null=True,blank=True)
+    process_machine=models.ForeignKey(ProcessMachineMapping,on_delete=models.CASCADE,related_name='FixtureCleaningRecord',null=True,blank=True)    
     month_year = models.DateField(default=timezone.now, blank=True)
-    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES)
-    fixture_location = models.CharField(max_length=200, choices=FIXTURE_LOCATION)
-    fixture_control_no = models.CharField(max_length=200, choices=CONTROL_NUMBER_CHOICES)
+    
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES,blank=True,null=True)
+    
+    fixture_location = models.CharField(max_length=100, null=True, blank=True)
+    fixture_control_no = models.CharField(max_length=100, null=True, blank=True)
     fixture_installation_date = models.DateField(default=timezone.now, blank=True)
     # Fields from DailyRecord
     date = models.DateField(default=timezone.now,blank=True)
     time = models.TimeField(default=timezone.now,blank=True)
+    
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     verification_tag_available = models.CharField(max_length=25, choices=TAG_CHOICES)
     verification_tag_condition = models.CharField(max_length=250, choices=modified_TAG_CHOICES)
@@ -206,19 +255,124 @@ class FixtureCleaningRecord(models.Model):
     supervisor_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✘',blank=True)
     history = HistoricalRecords()
 
-    
-
     class Meta:
         verbose_name = "Fixture Cleaning Record"
         verbose_name_plural = "Fixture Cleaning Records"
 
     def save(self, *args, **kwargs):
         """
-        Override save method to generate notifications for cleaning issues.
-        Checks multiple conditions and sends structured notifications.
+        Override save method to auto-populate fields based on logged-in machine,
+        generate notifications for cleaning issues, and auto-determine shift based on time.
         """
-        super().save(*args, **kwargs)
+        from datetime import datetime
+        # Auto-determine shift based on time
+        self.time = datetime.now().time()
+        # Auto-determine shift based on time
+        if self.time:
+            # The self.time is already a time object from TimeField
+            current_time = self.time
+            
+            # Import datetime properly
+            from datetime import time as datetime_time
+            
+            # Define shift time ranges
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            # shift_b_end is 00:30 next day, but we'll handle overnight differently
+            
+            # Check if time falls within Shift A
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            # Check if time falls within Shift B (accounting for overnight)
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            # If time doesn't fit either shift, default to closest one
+            else:
+                # This handles gaps like 16:00-16:30
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                if abs(morning_diff) < abs(evening_diff):
+                    self.shift = 'A'
+                else:
+                    self.shift = 'B'
         
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+        
+        # Proceed with existing functionality
+        print("Before save:")
+        print(f"process_machine: {self.process_machine}")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.fixture_location}")
+        print(f"control_number: {self.fixture_control_no}")
+
+        # Auto-populate from process_machine if available
+        if self.process_machine:
+            # No validation needed since we removed choices constraints
+            self.station = self.process_machine.station
+            self.fixture_location = self.process_machine.machine_name
+            self.fixture_control_no = self.process_machine.control_number
+            
+            # Try to find a matching machine_location
+            try:
+                # First try exact match on process name
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                # If not found, try substring match
+                if not location:
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                if location:
+                    self.machine_location = location
+            except Exception as e:
+                # Just log the error and continue
+                print(f"Error setting machine_location: {e}")
+        
+        # Handle operator assignment if available
+        if not self.operator_name and hasattr(self, 'request'):
+            self.operator_name = self.request.user
+
+        # Call parent save method
+        super().save(*args, **kwargs)
+        print("After population:")
+        print(f"process_machine: {self.process_machine}")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.fixture_location}")
+        print(f"control_number: {self.fixture_control_no}")
+
         # Define inspection points and their corresponding issue messages
         inspection_points = {
             'verification_tag_available': 'Verification Tag not available',
@@ -235,7 +389,7 @@ class FixtureCleaningRecord(models.Model):
         
         if issues:
             self._send_notification(issues)
-
+        
     def _send_notification(self, issues):
         """
         Send structured notification about cleaning issues.
@@ -264,6 +418,9 @@ class FixtureCleaningRecord(models.Model):
         """String representation of the cleaning record."""
         return f"Cleaning Record {self.fixture_control_no} - {self.date}"
 
+
+
+
 # ----------------------------------------------------------------
 # Rejection sheet
 
@@ -282,19 +439,93 @@ class RejectionSheet(models.Model):
         ('B', 'B'),
         ('C','C')
     ]
+    DEFECT_TYPE_CHOICES = [
+        ('visual', 'Visual Defects'),
+        ('programming', 'Programming Defects'),
+        ('automatic_testing', 'Automatic Testing Defects'),
+        ('adhesive', 'Adhesive Application Defects'),  # Add this for Adhesive Application
+        ('pcb_screwing', 'PCB Screwing Defects'),  # Add this for PCB Screwing with Heat Sink
+    ]
+    
+    VISUAL_CHOICES = [
+        ('Dry Solder', 'Dry Solder'),
+        ('No Solder', 'No Solder'),
+        ('Shorting/ Bridging', 'Shorting/ Bridging'),
+        ('Pad Damage', 'Pad Damage'),
+        ('Component Tombstone', 'Component Tombstone'),
+        ('Solder Ball', 'Solder Ball'),
+        ('Green Masking improper', 'Green Masking improper'),
+        ('Masking Improper', 'Masking Improper'),
+        ('Component Shifted', 'Component Shifted'),
+        ('Pad Lifted', 'Pad Lifted'),
+        ('Component Damage/Break', 'Component Damage/Break'),
+        ('Solder Projection', 'Solder Projection'),
+        ('Track Cut (Open)', 'Track Cut (Open)'),
+        ('Wrong Polarity', 'Wrong Polarity'),
+        ('PTH Shorting', 'PTH Shorting'),
+        ('Component Wrong', 'Component Wrong'),
+        ('Component Missing', 'Component Missing'),
+        ('Solder Dust', 'Solder Dust'),
+        ('Pin Hole', 'Pin Hole'),
+        ('Component Up Side Down', 'Component Up Side Down'),
+        ('LED Defects', 'LED Defects'),
+        ('Microcontroller Pin Bend/Damage', 'Microcontroller Pin Bend/Damage'),
+        ('Solder Crack', 'Solder Crack'),
+        ('Others', 'Others'),
+    ]
+    
+    PROGRAMMING_CHOICES = [
+        ('Programme does not accept', 'Programme does not accept'),
+        ('Pin Voltage low', 'Pin Voltage low'),
+        ('Others', 'Others'),
+    ]
+    
+    AUTOMATIC_TESTING_CHOICES = [
+        ('Testing fail', 'Testing fail'),
+        ('Others', 'Others'),
+    ]
+    ADHESIVE_CHOICES = [
+        ('Adhesive improper', 'Adhesive improper'),
+        ('Others', 'Others'),
+    ]
+    
+    PCB_SCREWING_CHOICES = [
+        ('Thermal Paste Shape not OK', 'Thermal Paste Shape not OK'),
+        ('Thread NG * Heat Sink', 'Thread NG * Heat Sink'),
+        ('Thread NG * Screw', 'Thread NG * Screw'),
+        ('Others', 'Others'),
+    ]
 
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked')
     ]
-
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
     # Basic information
-    station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01')
+    station = models.CharField(max_length=100, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 22-01",null=True,blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 00 ",null=True,blank=True)
+    
+    rev_date = models.DateField(null=True, blank=True)
+    
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES,blank=True,null=True)
+    time = models.TimeField(default=timezone.now,blank=True)
+
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='RejectionSheet',null=True,blank=True)
+    process_machine=models.ForeignKey(ProcessMachineMapping,on_delete=models.CASCADE,related_name='RejectionSheet',null=True,blank=True)    
+   
+    stage = models.CharField(max_length=100, null=True, blank=True)
+    part_description = models.CharField(max_length=100, null=True, blank=True)
+    part_name = models.CharField(max_length=100, null=True, blank=True)
+
+    
     month = models.DateField(default=timezone.now,blank=True)
     date=models.DateField(default=timezone.now,blank=True)
-    stage = models.CharField(max_length=200, choices=STATION_CHOICES)
-    part_description = models.CharField(max_length=250,choices=STATION_CHOICES)
 
     # Quantity fields
     opening_balance = models.IntegerField(validators=[MinValueValidator(0)])
@@ -304,11 +535,15 @@ class RejectionSheet(models.Model):
     closing_balance = models.IntegerField(validators=[MinValueValidator(0)])
     operator_name = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
     defects=models.ManyToManyField(Defects, blank=True)
+    
     # defects = models.TextField(blank=True)
     # Signature fields
     operator_signature = models.CharField(max_length=1, choices=TICK_CHOICES, default='✔',blank=True)
     verified_by = models.CharField(max_length=1, choices=TICK_CHOICES, default='✘',blank=True)
     history = HistoricalRecords()
+    defect_type = models.CharField(max_length=50, choices=DEFECT_TYPE_CHOICES, blank=True, null=True, verbose_name="Defect Type")
+    defect = models.CharField(max_length=100, blank=True, null=True, verbose_name="Defect") 
+    custom_defect = models.CharField(max_length=200, blank=True, null=True, verbose_name="Custom Defect")
 
     # # Additional fields for flexibility
     # notes = models.TextField(blank=True)
@@ -318,7 +553,6 @@ class RejectionSheet(models.Model):
     class Meta:
         verbose_name = "Rejection Sheet"
         verbose_name_plural = "Rejection Sheets"
-        unique_together = ['month', 'stage', 'part_description']
 
     def calculate_metrics(self):
         """
@@ -352,21 +586,7 @@ class RejectionSheet(models.Model):
 
         metrics = self.calculate_metrics()
         
-        if self.total_pass_qty > metrics['total_input']:
-            raise ValidationError({
-                "total_pass_qty": (
-                    f"Total pass quantity ({self.total_pass_qty}) cannot exceed "
-                    f"total input ({metrics['total_input']})"
-                )
-            })
 
-        if self.closing_balance != metrics['closing_balance']:
-            raise ValidationError({
-                "closing_balance": (
-                    f"Closing balance should be {metrics['closing_balance']} "
-                    "(Opening + Rework - Pass - Rejection)"
-                )
-            })
 
     def determine_severity(self):
         """
@@ -434,6 +654,117 @@ class RejectionSheet(models.Model):
     def save(self, *args, **kwargs):
         """Override save to include validation and notification."""
         self.full_clean()
+        from datetime import datetime
+        # Auto-determine shift based on time
+        self.time = datetime.now().time()
+        
+        # Auto-determine shift based on time
+        if self.time:
+            # The self.time is already a time object from TimeField
+            current_time = self.time
+            
+            # Import datetime properly
+            from datetime import time as datetime_time
+            
+            # Define shift time ranges
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            # shift_b_end is 00:30 next day, but we'll handle overnight differently
+            
+            # Check if time falls within Shift A
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            # Check if time falls within Shift B (accounting for overnight)
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            # If time doesn't fit either shift, default to closest one
+            else:
+                # This handles gaps like 16:00-16:30
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                if abs(morning_diff) < abs(evening_diff):
+                    self.shift = 'A'
+                else:
+                    self.shift = 'B'
+
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+                    
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+        
+                
+        # Add these at the beginning of the save method
+        print("Before save:")
+        print(f"station: {self.station}")
+        print(f"process_machine: {self.stage}")
+        print(f"control_number: {self.part_description}")
+
+        # Auto-populate from process_machine if available
+        if self.process_machine:
+            # No validation needed since we removed choices constraints
+            self.station = self.process_machine.station
+            self.part_description = self.process_machine.machine_name
+            self.stage = self.process_machine.process
+            
+            # Try to find a matching machine_location
+            try:
+                # First try exact match on process name
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                # If not found, try substring match
+                if not location:
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                if location:
+                    self.machine_location = location
+            except Exception as e:
+                # Just log the error and continue
+                print(f"Error setting machine_location: {e}")
+        
+        # Handle manager assignment if available
+        if not self.operator_name and hasattr(self, 'request'):
+            self.operator_name = self.request.user
+
+        # Call parent save method
+        super().save(*args, **kwargs)
+        print("After population:")
+        print(f"station: {self.station}")
+        print(f"process_machine: {self.stage}")
+        print(f"control_number: {self.part_description}")
+
+        
+        
         super().save(*args, **kwargs)
         self.send_notification()
 
@@ -442,12 +773,8 @@ class RejectionSheet(models.Model):
         return f"Rejection Sheet for {self.part_description} - {self.month.strftime('%B %Y')} ({self.stage})"
 
 # ----------------------------------------------------------------
-# SolderingBitRecord
-from django.db import models
-from django.utils import timezone
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 
+    
 class SolderingBitRecord(models.Model):
     PART_CHOICES = (
         ('tsc_01', 'TSC 01'),
@@ -488,6 +815,51 @@ class SolderingBitRecord(models.Model):
         ('20d', '20D'),
         ('30d', '30D'),
     ]
+        # New defect type choices
+    DEFECT_TYPE_CHOICES = [
+        ('visual', 'Visual Defects'),
+        ('programming', 'Programming Defects'),
+        ('automatic_testing', 'Automatic Testing Defects'),
+    ]
+    
+    VISUAL_CHOICES = [
+        ('Dry Solder', 'Dry Solder'),
+        ('No Solder', 'No Solder'),
+        ('Shorting/ Bridging', 'Shorting/ Bridging'),
+        ('Pad Damage', 'Pad Damage'),
+        ('Component Tombstone', 'Component Tombstone'),
+        ('Solder Ball', 'Solder Ball'),
+        ('Green Masking improper', 'Green Masking improper'),
+        ('Masking Improper', 'Masking Improper'),
+        ('Component Shifted', 'Component Shifted'),
+        ('Pad Lifted', 'Pad Lifted'),
+        ('Component Damage/Break', 'Component Damage/Break'),
+        ('Solder Projection', 'Solder Projection'),
+        ('Track Cut (Open)', 'Track Cut (Open)'),
+        ('Wrong Polarity', 'Wrong Polarity'),
+        ('PTH Shorting', 'PTH Shorting'),
+        ('Component Wrong', 'Component Wrong'),
+        ('Component Missing', 'Component Missing'),
+        ('Solder Dust', 'Solder Dust'),
+        ('Pin Hole', 'Pin Hole'),
+        ('Component Up Side Down', 'Component Up Side Down'),
+        ('LED Defects', 'LED Defects'),
+        ('Microcontroller Pin Bend/Damage', 'Microcontroller Pin Bend/Damage'),
+        ('Solder Crack', 'Solder Crack'),
+        ('Others', 'Others'),
+    ]
+    
+    PROGRAMMING_CHOICES = [
+        ('Programme does not accept', 'Programme does not accept'),
+        ('Pin Voltage low', 'Pin Voltage low'),
+        ('Others', 'Others'),
+    ]
+    
+    AUTOMATIC_TESTING_CHOICES = [
+        ('Testing fail', 'Testing fail'),
+        ('Others', 'Others'),
+    ]
+
     # Configuration constants
     BIT_LIFE_CONFIG = {
         '20d': {'points_per_part': 10, 'initial_life': 12000, 'warning_threshold': 2000},
@@ -513,6 +885,12 @@ class SolderingBitRecord(models.Model):
     bit_change_date = models.DateField(verbose_name="Bit Change Date")
     prepared_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
     approved_by = models.CharField(max_length=100, choices=TICK_CHOICES_Mark, blank=True)
+        # Add the new defect fields
+    # Add the defect fields but with CharField instead of choices for defect
+    defect_type = models.CharField(max_length=50, choices=DEFECT_TYPE_CHOICES, blank=True, null=True, verbose_name="Defect Type")
+    defect = models.CharField(max_length=100, blank=True, null=True, verbose_name="Defect") 
+    custom_defect = models.CharField(max_length=200, blank=True, null=True, verbose_name="Custom Defect")
+
     history = HistoricalRecords()
 
     class Meta:
@@ -547,6 +925,12 @@ class SolderingBitRecord(models.Model):
             raise ValidationError({
                 'produce_quantity_shift_b': "Shift B quantity cannot be negative"
             })
+                # Validate that if defect is "Others", a custom defect is provided
+        if self.defect == 'Others' and not self.custom_defect:
+            raise ValidationError({
+                'custom_defect': 'Please specify the custom defect'
+            })
+    
             
     def calculate_bit_life(self):
         """Calculate bit life related metrics"""
@@ -606,25 +990,49 @@ class SolderingBitRecord(models.Model):
 
 # ----------------------------------------------------------------
 
-    
-class DailyChecklistItem(models.Model):
+from django.db import models
+import django.utils.timezone
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from datetime import time as datetime_time
 
+class DailyChecklistItem(models.Model):
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked')
     ]
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
 
-    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)           
-    station = models.CharField(max_length=100, choices=STATION_CHOICES, default='DSL01_S01',blank=True)
-    doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
-    rev_number = models.CharField(max_length=10, default="02")
-    rev_date = models.DateField(default=timezone.now)
-    machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
-    control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
-    month_year = models.DateField(default=timezone.now,blank=True)
-    date=models.DateField(default=django.utils.timezone.now,blank=True)
+    
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None, blank=True)           
+    station = models.CharField(max_length=100, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 13-06", null=True, blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 02 ", null=True, blank=True)
+    
+    rev_date = models.DateField(default=date(2022, 12, 31),null=True, blank=True)
+
+    # Add the missing time field
+    time = models.TimeField(default=timezone.now, blank=True)
+    
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, blank=True, null=True)
+    
+
+
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='daily_checklists', null=True, blank=True)
+    process_machine = models.ForeignKey(ProcessMachineMapping, on_delete=models.CASCADE, related_name='daily_process_machine', null=True, blank=True)
+    machine_name = models.CharField(max_length=100, null=True, blank=True)
+    control_number = models.CharField(max_length=100, null=True, blank=True)  
+    part_name = models.CharField(max_length=100, null=True, blank=True)  
+    process_no = models.CharField(max_length=100, null=True, blank=True)  
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation", null=True, blank=True)
+    month_year = models.DateField(default=timezone.now, blank=True)
+    date = models.DateField(default=django.utils.timezone.now, blank=True)
     # Main Item filled by Operator 
     CHECK_POINT_CHOICES = (
         ('Clean Machine Surface', 'Clean Machine Surface'),
@@ -636,59 +1044,25 @@ class DailyChecklistItem(models.Model):
         ('Check Maintenance & Calibration Tag', 'Check Maintenance & Calibration Tag'),
     )
     
-    check_point_1 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Clean Machine Surface',blank=True)
-    check_point_2 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check ON/OFF Switch',blank=True)
-    check_point_3 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Emergency Switch',blank=True)
-    check_point_4 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check any Abnormal Sound in M/C',blank=True)
-    check_point_5 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Spray Nozzle',blank=True)
-    check_point_6 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check all Tubbing & Feeder pipe',blank=True)
-    check_point_7 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Maintenance & Calibration Tag',blank=True)
-
-
-    REQUIREMENT_RANGE_CHOICES = (
-        ('Proper Clean', 'Proper Clean'),
-        ('Proper Working', 'Proper Working'),
-        ('Proper Working', 'Proper Working'),
-        ('No any Abnormal Sound', 'No any Abnormal Sound'),
-        ('No Blockage No leakage', 'No Blockage No leakage'),
-        ('No Cut & No Damage', 'No Cut & No Damage'),
-        ('No Expiry date on tag', 'No Expiry date on tag'),
-    )
-    requirement_range_1 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='Proper Clean',blank=True)
-    requirement_range_2 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='Proper Working',blank=True)
-    requirement_range_3 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='Proper Working',blank=True)
-    requirement_range_4 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No any Abnormal Sound',blank=True)
-    requirement_range_5 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No Blockage No leakage',blank=True)
-    requirement_range_6 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No Cut & No Damage',blank=True)
-    requirement_range_7 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No Expiry date on tag',blank=True)
     
     METHOD_OF_CHECKING_CHOICES = (
         ('Clean by Cloths & Brush', 'Clean by Cloths & Brush'),
         ('By Hand', 'By Hand'),
         ('By Eye', 'By Eye'),
-        )
-    method_of_checking_1 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='Clean by Cloths & Brush',blank=True)
-    method_of_checking_2 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Hand',blank=True)
-    method_of_checking_3 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Hand',blank=True)
-    method_of_checking_4 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Eye',blank=True)
-    method_of_checking_5 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Eye',blank=True)
-    method_of_checking_6 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Eye',blank=True)
-    method_of_checking_7 = models.CharField(max_length=200,choices=METHOD_OF_CHECKING_CHOICES ,default='By Eye',blank=True)
-     
+    )     
  
- 
-    Remark_1=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_2=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_3=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_4=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_5=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_6=models.CharField(max_length=100,choices=TICK_CHOICES)   
-    Remark_7=models.CharField(max_length=100,choices=TICK_CHOICES)   
+    Remark_1 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_2 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_3 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_4 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_5 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_6 = models.CharField(max_length=100, choices=TICK_CHOICES)   
+    Remark_7 = models.CharField(max_length=100, choices=TICK_CHOICES)   
      
    
     
-    checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='✔',blank=True)
-    approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES,default='✘',blank=True)
+    checked_by_Operator = models.CharField(max_length=100, choices=TICK_CHOICES, default='✔', blank=True)
+    approved_by_Supervisor = models.CharField(max_length=100, choices=TICK_CHOICES, default='✘', blank=True)
     history = HistoricalRecords()
     
     class Meta:
@@ -700,9 +1074,42 @@ class DailyChecklistItem(models.Model):
 
     def get_notification_message(self, checkpoint_number, status):
         """
-        Generate a notification message that matches the frontend formatting.
-        Ensures consistent data structure for proper display.
+        Generate a notification message with hardcoded checkpoint details.
         """
+        # Define hardcoded checkpoint values
+        checkpoints = [
+            'Clean Machine Surface',
+            'Check ON/OFF Switch',
+            'Check Emergency Switch',
+            'Check any Abnormal Sound in M/C',
+            'Check Spray Nozzle',
+            'Check all Tubbing & Feeder pipe',
+            'Check Maintenance & Calibration Tag'
+        ]
+        
+        requirements = [
+            'Proper Clean',
+            'Proper Working',
+            'Proper Working',
+            'No any Abnormal Sound',
+            'No Blockage No leakage',
+            'No Cut & No Damage',
+            'No Expiry date on tag'
+        ]
+        
+        methods = [
+            'Clean by Cloths & Brush',
+            'By Hand',
+            'By Hand',
+            'By Eye',
+            'By Eye',
+            'By Eye',
+            'By Eye'
+        ]
+        
+        # Adjust index for 0-based list
+        idx = checkpoint_number - 1
+        
         return {
             'type': 'chat_message',
             'message': {
@@ -718,9 +1125,9 @@ class DailyChecklistItem(models.Model):
                 # Checkpoint details structured to match frontend expectations
                 'checkpoint': {
                     'number': checkpoint_number,
-                    'name': getattr(self, f'check_point_{checkpoint_number}') or 'N/A',
-                    'requirement': getattr(self, f'requirement_range_{checkpoint_number}') or 'N/A',
-                    'method': getattr(self, f'method_of_checking_{checkpoint_number}') or 'N/A',
+                    'name': checkpoints[idx] if idx < len(checkpoints) else 'N/A',
+                    'requirement': requirements[idx] if idx < len(requirements) else 'N/A',
+                    'method': methods[idx] if idx < len(methods) else 'N/A',
                     'status': '✘'  # Status symbol for failed checkpoint
                 },
                 
@@ -735,11 +1142,115 @@ class DailyChecklistItem(models.Model):
         """
         Save the checklist and generate notifications for failed checkpoints.
         """
+        from datetime import datetime
+        # Auto-determine shift based on time
+        self.time = datetime.now().time()
+        
+        # Auto-determine shift based on time
+        if hasattr(self, 'time') and self.time:
+            # The self.time is already a time object from TimeField
+            current_time = self.time
+            
+            # Define shift time ranges
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            # shift_b_end is 00:30 next day, but we'll handle overnight differently
+            
+            # Check if time falls within Shift A
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            # Check if time falls within Shift B (accounting for overnight)
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            # If time doesn't fit either shift, default to closest one
+            else:
+                # This handles gaps like 16:00-16:30
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                if abs(morning_diff) < abs(evening_diff):
+                    self.shift = 'A'
+                else:
+                    self.shift = 'B'
+        
+
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+                    
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+
+        # Add these at the beginning of the save method
+        print("Before save:")
+        print(f"process_machine: {self.process_machine}")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.machine_name}")
+        print(f"control_number: {self.control_number}")
+
+        # Auto-populate from process_machine if available
+        if self.process_machine:
+            # No validation needed since we removed choices constraints
+            self.station = self.process_machine.station
+            self.machine_name = self.process_machine.machine_name
+            self.control_number = self.process_machine.control_number
+            self.process_no = self.process_machine.process_no
+            
+            # Try to find a matching machine_location
+            try:
+                # First try exact match on process name
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                # If not found, try substring match
+                if not location:
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                if location:
+                    self.machine_location = location
+            except Exception as e:
+                # Just log the error and continue
+                print(f"Error setting machine_location: {e}")
+        
         # Handle manager assignment if available
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
+        # Call parent save method
         super().save(*args, **kwargs)
+        print("After population:")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.machine_name}")
+        print(f"control_number: {self.control_number}")
+        print(f"control_number: {self.process_no}")
 
         # Send notifications for failed checkpoints
         channel_layer = get_channel_layer()
@@ -748,26 +1259,42 @@ class DailyChecklistItem(models.Model):
             remark = getattr(self, f'Remark_{i}')
             if remark == '✘':  # Check for failed status
                 notification = self.get_notification_message(i, remark)
-                async_to_sync(channel_layer.group_send)('test', notification)
-
+                async_to_sync(channel_layer.group_send)('test', notification)                
+ 
+                
 class WeeklyChecklistItem(models.Model):
-
-
-    
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked')
     ]
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
+
+    
     manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)       
-    station = models.CharField(max_length=10, choices=STATION_CHOICES, default='DSL01_S01')
-    doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
-    rev_number = models.CharField(max_length=10, default="02")
-    rev_date = models.DateField(default=timezone.now)
-    machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
-    control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
+    station = models.CharField(max_length=100, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 13-06", null=True, blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 02 ", null=True, blank=True)
+    part_name = models.CharField(max_length=60 , null=True, blank=True)
+    
+    rev_date = models.DateField(default=date(2022, 12, 31),null=True, blank=True)
+
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES,blank=True,null=True)
+    
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='weekly_checklists',null=True,blank=True)
+    process_machine=models.ForeignKey(ProcessMachineMapping,on_delete=models.CASCADE,related_name='weekly_process_machine',null=True,blank=True)
+    
+    machine_name = models.CharField(max_length=100, null=True, blank=True)
+    control_number = models.CharField(max_length=100, null=True, blank=True)  
+    process_no = models.CharField(max_length=100, null=True, blank=True)  
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation",null=True,blank=True)
+
     month_year = models.DateField(default=timezone.now,blank=True)
+    date=models.DateField(default=django.utils.timezone.now,blank=True,null=True)
         
 
     # Weekly Checklist field
@@ -779,36 +1306,6 @@ class WeeklyChecklistItem(models.Model):
         ('Electrical Insulation', 'Electrical Insulation'),
     )
     date = models.DateField(default=timezone.now,blank=True)
-    # Fields for check points with default values
-    check_point_8 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Conveyor Belts',blank=True)
-    check_point_9 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Solder bit Assembly. For any Bolts & Screw Loose',blank=True)
-    check_point_10 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Wire & Cable',blank=True)
-    check_point_11 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Electrical Insulation',blank=True)
-
-    # Choices for requirement ranges
-    REQUIREMENT_RANGE_CHOICES = (
-        ('No Damage', 'No Damage'),
-        ('Proper Tight', 'Proper Tight'),
-        ('No Damage No Broken', 'No Damage No Broken'),
-        ('No Cut & No Damage Wire', 'No Cut & No Damage Wire'),
-    )
-
-    # Fields for requirement ranges with default values
-    requirement_range_8 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES,  default='No Damage',blank=True)
-    requirement_range_9 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES,  default='Proper Tight',blank=True)
-    requirement_range_10 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No Damage No Broken',blank=True)
-    requirement_range_11 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='No Cut & No Damage Wire',blank=True)
-
-    METHOD_OF_CHECKING_CHOICES = (
-        ('Clean by Cloths & Brush', 'Clean by Cloths & Brush'),
-        ('By Hand', 'By Hand'),
-        ('By Eye', 'By Eye'),
-        )
-    method_of_checking_8 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Hand',blank=True)
-    method_of_checking_9 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Hand',blank=True)
-    method_of_checking_10 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Hand',blank=True)
-    method_of_checking_11 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Hand',blank=True)
-
 
     Remark_8=models.CharField(max_length=100,choices=TICK_CHOICES)   
     Remark_9=models.CharField(max_length=100,choices=TICK_CHOICES)   
@@ -888,14 +1385,81 @@ class WeeklyChecklistItem(models.Model):
         Save checklist and generate notifications for failed checkpoints.
         Handles manager assignment and notification dispatch.
         """
-        # Handle manager assignment
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        from datetime import datetime
+        # Auto-determine shift based on time
+        self.time = datetime.now().time()
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+                    
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+        
+        # Auto-populate from process_machine if available
+        if self.process_machine:
+            # No validation needed since we removed choices constraints
+            self.station = self.process_machine.station
+            self.machine_name = self.process_machine.machine_name
+            self.control_number = self.process_machine.control_number
+            self.process_no=self.process_machine.process_no
+            
+            # Try to find a matching machine_location
+            try:
+                # First try exact match on process name
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                # If not found, try substring match
+                if not location:
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                if location:
+                    self.machine_location = location
+            except Exception as e:
+                # Just log the error and continue
+                print(f"Error setting machine_location: {e}")
+        
+        # Handle manager assignment if available
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
+        # Call parent save method
         super().save(*args, **kwargs)
+        print("After population:")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.machine_name}")
+        print(f"control_number: {self.control_number}")
+        print(f"control_number: {self.process_no}")
 
         # Send notifications for failed checkpoints
         channel_layer = get_channel_layer()
+
         
         # Weekly checklist uses checkpoints 8-11
         for checkpoint_number in range(8, 12):
@@ -905,30 +1469,57 @@ class WeeklyChecklistItem(models.Model):
                 async_to_sync(channel_layer.group_send)('test', notification)
 
     
+from django.db import models
+import django.utils.timezone
+from django.utils import timezone
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from datetime import time as datetime_time
+
 class MonthlyChecklistItem(models.Model):
-
-
     TICK_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
         ('', 'Not Checked')
     ]        
-    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)    
-    station=models.CharField(max_length=200,choices=STATION_CHOICES)
-    doc_number = models.CharField(max_length=20, default="QSF-13-06",blank=True)
-    rev_number = models.CharField(max_length=10, default="02")
-    rev_date = models.DateField(default="2022-12-31")
-    machine_name = models.CharField(max_length=100, choices=MACHINE_NAME_CHOICES)
-    control_number = models.CharField(max_length=100,choices=CONTROL_NUMBER_CHOICES)
-    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
-    month_year = models.DateField(default=timezone.now)
+    
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
+
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None, blank=True) 
+    station = models.CharField(max_length=100, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 13-06", null=True, blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 02 ", null=True, blank=True)
+    
+    rev_date = models.DateField(default=date(2022, 12, 31),null=True, blank=True)
+
+
+    # Add the missing time field
+    time = models.TimeField(default=timezone.now, blank=True)
+    
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, blank=True, null=True)
+    
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='monthly_checklists', null=True, blank=True)
+    
+    process_machine = models.ForeignKey(ProcessMachineMapping, on_delete=models.CASCADE, related_name='monthly_process_machine', null=True, blank=True)
+    machine_name = models.CharField(max_length=100, null=True, blank=True)
+    control_number = models.CharField(max_length=100, null=True, blank=True)  
+    part_name = models.CharField(max_length=100, null=True, blank=True)  
+    process_no = models.CharField(max_length=100, null=True, blank=True)  
+    machine_location = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation", null=True, blank=True)
+
+    month_year = models.DateField(default=timezone.now, blank=True)
+    date = models.DateField(default=django.utils.timezone.now, blank=True, null=True)
 
     CHECK_POINT_CHOICES = (
         ('Check Machine Earthing (Leakage Voltage)', 'Check Machine Earthing (Leakage Voltage)'),        
         ('Check all parameter', 'Check all parameter'),
         ('Check Working condition', 'Check Working condition'),
         ('Check Operation of Sensors', 'Check Operation of Sensors'),
-        ('Check condition of all fixture','Check condition of all fixture'),
+        ('Check condition of all fixture', 'Check condition of all fixture'),
     )
     # Choices for requirement ranges
     REQUIREMENT_RANGE_CHOICES = (
@@ -936,7 +1527,6 @@ class MonthlyChecklistItem(models.Model):
         ('Condition Proper', 'Condition Proper'),
         ('Condition Proper', 'Condition Proper'),
         ('Proper Condition', 'Proper Condition'),
-        
     )
     METHOD_OF_CHECKING_CHOICES = (
         ('By Parameter', 'By Parameter'),
@@ -945,23 +1535,9 @@ class MonthlyChecklistItem(models.Model):
         ('By Fixture', 'By Fixture'),
     )
     
-    date = models.DateField(default=timezone.now,blank=True)
-    # Fields for check points with default values
-    check_point_12 = models.CharField(max_length=200, choices=CHECK_POINT_CHOICES, default='Check Machine Earthing (Leakage Voltage)',blank=True)
-    # Fields for requirement ranges with default values
-    requirement_range_12 = models.CharField(max_length=200, choices=REQUIREMENT_RANGE_CHOICES, default='< 2 V',blank=True)
-
-    # Field for method of checking
-    method_of_checking_12 = models.CharField(max_length=200, choices=METHOD_OF_CHECKING_CHOICES, default='By Parameter',blank=True)
-
-    TICK_CHOICES = [
-        ('✔', 'OK'),
-        ('✘', 'Not OK'),
-        ('', 'Not Checked')
-    ]
-    Remark_12=models.CharField(max_length=100,choices=TICK_CHOICES)
-    checked_by_Operator = models.CharField(max_length=100,choices=TICK_CHOICES,default='',blank=True)
-    approved_by_Supervisor = models.CharField(max_length=100,choices=TICK_CHOICES ,default='',blank=True)
+    Remark_12 = models.CharField(max_length=100, choices=TICK_CHOICES)
+    checked_by_Operator = models.CharField(max_length=100, choices=TICK_CHOICES, default='✔', blank=True)
+    approved_by_Supervisor = models.CharField(max_length=100, choices=TICK_CHOICES, default='', blank=True)
     history = HistoricalRecords()
     
     
@@ -974,16 +1550,25 @@ class MonthlyChecklistItem(models.Model):
 
     def get_checkpoint_details(self, checkpoint_number):
         """
-        Retrieve comprehensive checkpoint details.
-        Returns formatted checkpoint information with fallback values.
+        Retrieve comprehensive checkpoint details with hardcoded values.
+        Returns formatted checkpoint information.
         """
-        return {
-            'number': checkpoint_number,
-            'name': getattr(self, f'check_point_{checkpoint_number}', 'N/A'),
-            'requirement': getattr(self, f'requirement_range_{checkpoint_number}', 'N/A'),
-            'method': getattr(self, f'method_of_checking_{checkpoint_number}', 'N/A')
-        }
-
+        # Hardcoded checkpoint details for checkpoint 12
+        if checkpoint_number == 12:
+            return {
+                'number': checkpoint_number,
+                'name': 'Check Machine Earthing (Leakage Voltage)',
+                'requirement': '< 2 V',
+                'method': 'By Parameter'
+            }
+        else:
+            return {
+                'number': checkpoint_number,
+                'name': 'N/A',
+                'requirement': 'N/A',
+                'method': 'N/A'
+            }
+            
     def get_machine_details(self):
         """
         Retrieve machine-related information.
@@ -1039,20 +1624,111 @@ class MonthlyChecklistItem(models.Model):
         Save checklist and generate notifications for failed checkpoints.
         Handles manager assignment and notification dispatch for checkpoint 12.
         """
-        # Handle manager assignment if not set
+        from datetime import datetime
+        # Auto-determine shift based on time
+        self.time = datetime.now().time()
+        if hasattr(self, 'time') and self.time:
+            # The self.time is already a time object from TimeField
+            current_time = self.time
+            
+            # Define shift time ranges
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            # shift_b_end is 00:30 next day, but we'll handle overnight differently
+            
+            # Check if time falls within Shift A
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            # Check if time falls within Shift B (accounting for overnight)
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            # If time doesn't fit either shift, default to closest one
+            else:
+                # This handles gaps like 16:00-16:30
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                if abs(morning_diff) < abs(evening_diff):
+                    self.shift = 'A'
+                else:
+                    self.shift = 'B'
+
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+                    
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+
+        # Auto-populate from process_machine if available
+        if self.process_machine:
+            # No validation needed since we removed choices constraints
+            self.station = self.process_machine.station
+            self.machine_name = self.process_machine.machine_name
+            self.control_number = self.process_machine.control_number
+            self.process_no = self.process_machine.process_no
+            
+            # Try to find a matching machine_location
+            try:
+                # First try exact match on process name
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                # If not found, try substring match
+                if not location:
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                if location:
+                    self.machine_location = location
+            except Exception as e:
+                # Just log the error and continue
+                print(f"Error setting machine_location: {e}")
+        
+        # Handle manager assignment if available
         if not self.manager and hasattr(self, 'request'):
             self.manager = self.request.user
 
+        # Call parent save method
         super().save(*args, **kwargs)
+        print("After population:")
+        print(f"station: {self.station}")
+        print(f"machine_name: {self.machine_name}")
+        print(f"control_number: {self.control_number}")
+        print(f"control_number: {self.process_no}")
 
-        # Check specifically for checkpoint 12 failure
+        # Send notifications for failed checkpoints
         channel_layer = get_channel_layer()
         
         if self.Remark_12 == '✘':
             notification = self.get_notification_message(12, self.Remark_12)
             async_to_sync(channel_layer.group_send)('test', notification)
-
-
 
 
 
@@ -1064,26 +1740,225 @@ from django.db.models import Avg, StdDev
 import math
 
 from django.db import models, IntegrityError
-
+from datetime import datetime, timedelta  # Correct import statement
+from machineapp.models import Machine
 class ControlChartReading(models.Model):
-    date = models.DateField(unique=True)
-    reading1 = models.FloatField()
-    reading2 = models.FloatField()
-    reading3 = models.FloatField()
-    reading4 = models.FloatField()
-    reading5 = models.FloatField()
-    usl = models.FloatField(default=375, validators=[MinValueValidator(0)])
-    lsl = models.FloatField(default=355, validators=[MinValueValidator(0)])
-    history = HistoricalRecords()
+    # Use machine_id as the screen identifier
+    machine = models.ForeignKey(Machine, on_delete=models.CASCADE, related_name='control_chart_readings', null=True, blank=True)
+    date = models.DateField()
+    time = models.TimeField(auto_now_add=True)
 
+    process_machine = models.ForeignKey(
+        ProcessMachineMapping, 
+        on_delete=models.SET_NULL,  # If mapping is deleted, keep the reading
+        related_name='control_chart_readings', 
+        null=True, 
+        blank=True
+    )
+
+    reading1 = models.FloatField()
+    reading2 = models.FloatField(null=True, blank=True)
+    reading3 = models.FloatField(null=True, blank=True)
+    reading4 = models.FloatField(null=True, blank=True)
+    reading5 = models.FloatField(null=True, blank=True)
+    usl = models.FloatField(validators=[MinValueValidator(0)], null=True, blank=True)
+    lsl = models.FloatField(validators=[MinValueValidator(0)], null=True, blank=True)
+    history = HistoricalRecords()
+    last_notification_time = models.DateTimeField(null=True, blank=True)
+    remaining_entries = models.IntegerField(default=5)
+    
+    
+    class Meta:
+        # Update uniqueness constraint to use machine instead of screen_id
+        unique_together = [  'time']
+        
+    def update_notification_status(self):
+        now = timezone.now()
+        if not self.last_notification_time or (now - self.last_notification_time) >= timedelta(hours=1):
+            self.last_notification_time = now
+            if self.remaining_entries > 0:
+                self.remaining_entries -= 1
+            self.save(update_fields=['last_notification_time', 'remaining_entries'])
+
+    @classmethod
+    def can_add_new_reading(cls, machine, user=None):
+        """Check if 90 minutes have passed since the last reading for specific machine"""
+        # Admin users can bypass the time restriction if needed
+        if user and (user.is_staff or user.is_superuser):
+            return True
+            
+        today = timezone.localdate()
+        today_reading = cls.objects.filter(machine=machine, date=today).first()
+        
+        if not today_reading:
+            return True  # No readings today, so can add first reading
+            
+        # Get the index of the next reading to be filled (1-5)
+        next_index = today_reading.get_next_reading_index()
+        
+        # If all readings are filled or no next index, can't add more
+        if not next_index:
+            return False
+            
+        # If this is the first reading of the day, allow it
+        if next_index == 1:
+            return True
+        
+        # For readings 2-5, check if 90 minutes have passed since the previous reading
+        # The challenge here is finding when the previous reading was added
+        
+        # Use the historical records to find when the previous reading was added
+        previous_index = next_index - 1
+        
+        # Map reading index to field name
+        field_mapping = {
+            1: 'reading1',
+            2: 'reading2',
+            3: 'reading3',
+            4: 'reading4',
+            5: 'reading5',
+        }
+        
+        # Determine which field was last filled
+        last_field = field_mapping[previous_index]
+        
+        # Find the most recent historical record where this field was updated
+        # We can use the history to find when the field was last changed from null to a value
+        history_entries = today_reading.history.order_by('-history_date')
+        
+        # Find when the previous reading was added (when it changed from null to a value)
+        last_update_time = None
+        found_change = False
+        
+        for i in range(len(history_entries) - 1):
+            current = history_entries[i]
+            previous = history_entries[i + 1]
+            
+            # Check if this field changed from null to a value
+            current_value = getattr(current, last_field)
+            previous_value = getattr(previous, last_field)
+            
+            if current_value is not None and previous_value is None:
+                last_update_time = current.history_date
+                found_change = True
+                break
+        
+        # If we didn't find it in history, use the record's time field as fallback
+        if not found_change:
+            # Default to the record's time field
+            latest_datetime = datetime.combine(today_reading.date, today_reading.time)
+            latest_datetime = timezone.make_aware(latest_datetime)
+            last_update_time = latest_datetime
+        
+        # Check if 90 minutes have passed
+        time_since_last = timezone.now() - last_update_time
+        minutes_passed = time_since_last.total_seconds() / 60
+        
+        return minutes_passed >= 90
+
+    @classmethod
+    def get_next_reading_time(cls, machine, user=None):
+        """Get the timestamp when next reading can be added for specific machine"""
+        # Admin users bypass the restriction
+        if user and (user.is_staff or user.is_superuser):
+            return timezone.now()
+            
+        today = timezone.localdate()
+        today_reading = cls.objects.filter(machine=machine, date=today).first()
+        
+        if not today_reading:
+            return timezone.now()  # No readings today, can add immediately
+            
+        # Get the index of the next reading to be filled (1-5)
+        next_index = today_reading.get_next_reading_index()
+        
+        # If all readings are filled or no next index, use default
+        if not next_index:
+            return timezone.now() + timedelta(minutes=90)  # Default value
+        
+        # If this is the first reading of the day, allow it immediately
+        if next_index == 1:
+            return timezone.now()
+        
+        # For readings 2-5, calculate when 90 minutes will have passed since previous reading
+        previous_index = next_index - 1
+        
+        # Map reading index to field name
+        field_mapping = {
+            1: 'reading1',
+            2: 'reading2',
+            3: 'reading3',
+            4: 'reading4',
+            5: 'reading5',
+        }
+        
+        # Determine which field was last filled
+        last_field = field_mapping[previous_index]
+        
+        # Find the most recent historical record where this field was updated
+        history_entries = today_reading.history.order_by('-history_date')
+        
+        # Find when the previous reading was added (when it changed from null to a value)
+        last_update_time = None
+        found_change = False
+        
+        for i in range(len(history_entries) - 1):
+            current = history_entries[i]
+            previous = history_entries[i + 1]
+            
+            # Check if this field changed from null to a value
+            current_value = getattr(current, last_field)
+            previous_value = getattr(previous, last_field)
+            
+            if current_value is not None and previous_value is None:
+                last_update_time = current.history_date
+                found_change = True
+                break
+        
+        # If we didn't find it in history, use the record's time field as fallback
+        if not found_change:
+            # Default to the record's time field
+            latest_datetime = datetime.combine(today_reading.date, today_reading.time)
+            latest_datetime = timezone.make_aware(latest_datetime)
+            last_update_time = latest_datetime
+        
+        # Next reading time is 90 minutes after the previous one
+        return last_update_time + timedelta(minutes=90)    
+    @classmethod
+    def get_todays_reading(cls, machine):
+        """Get today's reading record for specific machine or None"""
+        today = timezone.localdate()
+        return cls.objects.filter(machine=machine, date=today).first()
 
     def get_readings(self):
-        """Get all readings as a list"""
-        return [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
+        """Get all readings as a list, replacing None with 0"""
+        readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
+        return [r if r is not None else 0 for r in readings]
+        
+    def get_non_null_readings(self):
+        """Get only the readings that are not null"""
+        readings = [self.reading1, self.reading2, self.reading3, self.reading4, self.reading5]
+        return [r for r in readings if r is not None]
+        
+    def get_next_reading_index(self):
+        """Get index (1-5) of the next reading to be filled"""
+        if self.reading1 is None:
+            return 1
+        elif self.reading2 is None:
+            return 2
+        elif self.reading3 is None:
+            return 3
+        elif self.reading4 is None:
+            return 4
+        elif self.reading5 is None:
+            return 5
+        else:
+            return None  # All readings are filled
+
     def check_violations(self, x_bar, r):
         """Check for control chart violations"""
         violations = []
-        readings = self.get_readings()
+        readings = self.get_non_null_readings()
         
         # Check specification limits
         for i, reading in enumerate(readings, 1):
@@ -1092,34 +1967,38 @@ class ControlChartReading(models.Model):
             if reading < self.lsl:
                 violations.append(f"Reading {i} ({reading:.2f}) below LSL ({self.lsl})")
 
-        # Get control limits from statistics
-        control_limits = ControlChartStatistics.calculate_control_limits()
-        
-        # Check X-bar limits
-        if x_bar > control_limits['ucl_x_bar']:
-            violations.append(f"X-bar ({x_bar:.2f}) exceeds UCL ({control_limits['ucl_x_bar']:.2f})")
-        if x_bar < control_limits['lcl_x_bar']:
-            violations.append(f"X-bar ({x_bar:.2f}) below LCL ({control_limits['lcl_x_bar']:.2f})")
+        # Only perform control limit checks if we have enough readings
+        if len(readings) >= 2:
+            # Get control limits from statistics
+            control_limits = ControlChartStatistics.calculate_control_limits(machine=self.machine)
             
-        # Check Range limits
-        if r > control_limits['ucl_r']:
-            violations.append(f"Range ({r:.2f}) exceeds UCL-R ({control_limits['ucl_r']:.2f})")
-            
+            # Check X-bar limits
+            if x_bar > control_limits['ucl_x_bar']:
+                violations.append(f"X-bar ({x_bar:.2f}) exceeds UCL ({control_limits['ucl_x_bar']:.2f})")
+            if x_bar < control_limits['lcl_x_bar']:
+                violations.append(f"X-bar ({x_bar:.2f}) below LCL ({control_limits['lcl_x_bar']:.2f})")
+                
+            # Check Range limits
+            if r > control_limits['ucl_r']:
+                violations.append(f"Range ({r:.2f}) exceeds UCL-R ({control_limits['ucl_r']:.2f})")
+                
         return violations
 
     def get_notification_message(self, x_bar, r, violations):
         """Generate structured notification message"""
-        capability = ControlChartStatistics.calculate_capability_indices()
-        control_limits = ControlChartStatistics.calculate_control_limits()
+        capability = ControlChartStatistics.calculate_capability_indices(machine=self.machine)
+        control_limits = ControlChartStatistics.calculate_control_limits(machine=self.machine)
         
         return {
             'type': 'chat_message',
             'message': {
                 'record_id': self.pk,
+                'machine_id': self.machine.id,
+                'machine_name': self.machine.name,
                 'alert_type': 'control_chart_alert',
                 'date': self.date.strftime('%Y-%m-%d'),
                 'readings': {
-                    'values': self.get_readings(),
+                    'values': self.get_non_null_readings(),
                     'x_bar': round(x_bar, 3),
                     'range': round(r, 3)
                 },
@@ -1145,19 +2024,26 @@ class ControlChartReading(models.Model):
         }
 
     def clean(self):
-        readings = self.get_readings()
+        readings = self.get_non_null_readings()
         if any(reading < 0 for reading in readings):
             raise ValidationError("Readings cannot be negative.")
         if self.usl <= self.lsl:
             raise ValidationError("Upper specification limit must be greater than lower specification limit.")
 
     def _create_or_update_statistics(self):
-        readings = self.get_readings()
+        readings = self.get_non_null_readings()
+        if not readings:
+            return
+            
         x_bar = round(sum(readings) / len(readings), 2)
-        r = round(max(readings) - min(readings), 2)
+        r = round(max(readings) - min(readings), 2) if len(readings) > 1 else 0
 
         try:
-            stats = ControlChartStatistics.objects.filter(date=self.date).first()
+            stats = ControlChartStatistics.objects.filter(
+                date=self.date,
+                machine=self.machine  # Use machine instead of screen_id
+            ).first()
+            
             if stats:
                 stats.x_bar = x_bar
                 stats.r = r
@@ -1167,6 +2053,7 @@ class ControlChartReading(models.Model):
             else:
                 ControlChartStatistics.objects.create(
                     date=self.date,
+                    machine=self.machine,  # Use machine instead of screen_id
                     x_bar=x_bar,
                     r=r,
                     usl=self.usl,
@@ -1175,15 +2062,61 @@ class ControlChartReading(models.Model):
         except Exception as e:
             print(f"Error creating/updating statistics: {e}")
             raise
+
     def save(self, *args, **kwargs):
         try:
+            
+
+            # Check if this is a new record (not yet saved)
+            is_new = self.pk is None
+            
+            # Get the current request from thread local if available
+            request = getattr(self, 'request', None)
+            
+            # If we have a request and a machine isn't already set
+            if request and (is_new or not self.machine):
+                # Get browser key from session if logged into a machine
+                browser_key = request.session.get('browser_key')
+                
+                if browser_key:
+                    # Try to find the active machine for this browser
+                    from machineapp.models import MachineLoginTracker
+                    active_login = MachineLoginTracker.objects.filter(
+                        browser_key=browser_key,
+                        is_active=True
+                    ).order_by('-created_at').first()
+                    
+                    if active_login:
+                        # Set the machine from the active login
+                        self.machine = active_login.machine
+                        
+                        # Try to find the ProcessMachineMapping for this machine
+                        process_machine = ProcessMachineMapping.objects.filter(
+                            machine_name=self.machine.name
+                        ).first()
+                        
+                        # Set the process_machine relationship
+                        if process_machine:
+                            self.process_machine = process_machine
+                            
+                            # Update the USL and LSL values
+                            if process_machine.Usl is not None:
+                                self.usl = process_machine.Usl
+                            if process_machine.Lsl is not None:
+                                self.lsl = process_machine.Lsl
+            
+            # Perform validation
             self.clean()
+            
+            # Save the model
             super().save(*args, **kwargs)
+            
+            # Update statistics
             self._create_or_update_statistics()
+            
         except Exception as e:
             print(f"Error saving reading or statistics: {e}")
             raise
-
         
 # models.py
 from django.db import models
@@ -1194,24 +2127,36 @@ import calendar
 # models.py
 
 class ControlChartStatistics(models.Model):
-    date = models.DateField(unique=True)
+    machine = models.ForeignKey(Machine, on_delete=models.CASCADE, related_name='control_chart_statistics', null=True, blank=True)
+    date = models.DateField()
     x_bar = models.FloatField()
     r = models.FloatField()
     usl = models.FloatField(default=375)
     lsl = models.FloatField(default=355)
     history = HistoricalRecords()
+    
+
 
     @classmethod
-    def get_monthly_statistics(cls):
+    def get_monthly_statistics(cls, machine=None):
+        """
+        Get monthly statistics, optionally filtered by machine
+        """
         try:
-            monthly_stats = cls.objects.annotate(
+            query = cls.objects
+            
+            # If machine is provided, filter by it
+            if machine:
+                query = query.filter(machine=machine)
+                
+            monthly_stats = query.annotate(
                 month=TruncMonth('date')
-            ).values('month').annotate(
+            ).values('month', 'machine').annotate(
                 days_count=Count('id'),
                 monthly_x_bar=Avg('x_bar'),
                 monthly_r=Avg('r'),
                 monthly_std_dev=StdDev('x_bar')
-            ).order_by('-month')
+            ).order_by('-month', 'machine')
 
             processed_stats = []
             for stat in monthly_stats:
@@ -1222,8 +2167,13 @@ class ControlChartStatistics(models.Model):
                         stat['month'].month
                     )[1]
                     
+                    # Get machine name
+                    machine_obj = Machine.objects.get(id=stat['machine'])
+                    
                     monthly_data = {
                         'month': stat['month'],
+                        'machine_id': stat['machine'],
+                        'machine_name': machine_obj.name,
                         'days_count': stat['days_count'],
                         'completion_percentage': (stat['days_count'] / total_days) * 100,
                         'monthly_x_bar': stat['monthly_x_bar'] or 0,
@@ -1256,8 +2206,18 @@ class ControlChartStatistics(models.Model):
     
     
     @classmethod
-    def calculate_control_limits(cls):
-        data = cls.objects.all()
+    def calculate_control_limits(cls, machine=None):
+        """
+        Calculate control limits, optionally for a specific machine
+        """
+        query = cls.objects
+        
+        # If machine is provided, filter by it
+        if machine:
+            query = query.filter(machine=machine)
+            
+        data = query.all()
+        
         if not data.exists():
             return {
                 'x_bar_avg': 0,
@@ -1294,8 +2254,18 @@ class ControlChartStatistics(models.Model):
         }
 
     @classmethod
-    def calculate_capability_indices(cls):
-        data = cls.objects.all()
+    def calculate_capability_indices(cls, machine=None):
+        """
+        Calculate capability indices, optionally for a specific machine
+        """
+        query = cls.objects
+        
+        # If machine is provided, filter by it
+        if machine:
+            query = query.filter(machine=machine)
+            
+        data = query.all()
+        
         if not data.exists():
             return {
                 'cp': 0,
@@ -1307,7 +2277,18 @@ class ControlChartStatistics(models.Model):
         x_bars = [record.x_bar for record in data]
         
         # Calculate standard deviation using R-bar method
-        r_bar = round(data.aggregate(Avg('r'))['r__avg'], 2)
+        r_bar = round(query.aggregate(Avg('r'))['r__avg'] or 0, 2)
+        
+        # Add safety check to prevent division by zero
+        if r_bar == 0:
+            return {
+                'cp': 0,
+                'cpk': 0,
+                'std_dev': 0,
+                'usl': latest_record.usl,
+                'lsl': latest_record.lsl
+            }
+        
         std_dev = round(r_bar / 2.326, 2)  # d2 constant for n=5 is 2.326
         
         x_bar_avg = round(sum(x_bars) / len(x_bars), 2)
@@ -1315,6 +2296,16 @@ class ControlChartStatistics(models.Model):
         # Use the specification limits from the latest record
         usl = latest_record.usl
         lsl = latest_record.lsl
+        
+        # Add safety checks for division by zero
+        if std_dev == 0:
+            return {
+                'cp': 0,
+                'cpk': 0,
+                'std_dev': 0,
+                'usl': usl,
+                'lsl': lsl
+            }
         
         # Calculate capability indices with Excel methodology
         cp = round((usl - lsl) / (6 * std_dev), 2)
@@ -1329,6 +2320,7 @@ class ControlChartStatistics(models.Model):
             'usl': usl,
             'lsl': lsl
         }
+        
     @classmethod
     def check_special_causes(cls, data_points, mean, std_dev):
         """
@@ -1342,7 +2334,22 @@ class ControlChartStatistics(models.Model):
         Returns:
             list: List of detected violations with details
         """
+        if not data_points or std_dev == 0:
+            return []
+            
         violations = []
+        
+        # Convert data_points if needed to ensure each point has date, x_bar
+        formatted_points = []
+        for point in data_points:
+            if isinstance(point, dict) and 'date' in point and 'x_bar' in point:
+                formatted_points.append(point)
+        
+        if not formatted_points:
+            return []
+        
+        # Sort points by date
+        formatted_points.sort(key=lambda x: x['date'])
         
         def is_outside_std_dev(point, multiplier):
             """Check if a point is outside specified standard deviation limits"""
@@ -1360,6 +2367,7 @@ class ControlChartStatistics(models.Model):
                     'index': i,
                     'message': '1 point more than 3 standard deviations from centerline',
                     'date': point['date'],
+                    'machine_id': point.get('machine_id'),
                     'value': point['x_bar'],
                     'severity': 'high'
                 })
@@ -1373,16 +2381,26 @@ class ControlChartStatistics(models.Model):
                     'index': i,
                     'message': '7 points in a row on same side of centerline',
                     'date_range': [sequence[0]['date'], sequence[-1]['date']],
+                    'machine_id': sequence[0].get('machine_id'),
                     'points': [p['x_bar'] for p in sequence],
                     'severity': 'high'
                 })
-        
         # Rule C: 6 points in a row, increasing or decreasing
-        for i in range(len(data_points) - 5):
-            sequence = data_points[i:i+6]
+        for i in range(len(formatted_points) - 5):
+            sequence = formatted_points[i:i+6]
             x_bars = [p['x_bar'] for p in sequence]
-            increasing = all(x_bars[j] < x_bars[j+1] for j in range(len(x_bars)-1))
-            decreasing = all(x_bars[j] > x_bars[j+1] for j in range(len(x_bars)-1))
+            
+            increasing = True
+            for j in range(len(x_bars)-1):
+                if x_bars[j] >= x_bars[j+1]:
+                    increasing = False
+                    break
+                    
+            decreasing = True
+            for j in range(len(x_bars)-1):
+                if x_bars[j] <= x_bars[j+1]:
+                    decreasing = False
+                    break
             
             if increasing or decreasing:
                 violations.append({
@@ -1395,35 +2413,13 @@ class ControlChartStatistics(models.Model):
                     'trend': 'increasing' if increasing else 'decreasing'
                 })
         
-        # Rule D: 14 points alternating up and down
-        for i in range(len(data_points) - 13):
-            sequence = data_points[i:i+14]
-            x_bars = [p['x_bar'] for p in sequence]
-            alternating = True
+        # Rule E: 2 out of 3 points > 2 standard deviations (same side)
+        for i in range(len(formatted_points) - 2):
+            sequence = formatted_points[i:i+3]
+            above_2sigma = [p for p in sequence if p['x_bar'] > mean + 2*std_dev]
+            below_2sigma = [p for p in sequence if p['x_bar'] < mean - 2*std_dev]
             
-            for j in range(len(x_bars)-1):
-                if j % 2 == 0 and x_bars[j] <= x_bars[j+1]:
-                    alternating = False
-                    break
-                if j % 2 == 1 and x_bars[j] >= x_bars[j+1]:
-                    alternating = False
-                    break
-                    
-            if alternating:
-                violations.append({
-                    'rule': 'D',
-                    'index': i,
-                    'message': '14 points alternating up and down',
-                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
-                    'points': x_bars,
-                    'severity': 'medium'
-                })
-        
-        # Rule E: 2 out of 3 points > 2 standard deviations
-        for i in range(len(data_points) - 2):
-            sequence = data_points[i:i+3]
-            count = sum(1 for p in sequence if is_outside_std_dev(p, 2))
-            if count >= 2 and all(is_same_side(p, sequence[0]) for p in sequence):
+            if len(above_2sigma) >= 2 or len(below_2sigma) >= 2:
                 violations.append({
                     'rule': 'E',
                     'index': i,
@@ -1432,12 +2428,14 @@ class ControlChartStatistics(models.Model):
                     'points': [p['x_bar'] for p in sequence],
                     'severity': 'high'
                 })
-        
-        # Rule F: 4 out of 5 points > 1 standard deviation
-        for i in range(len(data_points) - 4):
-            sequence = data_points[i:i+5]
-            count = sum(1 for p in sequence if is_outside_std_dev(p, 1))
-            if count >= 4 and all(is_same_side(p, sequence[0]) for p in sequence):
+                
+        # Rule F: 4 out of 5 points > 1 standard deviation (same side)
+        for i in range(len(formatted_points) - 4):
+            sequence = formatted_points[i:i+5]
+            above_1sigma = [p for p in sequence if p['x_bar'] > mean + std_dev]
+            below_1sigma = [p for p in sequence if p['x_bar'] < mean - std_dev]
+            
+            if len(above_1sigma) >= 4 or len(below_1sigma) >= 4:
                 violations.append({
                     'rule': 'F',
                     'index': i,
@@ -1446,24 +2444,13 @@ class ControlChartStatistics(models.Model):
                     'points': [p['x_bar'] for p in sequence],
                     'severity': 'medium'
                 })
-        
-        # Rule G: 15 points in a row within 1 standard deviation
-        for i in range(len(data_points) - 14):
-            sequence = data_points[i:i+15]
-            if all(not is_outside_std_dev(p, 1) for p in sequence):
-                violations.append({
-                    'rule': 'G',
-                    'index': i,
-                    'message': '15 points in a row within 1 standard deviation of centerline',
-                    'date_range': [sequence[0]['date'], sequence[-1]['date']],
-                    'points': [p['x_bar'] for p in sequence],
-                    'severity': 'medium'
-                })
-        
-        # Rule H: 8 points in a row > 1 standard deviation from centerline
-        for i in range(len(data_points) - 7):
-            sequence = data_points[i:i+8]
-            if all(is_outside_std_dev(p, 1) for p in sequence):
+                
+        # Rule H: 8 points > 1 standard deviation from centerline (either side)
+        for i in range(len(formatted_points) - 7):
+            sequence = formatted_points[i:i+8]
+            outside_1sigma = [p for p in sequence if abs(p['x_bar'] - mean) > std_dev]
+            
+            if len(outside_1sigma) == len(sequence):
                 violations.append({
                     'rule': 'H',
                     'index': i,
@@ -1472,84 +2459,147 @@ class ControlChartStatistics(models.Model):
                     'points': [p['x_bar'] for p in sequence],
                     'severity': 'high'
                 })
-        
+                
         return violations
     
     @classmethod
-    def get_monthly_statistics_with_violations(cls, year, month):
+    def get_monthly_statistics_with_violations(cls, year, month, machine=None):
         """
-        Get monthly statistics including special cause violations
+        Get monthly statistics including special cause violations, optionally for a specific machine
         """
-        monthly_stats = cls.objects.filter(
+        query = cls.objects.filter(
             date__year=year,
             date__month=month
-        ).order_by('date').values('date', 'x_bar', 'r')
+        )
+        
+        # If machine is provided, filter by it
+        if machine:
+            query = query.filter(machine=machine)
+            
+        monthly_stats = query.order_by('date').values('date', 'machine', 'x_bar', 'r')
         
         if not monthly_stats:
             return [], []
         
         data_points = list(monthly_stats)
-        x_bars = [point['x_bar'] for point in data_points]
-        mean = sum(x_bars) / len(x_bars)
-        std_dev = math.sqrt(sum((x - mean) ** 2 for x in x_bars) / len(x_bars))
         
-        violations = cls.check_special_causes(data_points, mean, std_dev)
-        
-        return data_points, violations
-
-
-
+        # If we have a specific machine, analyze directly
+        if machine:
+            # Already filtered by machine, proceed normally
+            x_bars = [point['x_bar'] for point in data_points]
+            mean = sum(x_bars) / len(x_bars)
+            std_dev = math.sqrt(sum((x - mean) ** 2 for x in x_bars) / len(x_bars))
+            
+            violations = cls.check_special_causes(data_points, mean, std_dev)
+            return data_points, violations
+        else:
+            # Group by machine and analyze each group separately
+            all_violations = []
+            machine_groups = {}
+            
+            # Group data by machine
+            for point in data_points:
+                machine_id = point['machine']
+                if machine_id not in machine_groups:
+                    machine_groups[machine_id] = []
+                machine_groups[machine_id].append(point)
+            
+            # Analyze each machine separately
+            for machine_id, points in machine_groups.items():
+                x_bars = [point['x_bar'] for point in points]
+                mean = sum(x_bars) / len(x_bars)
+                std_dev = math.sqrt(sum((x - mean) ** 2 for x in x_bars) / len(x_bars))
+                
+                machine_violations = cls.check_special_causes(points, mean, std_dev)
+                all_violations.extend(machine_violations)
+            
+            return data_points, all_violations
 
 # ----------------------------------------------------------------+
 
+from django.db import models
+from django.utils import timezone
+from datetime import date
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from datetime import time as datetime_time
+
 class StartUpCheckSheet(models.Model):
+    
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
+
     # General Information
-    revision_no = models.IntegerField(verbose_name="Rev. No.")
-    effective_date = models.DateField(verbose_name="Eff. Date",default=timezone.now, blank=True)
-    process_operation = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation")
-    month = models.DateField(default=timezone.now, blank=True)
+    qsf_document = models.ForeignKey(QSF, on_delete=models.CASCADE, related_name='StartUpCheckSheet', null=True, blank=True)
+    doc_number = models.CharField(max_length=20, default="QSF 12-05", null=True, blank=True)
+    
+    rev_number = models.CharField(max_length=20, default="Rev 09 ", null=True, blank=True)
+    
+    rev_date = models.DateField(default=date(2024, 11, 10), null=True, blank=True)
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, blank=True, null=True)
+    # Time field is already present
+    time = models.TimeField(default=timezone.now, blank=True)
+    revision_no = models.IntegerField(verbose_name="Rev. No.", null=True, blank=True)    
+    effective_date = models.DateField(verbose_name="Eff. Date", default=timezone.now, blank=True)
+    process_machine = models.ForeignKey(ProcessMachineMapping, on_delete=models.CASCADE, related_name='StartUpCheckSheet', null=True, blank=True)   
+    machine_name = models.CharField(max_length=100, null=True, blank=True)
+    control_number = models.CharField(max_length=100, null=True, blank=True)  
+    process_no = models.CharField(max_length=100, null=True, blank=True)     
+    process_operation = models.ForeignKey(MachineLocation, on_delete=models.CASCADE, verbose_name="Process/Operation", null=True, blank=True)
+    month = models.DateField(default=timezone.now, null=True, blank=True)
     # Choices for Checkpoints
     OKAY_CHOICES = [
         ('✔', 'OK'),
         ('✘', 'Not OK'),
+        ('not applicable','Not Applicable'),
+        ('not available','Not AVAILABLE'),
     ]
+    OKAY_CHOICES2 = [
+        ('✔', 'OK'),
+        ('✘', 'Not OK'),
+
+    ]
+    
 
     # Checkpoints with choices
-    checkpoint_1 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 1")
-    checkpoint_2 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 2")
-    checkpoint_3 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 3")
-    checkpoint_4 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 4")
-    checkpoint_5 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 5")
-    checkpoint_6 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 6")
-    checkpoint_7 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 7")
-    checkpoint_8 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 8")
-    checkpoint_9 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 9")
-    checkpoint_10 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 10")
-    checkpoint_11 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 11")
-    checkpoint_12 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 12")
-    checkpoint_13 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 13")
-    checkpoint_14 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 14")
-    checkpoint_15 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 15")
-    checkpoint_16 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 16")
-    checkpoint_17 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 17")
-    checkpoint_18 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 18")
-    checkpoint_19 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 19")
-    checkpoint_20 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 20")
-    checkpoint_21 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 21")
-    checkpoint_22 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 22")
-    checkpoint_23 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 23")
-    checkpoint_24 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 24")
-    checkpoint_25 = models.CharField(max_length=6, choices=OKAY_CHOICES, verbose_name="Check Point 25")
-    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None ,blank=True)    
+    checkpoint_1 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 1")
+    checkpoint_2 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 2")
+    checkpoint_3 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 3")
+    checkpoint_4 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 4")
+    checkpoint_5 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 5")
+    checkpoint_6 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 6")
+    checkpoint_7 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 7")
+    checkpoint_8 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 8")
+    checkpoint_9 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 9")
+    checkpoint_10 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 10")
+    checkpoint_11 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 11")
+    checkpoint_12 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 12")
+    checkpoint_13 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 13")
+    checkpoint_14 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 14")
+    checkpoint_15 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 15")
+    checkpoint_16 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 16")
+    checkpoint_17 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 17")
+    checkpoint_18 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 18")
+    checkpoint_19 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 19")
+    checkpoint_20 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 20")
+    checkpoint_21 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 21")
+    checkpoint_22 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 22")
+    checkpoint_23 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 23")
+    checkpoint_24 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 24")
+    checkpoint_25 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 25")
+    checkpoint_26 = models.CharField(max_length=60, choices=OKAY_CHOICES, verbose_name="Check Point 26",blank=True,null=True)
+    manager = models.ForeignKey(User, on_delete=models.CASCADE, default=None, blank=True)    
     # defects = models.TextField(blank=True)
-    verified_by = models.CharField(max_length=1, choices=OKAY_CHOICES, default='✘',blank=True)
+    verified_by = models.CharField(max_length=60, choices=OKAY_CHOICES2, default='✔', blank=True, null=True)
     history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Start Up Check Sheet"
         verbose_name_plural = "Start Up Check Sheets"
 
-
+    # Checkpoint info dictionary remains unchanged
     CHECKPOINT_INFO = {
         1: {
             'name': 'Equipment Safety Guards',
@@ -1677,6 +2727,203 @@ class StartUpCheckSheet(models.Model):
             'criteria': 'All parameters within acceptable ranges'
         }
     }
+
+    def save(self, *args, **kwargs):
+        """
+        Save method with enhanced debugging and robust process/machine handling
+        """
+        print("\n=== StartUpCheckSheet SAVE METHOD BEGIN ===")
+        print(f"PK: {self.pk}, Is New Record: {self.pk is None}")
+        
+        # Auto-determine shift based on time
+        if hasattr(self, 'time') and self.time:
+            current_time = self.time
+            print(f"Current time: {current_time}")
+            
+            from datetime import time as datetime_time
+            
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            else:
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                self.shift = 'A' if abs(morning_diff) < abs(evening_diff) else 'B'
+            
+            print(f"Determined shift: {self.shift}")
+        else:
+            print("Time field not available, shift not automatically determined")
+
+        # Debug input data
+        request = getattr(self, 'request', None)
+        print(f"Request available: {request is not None}")
+        
+        browser_key = None
+        if request:
+            browser_key = request.session.get('browser_key')
+            print(f"Browser key from session: {browser_key}")
+        
+        # Direct assignments - handle explicitly set fields
+        print("\n=== DIRECT FIELD ASSIGNMENTS ===")
+        if hasattr(self, '_direct_machine_name') and self._direct_machine_name:
+            print(f"Using directly assigned machine_name: {self._direct_machine_name}")
+            self.machine_name = self._direct_machine_name
+        
+        if hasattr(self, '_direct_process_no') and self._direct_process_no:
+            print(f"Using directly assigned process_no: {self._direct_process_no}")
+            self.process_no = self._direct_process_no
+        
+        # Try to get machine from browser login if new record
+        if self.pk is None and browser_key:
+            print("\n=== TRYING TO GET MACHINE FROM BROWSER KEY ===")
+            try:
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    machine = active_login.machine
+                    print(f"Found active machine: {machine.name}")
+                    
+                    # Process machine lookup
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name
+                    ).first()
+                    
+                    if process_machine:
+                        print(f"Found process machine mapping: {process_machine.machine_name}")
+                        self.process_machine = process_machine
+                    else:
+                        print(f"No process machine mapping found for {machine.name}")
+                        # Create a direct assignment for debugging
+                        self.machine_name = machine.name
+                else:
+                    print("No active login found for this browser key")
+            except Exception as e:
+                print(f"Error getting machine from browser key: {str(e)}")
+        
+        # Auto-populate from QSF document
+            
+        # Auto-populate from process_machine
+        print("\n=== PROCESS MACHINE PROCESSING ===")
+        if self.process_machine:
+            print(f"Using process_machine: {self.process_machine}")
+            print(f"Before: machine_name={self.machine_name}, control_number={self.control_number}, process_no={self.process_no}")
+            
+            self.machine_name = self.process_machine.machine_name
+            self.control_number = self.process_machine.control_number
+            self.process_no = self.process_machine.process_no
+            
+            print(f"After: machine_name={self.machine_name}, control_number={self.control_number}, process_no={self.process_no}")
+            
+            # Try to find a matching machine_location
+            print("\n=== MACHINE LOCATION LOOKUP ===")
+            try:
+                print(f"Looking for location with process: {self.process_machine.process}")
+                
+                # First try exact match
+                location = MachineLocation.objects.filter(
+                    location_name=self.process_machine.process
+                ).first()
+                
+                if location:
+                    print(f"Found exact match location: {location}")
+                    self.process_operation = location
+                else:
+                    # Try substring match
+                    print("No exact match, trying substring match")
+                    location = MachineLocation.objects.filter(
+                        location_name__icontains=self.process_machine.process
+                    ).first()
+                    
+                    if location:
+                        print(f"Found substring match location: {location}")
+                        self.process_operation = location
+                    else:
+                        print("No substring match found")
+            except Exception as e:
+                print(f"Error finding machine location: {str(e)}")
+        else:
+            print("No process_machine available")
+        
+        # Make sure process_operation is set
+        print("\n=== ENSURING PROCESS OPERATION IS SET ===")
+        if not self.process_operation:
+            print("No process_operation set, looking for a default")
+            try:
+                # List all available locations for debugging
+                all_locations = MachineLocation.objects.all()
+                print(f"Available locations ({all_locations.count()}):")
+                for loc in all_locations[:5]:  # Show first 5 for debugging
+                    print(f" - {loc.id}: {loc}")
+                
+                # Try to get a default location
+                default_location = all_locations.first()
+                if default_location:
+                    print(f"Using default location: {default_location}")
+                    self.process_operation = default_location
+                else:
+                    print("No machine locations exist in database")
+            except Exception as e:
+                print(f"Error finding default machine location: {str(e)}")
+        else:
+            print(f"process_operation is already set: {self.process_operation}")
+        
+        # Handle manager assignment
+        if not self.manager and hasattr(self, 'request') and request and hasattr(request, 'user'):
+            self.manager = request.user
+            print(f"Set manager to current user: {self.manager}")
+        
+        # Prepare final state before save
+        print("\n=== FINAL STATE BEFORE SAVE ===")
+        print(f"process_machine: {self.process_machine}")
+        print(f"machine_name: {self.machine_name}")
+        print(f"control_number: {self.control_number}")
+        print(f"process_no: {self.process_no}")
+        print(f"process_operation: {self.process_operation}")
+        print(f"shift: {self.shift}")
+        
+        # Call parent save method
+        try:
+            super().save(*args, **kwargs)
+            print("Save successful")
+            
+            # Send notifications for failed checkpoints
+            self._send_notifications_for_failed_checkpoints()
+        except Exception as e:
+            print(f"ERROR saving record: {str(e)}")
+            raise  # Re-raise the exception after logging
+        
+        print("=== StartUpCheckSheet SAVE METHOD END ===\n")
+    
+                
+    def _send_notifications_for_failed_checkpoints(self):
+        """Extracted method to send notifications for failed checkpoints"""
+        channel_layer = get_channel_layer()
+        
+        checkpoints = [
+            self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
+            self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
+            self.checkpoint_9, self.checkpoint_10, self.checkpoint_11, self.checkpoint_12,
+            self.checkpoint_13, self.checkpoint_14, self.checkpoint_15, self.checkpoint_16,
+            self.checkpoint_17, self.checkpoint_18, self.checkpoint_19, self.checkpoint_20,
+            self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
+            self.checkpoint_25
+        ]
+
+        for i, checkpoint in enumerate(checkpoints, start=1):
+            if checkpoint == '✘':
+                notification = self.get_notification_message(i, checkpoint)
+                async_to_sync(channel_layer.group_send)('test', notification)
+    
     def get_notification_message(self, checkpoint_number, status):
         """Generate structured notification message"""
         checkpoint_info = self.CHECKPOINT_INFO.get(checkpoint_number, {
@@ -1694,8 +2941,8 @@ class StartUpCheckSheet(models.Model):
                 
                 # Document control information
                 'revision_no': self.revision_no or 'Not Specified',
-                'process_operation': str(self.process_operation) or 'Not Specified',
-                'effective_date': self.effective_date.strftime('%Y-%m-%d'),
+                'process_operation': str(self.process_operation) if self.process_operation else 'Not Specified',
+                'effective_date': self.effective_date.strftime('%Y-%m-%d') if self.effective_date else 'Not Specified',
                 
                 # Checkpoint details
                 'checkpoint': {
@@ -1713,109 +2960,85 @@ class StartUpCheckSheet(models.Model):
                 
                 # Management information
                 'manager': str(self.manager) if self.manager else 'Not Assigned',
-                'month': self.month.strftime('%B %Y'),
+                'month': self.month.strftime('%B %Y') if self.month else 'Not Specified',
                 
                 # Additional context
-                'shift': getattr(self, 'shift', 'Not Specified'),
+                'shift': self.shift or 'Not Specified',
                 'department': str(getattr(self, 'department', 'Not Specified'))
             }
         }
-
-    def save(self, *args, **kwargs):
-            if not self.manager and hasattr(self, 'request'):
-                self.manager = self.request.user
-
-            super().save(*args, **kwargs)
-
-            # Check for 'Not OK' checkpoints and send structured notifications
-            channel_layer = get_channel_layer()
-            
-            checkpoints = [
-                self.checkpoint_1, self.checkpoint_2, self.checkpoint_3, self.checkpoint_4,
-                self.checkpoint_5, self.checkpoint_6, self.checkpoint_7, self.checkpoint_8,
-                self.checkpoint_9, self.checkpoint_10, self.checkpoint_11, self.checkpoint_12,
-                self.checkpoint_13, self.checkpoint_14, self.checkpoint_15, self.checkpoint_16,
-                self.checkpoint_17, self.checkpoint_18, self.checkpoint_19, self.checkpoint_20,
-                self.checkpoint_21, self.checkpoint_22, self.checkpoint_23, self.checkpoint_24,
-                self.checkpoint_25
-            ]
-
-            for i, checkpoint in enumerate(checkpoints, start=1):
-                if checkpoint == '✘':
-                    notification = self.get_notification_message(i, checkpoint)
-                    async_to_sync(channel_layer.group_send)('test', notification)
+                
     def __str__(self):
-            return f"Start Up Check Sheet {self.revision_no} - {self.effective_date.strftime('%Y-%m-%d')}"
-
-
-
+        revision_display = self.revision_no if self.revision_no else "No Rev"
+        date_display = self.effective_date.strftime('%Y-%m-%d') if self.effective_date else "No Date"
+        return f"Start Up Check Sheet {revision_display} - {date_display}"
 
 
 # ---------------------------------------------------------------------
 
 from django.db import models
 from django.utils import timezone
-from django.db.models import Avg, Sum, F, ExpressionWrapper, StdDev, Variance
-from django.db.models.functions import Sqrt
 import math
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from datetime import time as datetime_time
+
+from django.db import models
+from django.utils import timezone
+import math
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from datetime import time as datetime_time
 
 class PChartData(models.Model):
-    # Required input fields
-    location = models.CharField(max_length=200, choices=MACHINE_LOCATION_CHOICES)
-    part_number_and_name = models.CharField(max_length=200)
-    operation_number_and_stage_name = models.CharField(max_length=200, choices=STATION_CHOICES)
-    department = models.CharField(max_length=100)
-    month = models.DateField(default=timezone.now)
-    date_control_limits_calculated = models.DateField(default=timezone.now)
-    average_sample_size = models.IntegerField()
-    frequency = models.IntegerField()
+    # Document info fields
+    doc_number = models.CharField(max_length=20, default="QSF 12-05", null=True, blank=True)
+    rev_number = models.CharField(max_length=20, default="Rev 09 ", null=True, blank=True)
+
+    # Process machine mapping connection
+    process_machine = models.ForeignKey('ProcessMachineMapping', on_delete=models.CASCADE, 
+                                       related_name='pchart_data', null=True, blank=True)
+    
+    # Auto-filled fields (will be populated from process_machine)
+    location = models.CharField(max_length=200, null=True, blank=True)
+    part_number_and_name = models.CharField(max_length=200, null=True, blank=True)
+    operation_number_and_stage_name = models.CharField(max_length=200, null=True, blank=True)
+    department = models.CharField(max_length=100, null=True, blank=True)
+    
+    # Shift field
+    shift = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B')], null=True, blank=True)
+    time = models.TimeField(default=timezone.now, blank=True)
+    
+    # Changed from month to date to allow for daily entries
+    date = models.DateField(default=timezone.now,blank=True)
+    date_control_limits_calculated = models.DateField(default=timezone.now,blank=True)
+    
+    # Only these two fields will be requested from user
     sample_size = models.IntegerField()
     nonconforming_units = models.IntegerField()
-    history = HistoricalRecords()
-
-    # Automatically calculated fields
+    
+    # Auto-calculated fields
     proportion = models.FloatField(null=True, blank=True)
     ucl_p = models.FloatField(null=True, blank=True)
     lcl_p = models.FloatField(null=True, blank=True)
-    ucl_np = models.FloatField(null=True, blank=True)
-    lcl_np = models.FloatField(null=True, blank=True)
-    ucl_c = models.FloatField(null=True, blank=True)
-    lcl_c = models.FloatField(null=True, blank=True)
-    ucl_u = models.FloatField(null=True, blank=True)
-    lcl_u = models.FloatField(null=True, blank=True)
-
+    history = HistoricalRecords()
+    
+    @property
+    def month(self):
+        """For compatibility with existing code"""
+        return self.date.replace(day=1)
+    
     def calculate_control_limits(self):
         try:
-            # Calculate proportion
+            # Calculate proportion (p-bar)
             self.proportion = self.nonconforming_units / self.sample_size if self.sample_size > 0 else None
             
-            # P-Chart limits
-            if self.average_sample_size > 0 and self.proportion and 0 < self.proportion < 1:
-                p_std = math.sqrt((self.proportion * (1 - self.proportion)) / self.average_sample_size)
+            # Calculate P-Chart limits for this individual entry
+            # Note: In the view, we'll calculate monthly limits separately
+            if self.sample_size > 0 and self.proportion is not None and 0 <= self.proportion <= 1:
+                p_std = math.sqrt((self.proportion * (1 - self.proportion)) / self.sample_size)
                 self.ucl_p = min(1, self.proportion + 3 * p_std)
                 self.lcl_p = max(0, self.proportion - 3 * p_std)
-            
-            # NP-Chart limits
-            if self.proportion is not None:
-                np_bar = self.average_sample_size * self.proportion
-                if np_bar > 0:
-                    np_std = math.sqrt(np_bar * (1 - self.proportion))
-                    self.ucl_np = np_bar + 3 * np_std
-                    self.lcl_np = max(0, np_bar - 3 * np_std)
-            
-            # C-Chart limits
-            if self.nonconforming_units > 0:
-                c_std = math.sqrt(self.nonconforming_units)
-                self.ucl_c = self.nonconforming_units + 3 * c_std
-                self.lcl_c = max(0, self.nonconforming_units - 3 * c_std)
-            
-            # U-Chart limits
-            if self.average_sample_size > 0:
-                u_bar = self.nonconforming_units / self.average_sample_size
-                if u_bar > 0:
-                    u_std = math.sqrt(u_bar / self.average_sample_size)
-                    self.ucl_u = u_bar + 3 * u_std
-                    self.lcl_u = max(0, u_bar - 3 * u_std)
 
         except (ZeroDivisionError, ValueError) as e:
             print(f"Error calculating control limits: {e}")
@@ -1828,23 +3051,8 @@ class PChartData(models.Model):
             # P-Chart violations
             if self.ucl_p is not None and self.proportion > self.ucl_p:
                 violations.append(f"P-Chart: Proportion ({self.proportion:.4f}) exceeds UCL ({self.ucl_p:.4f})")
-            if self.lcl_p is not None and self.proportion < self.lcl_p:
+            if self.lcl_p is not None and self.proportion < self.lcl_p and self.lcl_p > 0:
                 violations.append(f"P-Chart: Proportion ({self.proportion:.4f}) below LCL ({self.lcl_p:.4f})")
-
-            # NP-Chart violations
-            np_value = self.average_sample_size * self.proportion
-            if self.ucl_np is not None and np_value > self.ucl_np:
-                violations.append(f"NP-Chart: Value ({np_value:.4f}) exceeds UCL ({self.ucl_np:.4f})")
-            if self.lcl_np is not None and np_value < self.lcl_np:
-                violations.append(f"NP-Chart: Value ({np_value:.4f}) below LCL ({self.lcl_np:.4f})")
-
-        # U-Chart violations
-        if self.average_sample_size > 0:
-            u_value = self.nonconforming_units / self.average_sample_size
-            if self.ucl_u is not None and u_value > self.ucl_u:
-                violations.append(f"U-Chart: Rate ({u_value:.4f}) exceeds UCL ({self.ucl_u:.4f})")
-            if self.lcl_u is not None and u_value < self.lcl_u:
-                violations.append(f"U-Chart: Rate ({u_value:.4f}) below LCL ({self.lcl_u:.4f})")
 
         return violations
 
@@ -1859,43 +3067,786 @@ class PChartData(models.Model):
                 'part_info': self.part_number_and_name,
                 'operation': self.operation_number_and_stage_name,
                 'department': self.department,
-                'date': self.month.strftime('%Y-%m-%d'),
+                'date': self.date.strftime('%Y-%m-%d'),
                 'metrics': {
                     'sample_size': self.sample_size,
                     'nonconforming': self.nonconforming_units,
                     'proportion': round(self.proportion, 4) if self.proportion else None,
-                    'average_sample_size': self.average_sample_size
                 },
                 'control_limits': {
                     'p_chart': {
                         'ucl': round(self.ucl_p, 4) if self.ucl_p else None,
                         'lcl': round(self.lcl_p, 4) if self.lcl_p else None
-                    },
-                    'np_chart': {
-                        'ucl': round(self.ucl_np, 4) if self.ucl_np else None,
-                        'lcl': round(self.lcl_np, 4) if self.lcl_np else None
-                    },
-                    'u_chart': {
-                        'ucl': round(self.ucl_u, 4) if self.ucl_u else None,
-                        'lcl': round(self.lcl_u, 4) if self.lcl_u else None
                     }
                 },
                 'violations': violations,
                 'needs_attention': bool(violations),
-                'severity': 'high' if len(violations) > 1 else 'medium' if violations else 'low'
+                'severity': 'high' if len(violations) > 1 else 'medium' if violations else 'low',
+                'doc_number': self.doc_number,
+                'rev_number': self.rev_number,
+                'shift': self.shift
             }
         }
 
     def save(self, *args, **kwargs):
-        # Calculate control limits (your existing method)
+        print("\n=== PChartData SAVE METHOD BEGIN ===")
+        print(f"PK: {self.pk}, Is New Record: {self.pk is None}")
+        
+        # Auto-determine shift based on time
+        if hasattr(self, 'time') and self.time:
+            current_time = self.time
+            print(f"Current time: {current_time}")
+            
+            # Define shift time ranges
+            shift_a_start = datetime_time(7, 30)  # 07:30
+            shift_a_end = datetime_time(16, 0)    # 16:00
+            shift_b_start = datetime_time(16, 30) # 16:30
+            
+            # Convert current_time to datetime.time if it's a datetime
+            if hasattr(current_time, 'time'):
+                current_time = current_time.time()
+            
+            if shift_a_start <= current_time <= shift_a_end:
+                self.shift = 'A'
+            elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+                self.shift = 'B'
+            else:
+                morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+                evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+                
+                self.shift = 'A' if abs(morning_diff) < abs(evening_diff) else 'B'
+            
+            print(f"Determined shift: {self.shift}")
+        
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        print(f"Request available: {request is not None}")
+        
+        # Try to get machine from browser login if new record
+        if is_new and request:
+            browser_key = request.session.get('browser_key')
+            print(f"Browser key from session: {browser_key}")
+            
+            if browser_key:
+                try:
+                    from machineapp.models import MachineLoginTracker
+                    active_login = MachineLoginTracker.objects.filter(
+                        browser_key=browser_key,
+                        is_active=True
+                    ).order_by('-created_at').first()
+                    
+                    if active_login:
+                        machine = active_login.machine
+                        print(f"Found active machine: {machine.name}")
+                        
+                        # Process machine lookup
+                        process_machine = ProcessMachineMapping.objects.filter(
+                            process=machine.name
+                        ).first()
+                        
+                        if process_machine:
+                            print(f"Found process machine mapping: {process_machine.machine_name}")
+                            self.process_machine = process_machine
+                        else:
+                            print(f"No process machine mapping found for {machine.name}")
+                    else:
+                        print("No active login found for this browser key")
+                except Exception as e:
+                    print(f"Error getting machine from browser key: {str(e)}")
+        
+        # Auto-populate fields from process_machine
+        if self.process_machine:
+            print(f"Using process_machine: {self.process_machine}")
+            print("Before populating from process_machine:")
+            print(f"location: {self.location}")
+            print(f"part_number_and_name: {self.part_number_and_name}")
+            print(f"operation_number_and_stage_name: {self.operation_number_and_stage_name}")
+            print(f"department: {self.department}")
+            
+            # Map fields from process_machine to PChartData fields
+            # Adjust these mappings based on your ProcessMachineMapping model fields
+            self.location = self.process_machine.process or self.location
+            self.part_number_and_name = self.process_machine.part_name or self.part_name
+            self.operation_number_and_stage_name = self.process_machine.station or self.operation_number_and_stage_name
+            self.department = self.process_machine.process_no 
+            
+            print("After populating from process_machine:")
+            print(f"location: {self.location}")
+            print(f"part_number_and_name: {self.part_number_and_name}")
+            print(f"operation_number_and_stage_name: {self.operation_number_and_stage_name}")
+            print(f"department: {self.department}")
+        else:
+            print("No process_machine available for auto-population")
+        
+        # Calculate control limits
         self.calculate_control_limits()
         
+        print("Final state before save:")
+        print(f"location: {self.location}")
+        print(f"part_number_and_name: {self.part_number_and_name}")
+        print(f"operation_number_and_stage_name: {self.operation_number_and_stage_name}")
+        print(f"department: {self.department}")
+        print(f"shift: {self.shift}")
+        print(f"proportion: {self.proportion}")
+        print(f"ucl_p: {self.ucl_p}")
+        print(f"lcl_p: {self.lcl_p}")
+        
         # Save the record
+        try:
+            super().save(*args, **kwargs)
+            print("Save successful")
+            
+            # Check for violations and send notification
+            violations = self.check_control_limits()
+            if violations:
+                print(f"Found violations: {violations}")
+                channel_layer = get_channel_layer()
+                notification = self.get_notification_message(violations)
+                async_to_sync(channel_layer.group_send)('test', notification)
+            else:
+                print("No violations detected")
+        except Exception as e:
+            print(f"ERROR saving record: {str(e)}")
+            raise  # Re-raise the exception after logging
+        
+        print("=== PChartData SAVE METHOD END ===\n")
+        
+        
+        
+        
+        
+        
+        
+#   
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
+from simple_history.models import HistoricalRecords
+
+class PCBPanelInspectionRecord(models.Model):
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+        ('C', 'C'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('OK', 'OK'),
+        ('Not OK', 'Not OK'),
+    ]
+    
+    # Document information
+    doc_number = models.CharField(max_length=20, default="A-SMT-07", blank=True)
+    rev_number = models.CharField(max_length=20, default="00", blank=True)
+    doc_date = models.DateField(default=timezone.now, blank=True)
+    
+    # Basic information
+    date = models.DateField(default=timezone.now)
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, blank=True, null=True)
+    
+    # PCB information
+    pcb_number = models.CharField(max_length=100, verbose_name="PCB No. / Rev.")
+    customer = models.CharField(max_length=100)
+    pcb_batch_code = models.CharField(max_length=100)
+    inspection_qty = models.IntegerField(default=5, help_text="Number of pieces inspected")
+    
+    # Inspection criteria
+    no_masking_issue = models.CharField(max_length=10, choices=STATUS_CHOICES, help_text="No peel off, No foreign material")
+    no_dust_contamination = models.CharField(max_length=10, choices=STATUS_CHOICES, help_text="No Dust or contamination on PCB Panel")
+    no_track_damage = models.CharField(max_length=10, choices=STATUS_CHOICES, help_text="No Track cut / damage mark on PCB Panel")
+    
+    # Process information
+    process_machine = models.ForeignKey(
+        'ProcessMachineMapping', 
+        on_delete=models.CASCADE, 
+        related_name='PCBPanelInspectionRecords',
+        null=True, 
+        blank=True
+    )
+    station = models.CharField(max_length=100, blank=True)
+    line = models.CharField(max_length=100, blank=True)
+    plant = models.CharField(max_length=100, blank=True)
+    
+    # Accountability
+    operator_name = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='pcb_inspections', 
+        blank=True, 
+        null=True
+    )
+    verified_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='pcb_verifications', 
+        blank=True, 
+        null=True
+    )
+    remarks = models.TextField(blank=True, null=True)
+    
+    # Tracking changes
+    history = HistoricalRecords()
+    
+    class Meta:
+        verbose_name = "PCB Panel Inspection Record"
+        verbose_name_plural = "PCB Panel Inspection Records"
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save method to auto-populate fields based on logged-in machine
+        and auto-determine shift based on time.
+        """
+        from datetime import datetime
+        
+        # Auto-determine shift based on time
+        current_time = datetime.now().time()
+        
+        # Define shift time ranges
+        from datetime import time as datetime_time
+        
+        # Shift definitions - assuming standard 8-hour shifts
+        shift_a_start = datetime_time(6, 0)   # 06:00
+        shift_a_end = datetime_time(14, 0)    # 14:00
+        shift_b_start = datetime_time(14, 0)  # 14:00
+        shift_b_end = datetime_time(22, 0)    # 22:00
+        # Shift C is from 22:00 to 06:00
+        
+        # Determine shift
+        if shift_a_start <= current_time < shift_a_end:
+            self.shift = 'A'
+        elif shift_b_start <= current_time < shift_b_end:
+            self.shift = 'B'
+        else:
+            self.shift = 'C'
+        
+        # Check if this is a new record
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name  # Adjust field name if needed
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+                        self.station = process_machine
+                        self.line = process_machine.process  # Assuming process can be used as line
+                        print(process_machine , 'hyyy')  
+        
+        # Handle operator assignment if available
+        if not self.operator_name and hasattr(self, 'request'):
+            self.operator_name = self.request.user
+            
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        """String representation of the PCB inspection record."""
+        return f"PCB Inspection {self.pcb_number} - {self.date}" 
+    
+    
+    
+    
+    
+    
+    
+#-----------------------------------------
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
+from simple_history.models import HistoricalRecords
+
+class ReworkAnalysisRecord(models.Model):
+    STATUS_CHOICES = [
+        ('Rework', 'Rework'),
+        ('Scrap', 'Scrap'),
+    ]
+    
+    VERIFICATION_CHOICES = [
+        ('Pass', 'Pass'),
+        ('Fail', 'Fail'),
+    ]
+    
+    # Document information
+    doc_number = models.CharField(max_length=20, default="QSF-22-02", blank=True)
+    rev_number = models.CharField(max_length=20, default="03", blank=True)
+    rev_date = models.DateField(default=timezone.datetime(2023, 12, 29).date(), blank=True)
+    
+    # General information
+    month = models.CharField(max_length=20, blank=True)
+    year = models.CharField(max_length=4, blank=True)
+    department_name = models.CharField(max_length=100, blank=True)
+    process = models.CharField(max_length=100, blank=True)
+    
+    # Record details
+    sr_no = models.PositiveIntegerField(blank=True, null=True)
+    problem_found_date = models.DateField(default=timezone.now)
+    part_received_date = models.DateField(default=timezone.now)
+    line_shift = models.CharField(max_length=50, verbose_name="Line/Shift")
+    part_identification_no = models.CharField(max_length=100, verbose_name="Part Identification No.")
+    short_code = models.CharField(max_length=50, blank=True)
+    problem_found_stage = models.CharField(max_length=100)
+    defects_details = models.TextField(blank=True, null=True)
+    defect_location_on_pcb = models.CharField(max_length=100)
+    defect_qty = models.PositiveIntegerField(default=1)
+    
+    # Analysis details
+    analysis_date = models.DateField(default=timezone.now)
+    child_part_im_code = models.CharField(max_length=100, blank=True, verbose_name="Child Part IM Code")
+    component_package_size = models.CharField(max_length=50, blank=True)
+    reason_for_defect = models.TextField(blank=True, null=True)
+    
+    # Rework details
+    rework_details = models.TextField(blank=True, null=True)
+    rework_date = models.DateField(default=timezone.now)
+    rework_done_by = models.CharField(max_length=100)
+    part_status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='Rework')
+    part_re_verification = models.CharField(
+        max_length=5, 
+        choices=VERIFICATION_CHOICES, 
+        default='Pass',
+        verbose_name="Part Re-verification Status"
+    )
+    
+    # Verification
+    verified_by = models.CharField(max_length=100, blank=True, verbose_name="Verified by (Line Supervisor)")
+    remarks = models.TextField(blank=True, null=True)
+    
+    # Process machine relation (optional, if needed for system integration)
+    process_machine = models.ForeignKey(
+        'ProcessMachineMapping', 
+        on_delete=models.SET_NULL, 
+        related_name='rework_analyses',
+        null=True, 
+        blank=True
+    )
+    
+    # Record creation/modification info
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='rework_records_created',
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # History tracking
+    history = HistoricalRecords()
+    
+    class Meta:
+        verbose_name = "Rework Analysis Record"
+        verbose_name_plural = "Rework Analysis Records"
+        ordering = ['-problem_found_date', 'sr_no']
+    
+    def save(self, *args, **kwargs):
+        # If sr_no is not set, auto-generate it based on the current month/year count
+        if not self.sr_no:
+            # Get records from the same month and year
+            current_month = self.problem_found_date.month if self.problem_found_date else timezone.now().month
+            current_year = self.problem_found_date.year if self.problem_found_date else timezone.now().year
+            
+            count = ReworkAnalysisRecord.objects.filter(
+                problem_found_date__month=current_month,
+                problem_found_date__year=current_year
+            ).count()
+            
+            self.sr_no = count + 1
+        
+        # Auto-set month and year based on problem_found_date
+        if self.problem_found_date:
+            self.month = self.problem_found_date.strftime('%B')
+            self.year = str(self.problem_found_date.year)
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If we have access to the request
+        if request:
+            # Set created_by to the current user
+            if not self.pk:  # Only on creation
+                self.created_by = request.user
+            
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+                        # You might want to auto-populate other fields based on the machine
+                        self.department_name = process_machine.station
+                        self.process = process_machine.process
+        
+        super().save(*args, **kwargs)
+    
+    def __str__(self):
+        return f"Rework Analysis #{self.sr_no} - {self.part_identification_no} ({self.problem_found_date})"
+
+ 
+# ----------------  
+
+from django.db import models
+from django.utils import timezone
+from django.contrib.auth.models import User
+from simple_history.models import HistoricalRecords
+
+class SolderPasteControl(models.Model):
+    STATUS_CHOICES = [
+        ('OK', 'OK'),
+        ('NG', 'NG'),
+    ]
+    
+    EXPIRY_STATUS_CHOICES = [
+        ('Valid', 'Valid'),
+        ('Expired', 'Expired'),
+    ]
+    
+    # Solder paste specification (default values based on the document)
+    paste_type = models.CharField(max_length=50, default="Lead Free Solder Paste")
+    paste_make = models.CharField(max_length=50, default="Heraeus")
+    part_number = models.CharField(max_length=50, default="F640SA30C5-89M30")
+    alloy = models.CharField(max_length=100, default="Sn 96.5; Ag 3; Cu 0.5")
+    mesh_type = models.CharField(max_length=100, default="Type 3 =25 -45 microns (325/=500mesh)")
+    net_weight = models.CharField(max_length=20, default="500 Gms")
+    paste_code = models.CharField(max_length=10, default="G1")
+    
+    # Entry information
+    serial_number = models.CharField(max_length=20, verbose_name="S No G1-")
+    
+    # PSR Information
+    psr_date = models.DateField(default=timezone.now, verbose_name="PSR Date")
+    psr_number = models.CharField(max_length=20, verbose_name="PSR No.")
+    
+    # Validation checks
+    make_status = models.CharField(max_length=5, choices=STATUS_CHOICES, default='OK', verbose_name="Make Status")
+    part_number_status = models.CharField(max_length=5, choices=STATUS_CHOICES, default='OK', verbose_name="Part Number Status")
+    alloy_status = models.CharField(max_length=5, choices=STATUS_CHOICES, default='OK', verbose_name="Alloy Status")
+    net_weight_status = models.CharField(max_length=5, choices=STATUS_CHOICES, default='OK', verbose_name="Net Weight Status")
+    
+    # Lot information
+    lot_number = models.CharField(max_length=50, verbose_name="Lot No")
+    expiry_date = models.DateField()
+    deep_storage_jar_number = models.CharField(max_length=50, verbose_name="Deep Storage Tubular Jar No.")
+    
+    # Removal for Thawing details
+    thawing_date = models.DateField(blank=True, null=True, verbose_name="Thawing Date")
+    thawing_time = models.TimeField(blank=True, null=True, verbose_name="Thawing Time")
+    expiry_status = models.CharField(max_length=10, choices=EXPIRY_STATUS_CHOICES, default='Valid')
+    thawing_sign = models.CharField(max_length=50, blank=True, verbose_name="Thawing Sign")
+    
+    # Paste mixing details
+    mixing_date = models.DateField(blank=True, null=True, verbose_name="Mixing Date")
+    mixing_time = models.TimeField(blank=True, null=True, verbose_name="Mixing Time")
+    
+    # First time use details
+    first_use_date = models.DateField(blank=True, null=True, verbose_name="First Use Date")
+    first_use_time = models.TimeField(blank=True, null=True, verbose_name="First Use Time")
+    first_use_sign = models.CharField(max_length=50, blank=True, verbose_name="First Use Sign")
+    
+    # Second time use details
+    second_use_date = models.DateField(blank=True, null=True, verbose_name="Second Use Date")
+    second_use_time = models.TimeField(blank=True, null=True, verbose_name="Second Use Time")
+    second_use_sign = models.CharField(max_length=50, blank=True, verbose_name="Second Use Sign")
+    
+    # Additional information
+    remarks = models.TextField(blank=True)
+    
+    # Process machine relation (optional, if needed for system integration)
+    process_machine = models.ForeignKey(
+        'ProcessMachineMapping', 
+        on_delete=models.SET_NULL, 
+        related_name='solder_paste_controls',
+        null=True, 
+        blank=True
+    )
+    
+    # Record creation/modification info
+    created_by = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='solder_paste_records_created',
+        null=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    # History tracking
+    history = HistoricalRecords()
+    
+    def get_use_period(self):
+        """Calculate the use period based on dates"""
+        if self.second_use_date:
+            # Calculate from first to second use
+            if self.first_use_date:
+                days = (self.second_use_date - self.first_use_date).days
+                return f"{days} days"
+        elif self.first_use_date:
+            # Calculate from thawing to first use
+            if self.thawing_date:
+                days = (self.first_use_date - self.thawing_date).days
+                return f"{days} days"
+        
+        # If dates not available or no use yet
+        return "Not used yet"
+    
+    def save(self, *args, **kwargs):
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If we have access to the request
+        if request:
+            # Set created_by to the current user on creation
+            if not self.pk:  # Only on creation
+                self.created_by = request.user
+                
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                from machineapp.models import MachineLoginTracker
+                active_login = MachineLoginTracker.objects.filter(
+                    browser_key=browser_key,
+                    is_active=True
+                ).order_by('-created_at').first()
+                
+                if active_login:
+                    # Get the machine from the active login
+                    machine = active_login.machine
+
+                    process_machine = ProcessMachineMapping.objects.filter(
+                        process=machine.name
+                    ).first()
+                    
+                    if process_machine:
+                        self.process_machine = process_machine
+        
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        verbose_name = "Solder Paste Control"
+        verbose_name_plural = "Solder Paste Controls"
+        ordering = ['-psr_date', 'serial_number']
+    
+    def __str__(self):
+        return f"Solder Paste Control: G1-{self.serial_number} ({self.psr_date})" 
+    
+    
+    
+    
+    
+    
+    
+# ------------------------------
+
+class TipVoltageResistanceRecord(models.Model):
+    SHIFT_CHOICES = [
+        ('A', 'A'),
+        ('B', 'B'),
+    ]
+    
+    FREQ_CHOICES = [
+        ('1st', '1st'),
+        ('2nd', '2nd'),
+        ('3rd', '3rd'),
+        ('4th', '4th'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('✔', 'OK'),
+        ('✘', 'Not OK'),
+        ('', 'Not Checked')
+    ]
+    
+    # Document Information
+    qsf_document = models.CharField(max_length=50,null=True, blank=True, default='QSF-12-09')
+    
+    
+    process_machine = models.ForeignKey(ProcessMachineMapping, on_delete=models.CASCADE, related_name='TipVoltageResistanceRecords', null=True, blank=True)
+    
+    # Basic Information
+    department = models.CharField(max_length=50, default="Production")
+    operation = models.CharField(max_length=50, default="Rework")
+    month_year = models.DateField(default=timezone.now)
+    soldering_station_control_no = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Measurement Details
+    date = models.DateField(default=timezone.now)
+    frequency = models.CharField(max_length=5, choices=FREQ_CHOICES)
+    tip_voltage = models.FloatField(help_text="Should be less than 1V")
+    tip_resistance = models.FloatField(help_text="Should be less than 10Ω")
+    
+    # Signatures
+    operator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tip_voltage_records_as_operator', blank=True, null=True)
+    operator_signature = models.CharField(max_length=1, choices=STATUS_CHOICES, default='✔')
+    supervisor_signature = models.CharField(max_length=1, choices=STATUS_CHOICES, default='✘')
+    
+    # Record keeping
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    shift = models.CharField(max_length=1, choices=SHIFT_CHOICES, blank=True, null=True)
+    history = HistoricalRecords()
+    
+    class Meta:
+        verbose_name = "Tip Voltage & Resistance Record"
+        verbose_name_plural = "Tip Voltage & Resistance Records"
+        ordering = ['-date', 'frequency']
+    
+    def save(self, *args, **kwargs):
+        """
+        Override save method to auto-populate fields based on logged-in machine
+        and auto-determine shift based on time.
+        """
+        from datetime import datetime, time as datetime_time
+        
+        # Auto-determine shift based on time
+        current_time = datetime.now().time()
+        
+        # Define shift time ranges
+        shift_a_start = datetime_time(7, 30)  # 07:30
+        shift_a_end = datetime_time(16, 0)    # 16:00
+        shift_b_start = datetime_time(16, 30) # 16:30
+        
+        # Check if time falls within Shift A
+        if shift_a_start <= current_time <= shift_a_end:
+            self.shift = 'A'
+        # Check if time falls within Shift B (accounting for overnight)
+        elif current_time >= shift_b_start or current_time <= datetime_time(0, 30):
+            self.shift = 'B'
+        # If time doesn't fit either shift, default to closest one
+        else:
+            # This handles gaps like 16:00-16:30
+            morning_diff = (current_time.hour - shift_a_start.hour) * 60 + (current_time.minute - shift_a_start.minute)
+            evening_diff = (current_time.hour - shift_b_start.hour) * 60 + (current_time.minute - shift_b_start.minute)
+            
+            if abs(morning_diff) < abs(evening_diff):
+                self.shift = 'A'
+            else:
+                self.shift = 'B'
+        
+        # Check if this is a new record (not yet saved)
+        is_new = self.pk is None
+        
+        # Get the current request from thread local if available
+        request = getattr(self, 'request', None)
+        
+        # If this is a new record and we have access to the request
+        if is_new and request:
+            # Get browser key from session if logged into a machine
+            browser_key = request.session.get('browser_key')
+            
+            if browser_key:
+                # Try to find the active machine for this browser
+                try:
+                    from machineapp.models import MachineLoginTracker
+                    active_login = MachineLoginTracker.objects.filter(
+                        browser_key=browser_key,
+                        is_active=True
+                    ).order_by('-created_at').first()
+                    
+                    if active_login:
+                        # Get the machine from the active login
+                        machine = active_login.machine
+                        
+                        process_machine = ProcessMachineMapping.objects.filter(
+                            process=machine.name  # Adjust field name if needed
+                        ).first()
+                        
+                        if process_machine:
+                            self.process_machine = process_machine
+                            self.soldering_station_control_no = process_machine.control_number
+                except Exception as e:
+                    print(f"Error getting machine information: {e}")
+        
+        # Handle operator assignment if available
+        if not self.operator and hasattr(self, 'request') and hasattr(self.request, 'user'):
+            self.operator = self.request.user
+            
+        # Validate measurements
+        if self.tip_voltage > 1.0:
+            self.operator_signature = '✘'  # Mark as not OK if voltage exceeds 1V
+            
+        if self.tip_resistance > 10.0:
+            self.operator_signature = '✘'  # Mark as not OK if resistance exceeds 10Ω
+        
+        # Call parent save method
         super().save(*args, **kwargs)
         
-        # Check for violations and send notification
-        violations = self.check_control_limits()
-        if violations:
+        # Send notification if measurements are out of range
+        if self.tip_voltage > 1.0 or self.tip_resistance > 10.0:
+            self._send_notification()
+    
+    def _send_notification(self):
+        """
+        Send notification about out-of-range measurements.
+        """
+        try:
+            from asgiref.sync import async_to_sync
+            from channels.layers import get_channel_layer
+            
+            issues = []
+            if self.tip_voltage > 1.0:
+                issues.append(f"Tip voltage out of range: {self.tip_voltage}V (should be <1V)")
+            if self.tip_resistance > 10.0:
+                issues.append(f"Tip resistance out of range: {self.tip_resistance}Ω (should be <10Ω)")
+            
+            severity = 'high' if len(issues) > 1 else 'medium'
+            
+            notification = {
+                'type': 'chat_message',
+                'message': {
+                    'alert_type': 'tip_measurement_alert',
+                    'record_id': self.pk,
+                    'station_control_no': self.soldering_station_control_no,
+                    'date': self.date.strftime('%Y-%m-%d'),
+                    'frequency': self.frequency,
+                    'shift': self.shift,
+                    'issues': issues,
+                    'severity': severity
+                }
+            }
+            
             channel_layer = get_channel_layer()
-            notification = self.get_notification_message(violations)
             async_to_sync(channel_layer.group_send)('test', notification)
+        except Exception as e:
+            print(f"Error sending notification: {e}")
+    
+    def __str__(self):
+        return f"Tip Measurement: {self.soldering_station_control_no} - {self.date} ({self.frequency})"
+ 

@@ -8,8 +8,8 @@
 <div class="background-container">
     <div class="container content-container">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}Add{% endif %} Fixture Cleaning Record</h1>
-            <p class="text-secondary">QSF-13-06</p>
+            <h1 class="text-primary">{% if form.instance.pk %}Update{% else %}{% endif %} Fixture Cleaning Record</h1>
+            <p class="text-secondary">QSF-12-16<br>Rev-00</p>
         </div>
 
         <div class="alert-container">
@@ -49,87 +49,42 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.station.id_for_label }}" class="form-label">{{ form.station.label }}</label>
-                            {{ form.station }}
-                            {% if form.station.errors %}
-                                <div class="text-danger">{{ form.station.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.month_year.id_for_label }}" class="form-label">{{ form.month_year.label }}</label>
-                            {{ form.month_year }}
-                            {% if form.month_year.errors %}
-                                <div class="text-danger">{{ form.month_year.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.shift.id_for_label }}" class="form-label">{{ form.shift.label }}</label>
-                            {{ form.shift }}
-                            {% if form.shift.errors %}
-                                <div class="text-danger">{{ form.shift.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.fixture_location.id_for_label }}" class="form-label">{{ form.fixture_location.label }}</label>
-                            {{ form.fixture_location }}
-                            {% if form.fixture_location.errors %}
-                                <div class="text-danger">{{ form.fixture_location.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.fixture_control_no.id_for_label }}" class="form-label">{{ form.fixture_control_no.label }}</label>
-                            {{ form.fixture_control_no }}
-                            {% if form.fixture_control_no.errors %}
-                                <div class="text-danger">{{ form.fixture_control_no.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="{{ form.fixture_installation_date.id_for_label }}" class="form-label">{{ form.fixture_installation_date.label }}</label>
-                            {{ form.fixture_installation_date }}
-                            {% if form.fixture_installation_date.errors %}
-                                <div class="text-danger">{{ form.fixture_installation_date.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+
+
+
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                {{ form.verification_tag_available }}
                                 <label class="form-check-label" for="{{ form.verification_tag_available.id_for_label }}">
                                     {{ form.verification_tag_available.label }}
                                 </label>
+                                {{ form.verification_tag_available }}
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                {{ form.verification_tag_condition }}
                                 <label class="form-check-label" for="{{ form.verification_tag_condition.id_for_label }}">
                                     {{ form.verification_tag_condition.label }}
                                 </label>
+                                {{ form.verification_tag_condition }}
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                {{ form.no_dust_on_fixture }}
                                 <label class="form-check-label" for="{{ form.no_dust_on_fixture.id_for_label }}">
                                     {{ form.no_dust_on_fixture.label }}
                                 </label>
+                                {{ form.no_dust_on_fixture }}
                             </div>
                         </div>
                         <div class="col-md-6 mb-3">
                             <div class="form-check">
-                                {{ form.no_epoxy_coating_on_fixture }}
                                 <label class="form-check-label" for="{{ form.no_epoxy_coating_on_fixture.id_for_label }}">
                                     {{ form.no_epoxy_coating_on_fixture.label }}
                                 </label>
+                                {{ form.no_epoxy_coating_on_fixture }}
                             </div>
                         </div>
                     </div>

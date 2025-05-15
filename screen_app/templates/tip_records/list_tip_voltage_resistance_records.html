@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block title %}
+    <title>Tip Voltage & Resistance Records</title>
+{% endblock title %}
+
+{% block content %}
+<div class="background-container">
+    <div class="container content-container">
+        <h1 class="page-title">Tip Voltage & Resistance Records</h1>
+
+        <div class="card search-card">
+            <div class="card-body">
+                <h2 class="card-title">Search Records</h2>
+                <form method="get" class="search-form">
+                    {{ search_form.as_p }}
+                    <div class="button-group">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                        <button type="reset" class="btn btn-secondary">Reset</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="action-container">
+            <a href="{% url 'add_tip_voltage_resistance_record' %}" class="btn btn-success">Add New Record</a>
+            <div class="export-buttons">
+                <a href="?{{ request.GET.urlencode }}&export=excel" class="btn btn-outline-primary">Export to Excel</a>
+                <a href="?{{ request.GET.urlencode }}&export=pdf" class="btn btn-outline-danger">Export to PDF</a>
+            </div>
+        </div>
+
+        {% if records %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Control No</th>
+                            <th>Date</th>
+                            <th>Frequency</th>
+                            <th>Shift</th>
+                            <th>Tip Voltage (<1V)</th>
+                            <th>Tip Resistance (<10Ω)</th>
+                            <th>Operator</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.soldering_station_control_no }}</td>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.frequency }}</td>
+                            <td>{{ record.shift }}</td>
+                            <td class="{% if record.tip_voltage >= 1.0 %}text-danger{% endif %}">
+                                {{ record.tip_voltage }}V
+                            </td>
+                            <td class="{% if record.tip_resistance >= 10.0 %}text-danger{% endif %}">
+                                {{ record.tip_resistance }}Ω
+                            </td>
+                            <td>{{ record.operator.username }}</td>
+                            <td>
+                                {% if record.tip_voltage < 1.0 and record.tip_resistance < 10.0 %}
+                                    <span class="badge bg-success">OK</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Not OK</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'tip_voltage_resistance_record_detail' record.pk %}" class="btn btn-sm btn-info">View</a>
+                                    <a href="{% url 'update_tip_voltage_resistance_record' record.pk %}" class="btn btn-sm btn-warning">Edit</a>
+                                    <a href="{% url 'delete_tip_voltage_resistance_record' record.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="no-records">No records found.</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    :root {
+        --primary-color: #0033CC;
+        --secondary-color: #FF6633;
+        --background-color: #F8FAFC;
+        --card-bg: #FFFFFF;
+        --text-color: #1E293B;
+        --grid-color: rgba(0, 51, 204, 0.1);
+    }
+
+    body {
+        background-color: var(--background-color);
+        color: var(--text-color);
+        font-family: Arial, sans-serif;
+    }
+
+    .background-container {
+        background-color: var(--background-color);
+        background-image: 
+            linear-gradient(var(--grid-color) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+        background-size: 20px 20px;
+        min-height: 100vh;
+        padding: 40px 0;
+    }
+
+    .content-container {
+        background-color: rgba(255, 255, 255, 0.95);
+        border-radius: 10px;
+        padding: 30px;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+        color: var(--primary-color);
+        text-align: center;
+        margin-bottom: 30px;
+        font-weight: bold;
+    }
+
+    .search-card {
+        margin-bottom: 30px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-title {
+        color: var(--primary-color);
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+
+    .search-form {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+    }
+
+    .button-group {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .action-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .table {
+        background-color: var(--card-bg);
+    }
+
+    .table thead th {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0, 51, 204, 0.05);
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 5px;
+    }
+
+    .no-records {
+        text-align: center;
+        padding: 20px;
+        color: #777;
+        font-style: italic;
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-secondary {
+        background-color: var(--secondary-color);
+        border-color: var(--secondary-color);
+    }
+
+    .btn-success {
+        background-color: #B2BEB5;
+        border-color: #B2BEB5;
+    }
+    
+    .btn-info {
+        background-color: #E5E4E2;
+        border-color: #E5E4E2;
+    }
+    
+    .btn-warning {
+        background-color: #E5E4E2;
+        border-color: #E5E4E2;
+    }
+    
+    .btn-danger {
+        background-color: #dc3545;
+        border-color: #dc3545;
+    }
+    
+    .text-danger {
+        color: #dc3545 !important;
+        font-weight: bold;
+    }
+    
+    .badge {
+        padding: 6px 12px;
+        border-radius: 4px;
+        font-weight: normal;
+    }
+    
+    .bg-success {
+        background-color: #28a745 !important;
+    }
+    
+    .bg-danger {
+        background-color: #dc3545 !important;
+    }
+</style>
+{% endblock content %}
